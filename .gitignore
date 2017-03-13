@@ -27,3 +27,13 @@
 *.exe
 *.out
 *.app
+
+#mac finder
+.DS_Store
+
+#makefile poop
+*.d
+
+#mac debug dymbols
+*dSYM/
+

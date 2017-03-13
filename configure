@@ -1,0 +1,90 @@
+#! /bin/bash
+
+
+PREFIX="/usr/local"
+: ${CFLAGS=""}
+: ${LDFLAGS=""}
+BUILD="shared"
+TAU_LIBS="-ltau -levent -levent_pthreads"
+
+
+show_help() {
+cat <<EOF
+Configure.
+
+--help                      This help.                            
+--prefix
+--static                    Build as a static library
+
+
+Environment variables:
+ 
+  LDFLAGS                   linker flags, e.g. -L<lib dir> if you have libraries in a
+                            nonstandard directory <lib dir>
+
+  CFLAGS                    C/C++ preprocessor flags, e.g. -I<include dir> if
+                            you have headers in a nonstandard directory <include dir>
+                            
+EOF
+}
+
+# Parse options
+
+while [ -n "$1" ]
+do
+   value="`echo $1 | sed 's/[^=]*.\(.*\)/\1/'`"
+   key="`echo $1 | sed 's/=.*//'`"
+   if `echo "$value" | grep "~" >/dev/null 2>/dev/null`
+   then
+      echo
+      echo '*WARNING*: the "~" sign is not expanded in flags.'
+      echo 'If you mean the home directory, use $HOME instead.'
+      echo
+   fi
+   case "$key" in
+   --help)
+      show_help
+      exit 0
+      ;;
+   --prefix)
+      [ -n "$value" ] || die "Missing value in flag $key."
+      PREFIX="$value"
+      ;;
+   --static)
+      BUILD="static"
+      ;; 
+   --with-openssl)
+     OPENSSL="yes"
+     ;; 
+   *)
+      die "Error: Unknown flag: $1"
+      ;;
+   esac
+   shift
+done
+
+LIBEVENT_CONFIGURE_FLAGS="--disable-libevent-regress  --disable-malloc-replacement --disable-debug-mode --disable-dependency-tracking --prefix=$PREFIX --disable-openssl"
+
+if [ "$BUILD" = "static" ]
+then
+    LIBEVENT_CONFIGURE_FLAGS="$LIBEVENT_CONFIGURE_FLAGS --enable-shared=no --enable-static=yes"
+else
+    LIBEVENT_CONFIGURE_FLAGS="$LIBEVENT_CONFIGURE_FLAGS --enable-shared=yes --enable-static=no"
+fi
+
+cd deps/libevent &&  CFLAGS=$CFLAGS LDFLAGS=$LDFLAGS ./configure $LIBEVENT_CONFIGURE_FLAGS
+make
+
+cd ../..
+
+cat <<EOF > config.mk
+
+PREFIX=$PREFIX
+CFLAGS=$CFLAGS
+LDFLAGS=$LDFLAGS
+BUILD=$BUILD
+TAU_LIBS=$TAU_LIBS
+
+
+EOF
+
