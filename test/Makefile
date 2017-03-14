@@ -21,7 +21,7 @@ clean:
 	$(CXX) $(CPPFLAGS) -o $@   $< $(LDFLAGS)  
  	
 run:
-	 mkdir bin && cp $(EXECUTABLES) bin && cd .. && test/run.sh	
+	 mkdir -p bin && cp $(EXECUTABLES) bin && cd .. && test/run.sh	
 
 		
 .PHONY: all clean 

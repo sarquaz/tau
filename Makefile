@@ -58,10 +58,10 @@ rebuild: clean
 
 $(TARGET): $(OBJECTS)  
 ifeq ($(BUILD),shared)
-		mkdir bin && $(CXX) -shared  -fPIC -o bin/$@ $(OBJECTS)    $(PLATFORM_LDFLAGS) 
+		mkdir -p bin && $(CXX) -shared  -fPIC -o bin/$@ $(OBJECTS)    $(PLATFORM_LDFLAGS) 
 else
 		$(AR) libtau.a $(OBJECTS)
-		mkdir bin && $(RANLIB) bin/$@
+		mkdir -p bin && $(RANLIB) bin/$@
 endif
 
 
