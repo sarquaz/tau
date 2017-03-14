@@ -34,38 +34,37 @@ SOURCES =  src/types.c++ src/si.++ src/log.c++
 
 OBJECTS =  src/types.o src/si.o src/log.o
 
-all: $(TARGET)
+all: $(TARGET) 
+
 
 clean_tau:
 	rm -f src/*.o
 	rm -f src/*.d
-	rm -f *.a
-	rm -f *.so
+	rm -f bin
 	
 	-(cd test && $(MAKE) clean)	
 	
-clean: clean_tau
+clean: 
+	rm -f src/*.o
+	rm -f src/*.d
+	rm -rf bin
+	
+	-(cd test && $(MAKE) clean)	
 
-clean_all: clean_tau
-	-(cd deps/libevent && $(MAKE) clean)
-	
-rebuild: clean_tau
-	make -j
-	
-rebuild_all: clean
+
+rebuild: clean
 	make -j	
 		
 
-
-
 $(TARGET): $(OBJECTS)  
 ifeq ($(BUILD),shared)
-		$(CXX) -shared  -fPIC -o $@ $(OBJECTS)    $(PLATFORM_LDFLAGS) 
+		mkdir bin && $(CXX) -shared  -fPIC -o bin/$@ $(OBJECTS)    $(PLATFORM_LDFLAGS) 
 else
 		$(AR) libtau.a $(OBJECTS)
-		$(RANLIB) $@
+		mkdir bin && $(RANLIB) bin/$@
 endif
-	
+
+
 
 test: 
 	cd test && $(MAKE); 
