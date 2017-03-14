@@ -1,28 +1,28 @@
 include ../config.mk
 CXX = g++
 CPPFLAGS =  -I../include/tau  -g -DLOG -std=c++0x 
-LDFLAGS = -L../ -ltau 
+LDFLAGS = -L../bin -ltau 
 
 SOURCES = $(wildcard *.c++)
 #EXECUTABLES = $(SOURCES:.c++)
 
 EXECUTABLES = Map
 
-#all:  clean $(EXECUTABLES)  run
-all: clean $(EXECUTABLES)
+all:  clean $(EXECUTABLES)  run
 
 tau:
 	cd .. && $(MAKE)
 clean:
 	rm -rf *.o
-	rm -rf $(EXECUTABLES)
+	rm -rf bin
 	
 	
 %: %.c++
 	$(CXX) $(CPPFLAGS) -o $@   $< $(LDFLAGS)  
  	
 run:
-	cd .. && test/run.sh	
+	 mkdir bin && cp $(EXECUTABLES) bin && cd .. && test/run.sh	
+
 		
 .PHONY: all clean 
 	
