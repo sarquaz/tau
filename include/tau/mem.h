@@ -251,10 +251,9 @@ namespace tau
                     Chunk( unsigned int _count = 0 )
                     : count( _count ), got( 0 ), freed( 0 ) 
                     {
-                        
                     }
                 };
-                
+                 
                 typedef list::Node< Chunk > Node;
                 
                 template < class T > struct _Item

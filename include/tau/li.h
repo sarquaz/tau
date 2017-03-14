@@ -198,12 +198,7 @@ namespace tau
 
             template < class Items > void items( Items items ) const
             {
-                const Item* tail = m_list;
-                while ( tail )
-                {
-                    items( *tail );
-                    tail = tail->prev;
-                }
+                return const_cast< List* >( this )->items( items );
             }
 
             template < class Items > void items( Items items )
