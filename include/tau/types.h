@@ -49,13 +49,13 @@ namespace tau
         {
         public:
             Random( );
-            unsigned int operator()( unsigned int max = 0 );
+            ui operator()( ui max = 0 );
 
         private:
             std::default_random_engine m_random;
         };
 
-        unsigned long random( unsigned int max = 0 );
+        ul random( ui max = 0 );
     }
     
     typedef si::Data Data;
@@ -135,7 +135,7 @@ namespace tau
             
             virtual void destroy();
             
-            virtual unsigned int code( ) const = 0;
+            virtual ui code( ) const = 0;
             
         protected:
             Tok( )
@@ -181,26 +181,26 @@ namespace tau
             }
             
             void dispose( Tok& );
-            void setMax( unsigned int max )
+            void setMax( ui max )
             {
                 m_max = max;
             }
 
         private:
-            unsigned int max() const
+            ui max() const
             {
                 return m_max;
             }
             
             void clear() ;
-            Tok* get( unsigned long );
+            Tok* get( ul );
             
             typedef li::Mass< Tok* > Toks;
             
         private:
             
-            li::Map< unsigned long, Toks >  m_map;
-            unsigned int m_max;
+            li::Map< ul, Toks >  m_map;
+            ui m_max;
         };
         
         Toker& toker();
@@ -237,7 +237,7 @@ namespace tau
         }
         
     private:
-        unsigned int m_ref;
+        ui m_ref;
     };
 }
 

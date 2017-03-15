@@ -2,7 +2,6 @@
 #define TAU_MEM_H
 
 #include "std.h"
-#include "../../src/trace.h"
 
 namespace tau
 {
@@ -25,7 +24,7 @@ namespace tau
                 }
             };
             
-            template < class Data, unsigned int Size > struct Root
+            template < class Data, ui Size > struct Root
             {
                 Data data[ Size ];
                 
@@ -33,12 +32,12 @@ namespace tau
                 {
                 }
                 
-                Data& operator []( unsigned int index )
+                Data& operator []( ui index )
                 {
                     return data[ index ];
                 }
                 
-                unsigned int size() const
+                ui size() const
                 {
                     return Size;
                 }
@@ -51,8 +50,8 @@ namespace tau
                     Size = 0x20
                 };
                 
-                unsigned int count;
-                unsigned long type;
+                ui count;
+                ul type;
                 
                 Nodes()
                 {
@@ -67,9 +66,13 @@ namespace tau
                 };                
                 
                 Sizes()
+                : used( 0 ), max( 1024 * 1024 * 5 /* 5 MB default */)
                 {
                     std::memset( data, 0, sizeof( data ) );
                 }
+                
+                ui used;
+                ui max;
             };
             
             Sizes& sizes();
@@ -77,7 +80,7 @@ namespace tau
             template < class Type > class Bytes
             {
             public:
-                Bytes( unsigned int chunk = 0 )
+                Bytes( ui chunk = 0 )
                 : m_chunk( chunk ? chunk : sizeof( Type ) ), m_nodes( mem::sizes()[ typeid( Type ).hash_code() % Sizes::Size ] ),
                  m_max( 500 ), m_null( NULL ), m_hash( typeid( Type ).hash_code() )
                 {                           
@@ -94,7 +97,7 @@ namespace tau
                     }
                 }
                 
-                Type* get( unsigned int chunks = 1, bool* reuse = NULL )
+                Type* get( ui chunks = 1, bool* reuse = NULL )
                 {
                     auto& node = this->node( chunks );
                     
@@ -112,6 +115,7 @@ namespace tau
                         {
                             *reuse = true;
                         }
+                        
                     }
                     
                     if ( !data )
@@ -122,18 +126,25 @@ namespace tau
                     return static_cast< Type* >( data );
                 }
                 
-                void free( Type* data, unsigned int chunks = 1 )
+                void free( Type* data, uint chunks = 1 )
                 {
+                    auto freed = sizeof( data ) * chunks;
                     auto& first = this->node( chunks );
-                                        
-                    if ( m_max > m_nodes.count )
+                    
+                    printf( "need to free %d bytes have %d, max %d \n", freed, sizes().used, sizes().max );
+                    
+                    
+                    if ( sizes().used < sizes().max )
                     {
                         auto& node = Node::get( data );
                                 
                         node.next = first;
                         first = &node;
-                                
-                        m_nodes.count += 1;
+                        
+                        auto size = freed;
+                        printf( "reusing %d bytes \n", size );
+                        sizes().used += size;
+                        
                     }
                     else
                     {
@@ -141,17 +152,28 @@ namespace tau
                     }
                 }
                 
-                void setMax( unsigned int max )
+                ui max( ui max )
                 {
                     m_max = max;
+                    return 0;
+                }
+                
+                ui max( ) const
+                {
+                    return m_max;
+                }
+                
+                ui size( ) const
+                {
+                    return m_size;
                 }
                 
             protected:
-                unsigned int m_chunk;
+                ui m_chunk;
                 
                 
             private:
-                Node*& node( unsigned int chunks )
+                Node*& node( ui chunks )
                 {                    
                     if ( chunks > Nodes::Size )
                     {
@@ -164,9 +186,11 @@ namespace tau
                 
             private:
                 Nodes& m_nodes;
-                unsigned int m_max;
+                ui m_max;
+                ui m_size;
+                
                 Node* m_null;
-                unsigned long m_hash;
+                ul m_hash;
             };
             
             typedef Bytes< char > Char;
@@ -243,12 +267,12 @@ namespace tau
             {               
                 struct Chunk
                 {
-                    unsigned int got;
-                    unsigned int count;
-                    unsigned int freed;
+                    ui got;
+                    ui count;
+                    ui freed;
                     void* start;
                     
-                    Chunk( unsigned int _count = 0 )
+                    Chunk( ui _count = 0 )
                     : count( _count ), got( 0 ), freed( 0 ) 
                     {
                     }
@@ -270,9 +294,9 @@ namespace tau
                 };
                 
             public:
-                unsigned int count;
+                ui count;
                 
-                Pile( unsigned int _count = Count )
+                Pile( ui _count = Count )
                 : count( _count ), m_list( NULL ), m_size( 0 )
                 {
                 }
@@ -291,7 +315,7 @@ namespace tau
                                                 
                         if ( count < m_list->v.count )
                         {
-                            auto item = ( Item* ) ( ( unsigned long ) m_list->v.start + count * sizeof( Item ) );                            
+                            auto item = ( Item* ) ( ( ul ) m_list->v.start + count * sizeof( Item ) );                            
                             auto type = &item->type;
                             item->node = m_list;
                                                         
@@ -318,7 +342,7 @@ namespace tau
                 {
                     type.~Type();
                     
-                    auto item = ( Item* ) ( ( unsigned long ) &type - sizeof( Node* ) );
+                    auto item = ( Item* ) ( ( ul ) &type - sizeof( Node* ) );
                     auto node = item->node;
                     
                     auto& freed = node->v.freed;
@@ -358,7 +382,7 @@ namespace tau
                     count = Count;
                 }
                 
-                unsigned int size() const
+                ui size() const
                 {
                     return m_size;
                 }
@@ -391,7 +415,7 @@ namespace tau
                 Types< Node > m_nodes;
                 Bytes< Item > m_items;
                 Node* m_list;
-                unsigned int m_size;
+                ui m_size;
             };
         }
     }

@@ -53,7 +53,7 @@ namespace tau
             }
 
              
-            auto& toks =  m_map[ ( unsigned long ) tok.code( ) ];
+            auto& toks =  m_map[ ( ul ) tok.code( ) ];
             
             if ( toks.length() < max() )
             {
@@ -65,7 +65,7 @@ namespace tau
             }
         }
         
-        Tok* Toker::get( unsigned long hash )
+        Tok* Toker::get( ul hash )
         {
             Tok* tok = NULL;
             
@@ -120,7 +120,7 @@ namespace tau
 
     namespace si
     {
-        int Data::find( const Data& data, unsigned int offset ) const
+        int Data::find( const Data& data, ui offset ) const
         {
             auto found = ( char* ) ::memmem( *this + offset, length(), data, data.length() );
             
@@ -133,7 +133,7 @@ namespace tau
             return -1;
         }
         
-        void Data::setup( const char* data, unsigned int length )
+        void Data::setup( const char* data, ui length )
         {
             m_external = data;
             
@@ -163,7 +163,7 @@ namespace tau
             return *this;
         }
         
-        Data& Data::add( const char* data, unsigned int length )
+        Data& Data::add( const char* data, ui length )
         {
             if ( !data )
             {
@@ -191,7 +191,7 @@ namespace tau
             return *this;
         }
         
-        void Data::space( unsigned int length )
+        void Data::space( ui length )
         {
             if ( m_external )
             {
@@ -207,9 +207,9 @@ namespace tau
         }
         
                         
-        char& Data::operator[]( unsigned int offset )
+        char& Data::operator[]( ui offset )
         {
-            if ( !data( ) || offset > ( unsigned int ) m_data )
+            if ( !data( ) || offset > ( ui ) m_data )
             {
                 throw Error();
             }
@@ -217,9 +217,9 @@ namespace tau
             return *( data( ) + offset );
         }
 
-        char Data::operator[]( unsigned int offset ) const
+        char Data::operator[]( ui offset ) const
         {
-            if ( !data( ) || offset > ( unsigned int ) m_data )
+            if ( !data( ) || offset > ( ui ) m_data )
             {
                 return 0;
             }
@@ -228,14 +228,14 @@ namespace tau
         }
 
         
-        Data Data::get( unsigned int length )
+        Data Data::get( ui length )
         {
             Data data;
             
             auto start = 33;
             auto range = 126 - start;
             
-            unsigned int number = 0;
+            ui number = 0;
             auto pos = 0;
             
             while ( data.length() < length )
@@ -260,7 +260,7 @@ namespace tau
             return data;
         }
         
-        unsigned long Data::hash( ) const
+        ul Data::hash( ) const
         {
             auto hash = Piece( ( char* ) ( const char *) m_data, length() )();
 
@@ -277,12 +277,12 @@ namespace tau
                 Size = 0x40
             };
 
-            static unsigned int bytes( unsigned int size )
+            static ui bytes( ui size )
             {
                 return chunks( size ) * Size;
             }
 
-            static unsigned int chunks( unsigned int length )
+            static ui chunks( ui length )
             {
                 auto size = length / Size;
 
@@ -314,7 +314,7 @@ namespace tau
             }
         }
          
-        void Data::Piece::get( unsigned int length )
+        void Data::Piece::get( ui length )
         {
             Piece old = *this;
             
@@ -329,9 +329,9 @@ namespace tau
             }
         }
         
-        unsigned long Data::Piece::operator()( ) const
+        ul Data::Piece::operator()( ) const
         {            
-            unsigned long hash = 0;
+            ul hash = 0;
             auto pos = 0;
             
             auto step = sizeof( hash );
@@ -341,17 +341,17 @@ namespace tau
                 step = 1;
             }
             
-            unsigned long last = 0;
-            unsigned long* next = NULL;
+            ul last = 0;
+            ul* next = NULL;
             
             for ( ;; )
             {
                 auto length = 0;
-                unsigned long number = 0;
+                ul number = 0;
                 
                 if ( pos + step >= m_size )
                 {
-                     next = ( unsigned long* ) ( m_data + pos ); 
+                     next = ( ul* ) ( m_data + pos ); 
                 }
                 else
                 {
@@ -392,7 +392,7 @@ namespace tau
         
         __thread Random* t_random = NULL;
 
-        unsigned long random( unsigned int max )
+        ul random( ui max )
         {
             if ( !t_random )
             {
@@ -407,7 +407,7 @@ namespace tau
         {
         }
         
-        unsigned int Random::operator()( unsigned int max )
+        ui Random::operator()( ui max )
         {
             auto random = m_random( );
 

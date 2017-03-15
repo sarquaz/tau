@@ -25,7 +25,7 @@ namespace tau
         virtual void stop();
         
         static tau::Line* pline();
-        static Liner& instance( in::Female& female, unsigned int threads = 1 );
+        static Liner& instance( in::Female& female, ui threads = 1 );
         static tau::Line& line();
         
     private:
@@ -34,22 +34,22 @@ namespace tau
             return *s_instance;
         }
         
-        Liner( unsigned int threads );
+        Liner( ui threads );
         
     private:
         void started( Grain& grain );
         void stopped();
         
-        virtual unsigned int code() const
+        virtual ui code() const
         {
             return 0;
         }
         
     private:
-        unsigned int m_count;
+        ui m_count;
         li::List< tau::Line* > m_lines;
         si::Lock m_lock;   
-        unsigned int m_stopped;
+        ui m_stopped;
         si::Semaphore m_semaphore;
         static Liner* s_instance;
     };
@@ -80,7 +80,7 @@ namespace tau
         }
         
     protected:
-        Line( unsigned int id );
+        Line( ui id );
         
     private:
         virtual void routine( );
@@ -98,13 +98,13 @@ namespace tau
             delete this;
         }
         
-        virtual unsigned int code() const
+        virtual ui code() const
         {
             return 0;
         }
 
     private:
-        unsigned int m_id;
+        ui m_id;
         ev::Loop* m_loop;
     };
     
@@ -144,17 +144,17 @@ namespace tau
             Timeout = EVENT_TIMER
         };
 
-        void setType( unsigned int type )
+        void setType( ui type )
         {
             m_type = type;
         }
 
-        unsigned int type( ) const
+        ui type( ) const
         {
             return m_type;
         }
 
-        virtual unsigned int code( ) const
+        virtual ui code( ) const
         {
             return typeid ( *this ).hash_code( );
         }
@@ -192,15 +192,15 @@ namespace tau
     private:
         Time m_interval;
         Grain* m_grain;
-        unsigned int m_type;
+        ui m_type;
     };
     
     struct event
     {
         Event& e;
-        unsigned int type;
+        ui type;
 
-        event( in::Female* female = NULL, unsigned int _type = 0 )
+        event( in::Female* female = NULL, ui _type = 0 )
         : e( Event::get( female ) ), type( _type )
         {
         }

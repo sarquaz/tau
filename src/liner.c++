@@ -7,7 +7,7 @@ namespace tau
     
     Liner* Liner::s_instance = NULL;
     
-    Line::Line( unsigned int id )
+    Line::Line( ui id )
     : m_id( id )
     {
         TRACE( "starting thread id %d", id );
@@ -64,7 +64,7 @@ namespace tau
        event.destroy();
    }
 
-    Liner::Liner( unsigned int threads )
+    Liner::Liner( ui threads )
     : m_count( threads ), m_stopped( 0 )
     {
         ENTER();
@@ -73,7 +73,7 @@ namespace tau
         
     }
     
-    Liner& Liner::instance( in::Female& female, unsigned int threads )
+    Liner& Liner::instance( in::Female& female, ui threads )
     {
         if ( !s_instance )
         {
@@ -103,7 +103,7 @@ namespace tau
             return;
         }
         
-        unsigned int id = 0;
+        ui id = 0;
         
         TRACE( "starting %d threads", m_count );
         while( id < m_count  )

@@ -17,20 +17,20 @@ namespace tau
             return __sync_val_compare_and_swap( target, oldValue, value );
         }
 
-        unsigned int inc( unsigned int* target )
+        ui inc( ui* target )
         {
-            unsigned int result = __sync_fetch_and_add( target, 1 );
+            ui result = __sync_fetch_and_add( target, 1 );
             return result + 1;
         }
 
-        unsigned int dec( unsigned int* target )
+        ui dec( ui* target )
         {
-            unsigned int result = __sync_fetch_and_sub( target, 1 );
+            ui result = __sync_fetch_and_sub( target, 1 );
             return result - 1;
 
         }
 
-        unsigned int millis( )
+        ui millis( )
         {
             timeval time;
             ::gettimeofday( &time, NULL );
@@ -38,7 +38,7 @@ namespace tau
             return ( ( time.tv_sec ) * 1000 + time.tv_usec / 1000 );
         }
         
-        unsigned long check::operator()( const char* format, ... )
+        ul check::operator()( const char* format, ... )
         {
             if ( errno == skip || result != -1 )
             {
@@ -51,7 +51,7 @@ namespace tau
             throw error;
         }
         
-        void backtrace( unsigned int length, Stream stream )
+        void backtrace( ui length, Stream stream )
         {
             void* array[ length ];
             auto size = ::backtrace( array, length );
@@ -793,19 +793,19 @@ namespace tau
 //                     )( "file open, name %s, flags %d, mode %d", ( const char* ) name, flags, mode ) );
 //         }
 //
-//         unsigned int File::available( ) const
+//         ui File::available( ) const
 //         {
-//             unsigned int available = 0;
+//             ui available = 0;
 //             ::ioctl( fd( ), FIONREAD, &available );
 //
 //             return available;
 //         }
-//         unsigned long File::write( const Data& data, unsigned long offset ) const
+//         ul File::write( const Data& data, ul offset ) const
 //         {
 //             seek( offset );
 //             return check( ::write( fd( ), data, data.length( ) ) )( "write" );
 //         }
-//         unsigned long File::read( Data& data, unsigned long offset )
+//         ul File::read( Data& data, ul offset )
 //         {
 //             ENTER( );
 //             seek( offset );
@@ -832,7 +832,7 @@ namespace tau
 //             }
 //         }
 //
-//         void File::seek( unsigned long offset ) const
+//         void File::seek( ul offset ) const
 //         {
 //             if ( offset )
 //             {
@@ -951,7 +951,7 @@ namespace tau
 //             }
 //         }
 //
-//         Link::Address::Address( Type _type,  const Data& _host, unsigned int _port  )
+//         Link::Address::Address( Type _type,  const Data& _host, ui _port  )
 //         : type( _type ), host( _host ), port( _port ), length( sizeof( a ) ), family( AF_INET )
 //         {
 //             ::memset( &a, 0, length );
@@ -1006,7 +1006,7 @@ namespace tau
 //             setPort( address.port );
 //         }
 //
-//         void Link::Address::setPort( unsigned int _port )
+//         void Link::Address::setPort( ui _port )
 //         {
 //             if ( family == AF_INET )
 //             {
@@ -1042,7 +1042,7 @@ namespace tau
 //         int Link::error( )
 //         {
 //             int error = 0;
-//             unsigned int length = sizeof( error );
+//             ui length = sizeof( error );
 //
 //             ::getsockopt( fd( ), SOL_SOCKET, SO_ERROR, &error, &length );
 //
@@ -1082,7 +1082,7 @@ namespace tau
 //             check( ::bind( fd(), address(), address().length ) )( "bind to %s", ( const char* ) address().tostring() );
 //         }
 //
-//         unsigned long Link::write( const Data& data, unsigned long offset ) const
+//         ul Link::write( const Data& data, ul offset ) const
 //         {
 //             ENTER( );
 //
@@ -1105,7 +1105,7 @@ namespace tau
 //             return check( result )( "send " );
 //         }
 //
-//         unsigned long Link::read( Data& data, unsigned long offset )
+//         ul Link::read( Data& data, ul offset )
 //         {
 //             if ( local( ) )
 //             {

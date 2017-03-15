@@ -9,7 +9,7 @@ namespace tau
     namespace li
      {
 
-        template < class Data, unsigned int Size = 16 > class Mass
+        template < class Data, ui Size = 16 > class Mass
         {
         public:
             Mass( )
@@ -18,7 +18,7 @@ namespace tau
 
             }
 
-            unsigned int length( ) const
+            ui length( ) const
             {
                 return m_length;
             }
@@ -76,7 +76,7 @@ namespace tau
                 }
             }
 
-            unsigned int size( ) const
+            ui size( ) const
             {
                 return m_size;
             }
@@ -84,8 +84,8 @@ namespace tau
         private:
             Data m_default[ Size ];
             Data* m_data;
-            unsigned int m_size;
-            unsigned int m_length;
+            ui m_size;
+            ui m_length;
         };
 
         template < class Data > class List
@@ -212,7 +212,7 @@ namespace tau
                 }
             }
 
-            unsigned int size( ) const
+            ui size( ) const
             {
                 return m_items.size();
             }
@@ -241,15 +241,15 @@ namespace tau
             si::mem::Pile< Item > m_items;
         };
 
-        template < class Key, class Value, unsigned int Size = 64 > class Map
+        template < class Key, class Value, ui Size = 64 > class Map
         {
-            template < unsigned int S > struct _Hash
+            template < ui S > struct _Hash
             {
-                unsigned long value;
-                unsigned long mod;
-                unsigned int id;
+                ul value;
+                ul mod;
+                ui id;
                 
-                _Hash( unsigned long _value = 0, unsigned int _id = 0 )
+                _Hash( ul _value = 0, ui _id = 0 )
                 : value( _value ), mod( _value ), id( _id )
                 {
                 }
@@ -271,7 +271,7 @@ namespace tau
                     mod = mod > S ? mod / S : mod;
                 }
                 
-                operator unsigned long() const
+                operator ul() const
                 {
                     return value;
                 }
@@ -282,7 +282,7 @@ namespace tau
                 }
             };
             
-            template < class K, class V, unsigned int S > struct _Item
+            template < class K, class V, ui S > struct _Item
             {
                 typedef _Hash< S > Hash;
                 
@@ -298,7 +298,7 @@ namespace tau
                 }
             };
             
-            template < class K, class V, unsigned int S > struct _Node 
+            template < class K, class V, ui S > struct _Node 
             {
                 typedef _Item< K, V, S > Item;
                 typedef typename Item::Hash Hash;
@@ -313,7 +313,7 @@ namespace tau
                 {
                 }
                 
-                _Node( unsigned long hash, const K& key, _Node*& _ref )
+                _Node( ul hash, const K& key, _Node*& _ref )
                 : item( key, hash ), ref( _ref ), nodes( NULL ), prev( NULL )
                 {
                 }
@@ -430,7 +430,7 @@ namespace tau
                 return false;
             }
 
-            unsigned int size( ) const
+            ui size( ) const
             {
                 return m_items.size( );
             }
@@ -522,7 +522,7 @@ namespace tau
             {   
                 auto& item = parent.item;
                 
-                if ( ! ( unsigned long ) item.hash )
+                if ( ! ( ul ) item.hash )
                 {
                     this->item( item, hash, key );
                     return parent;
@@ -547,7 +547,7 @@ namespace tau
             si::mem::Bytes< Node* > m_pools;
             Items m_items;
             Node* m_last;
-            unsigned int m_id;
+            ui m_id;
         };
 
         template< class Value > class Set : public Map< Value, Value >

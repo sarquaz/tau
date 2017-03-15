@@ -54,7 +54,7 @@ namespace tau
                 
                 virtual void destroy( );
                 
-                virtual unsigned int code() const
+                virtual ui code() const
                 {
                     return typeid( *this ).hash_code();
                 }
@@ -242,7 +242,7 @@ namespace tau
 
             };
             
-            unsigned int size() const
+            ui size() const
             {
                 return m_events.size();
             }
@@ -252,7 +252,7 @@ namespace tau
             void remove( const Event& event );
             void add( Event& event );
             virtual void onEvent( const Set& set );
-            virtual unsigned int length()
+            virtual ui length()
             {
                 return m_events.size();
             }
@@ -272,7 +272,7 @@ namespace tau
             {
                 Data data;
                 
-                virtual unsigned int code() const
+                virtual ui code() const
                 {
                     return typeid( *this ).hash_code();
                 }
@@ -330,8 +330,8 @@ namespace tau
                 {
                 }
                 
-                virtual unsigned int doWrite() = 0;
-                virtual unsigned int doRead( ) = 0;
+                virtual ui doWrite() = 0;
+                virtual ui doRead( ) = 0;
                 
             private:
                 si::File* m_file;

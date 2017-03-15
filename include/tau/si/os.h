@@ -50,9 +50,9 @@ namespace si
         class Thread
         {
         public:
-            static unsigned int id()
+            static ui id()
             {
-                return ( unsigned long ) ::pthread_self();
+                return ( ul ) ::pthread_self();
             }
             
             Thread( )
@@ -79,7 +79,7 @@ namespace si
         class Process
         {
         public:
-            static unsigned int id( )
+            static ui id( )
             {
                 return ::getpid();
             }
@@ -91,7 +91,7 @@ namespace si
             struct Stream
             {
                 int fds[2];
-                unsigned int type;
+                ui type;
                 Handle fd;
 
                 Handle writeFd( bool child = false )
@@ -108,7 +108,7 @@ namespace si
                 void open( );
                 void close( );
 
-                Stream( unsigned int _type = 0 )
+                Stream( ui _type = 0 )
                 : type( _type ), fd( 0 )
                 {
                 }
@@ -124,7 +124,7 @@ namespace si
 
             };
 
-            unsigned int pid( ) const
+            ui pid( ) const
             {
                 return m_pid;
             }
@@ -151,7 +151,7 @@ namespace si
             }
 
         private:
-            unsigned int m_pid;
+            ui m_pid;
             Stream m_streams[ 3 ];
             Data m_command;
         };

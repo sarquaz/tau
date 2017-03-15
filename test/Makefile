@@ -1,4 +1,3 @@
-include ../config.mk
 CXX = g++
 CPPFLAGS =  -I../include/tau  -g -DLOG -std=c++0x 
 LDFLAGS = -L../bin -ltau 
@@ -6,25 +5,28 @@ LDFLAGS = -L../bin -ltau
 SOURCES = $(wildcard *.c++)
 #EXECUTABLES = $(SOURCES:.c++)
 
-EXECUTABLES = Map
+EXECUTABLES = Mem
 
-all:  clean $(EXECUTABLES)  run
+all:  tau $(EXECUTABLES)  #run
 
-tau:
-	cd .. && $(MAKE)
 clean:
 	rm -rf *.o
 	rm -rf bin
 	
 	
 %: %.c++
-	$(CXX) $(CPPFLAGS) -o $@   $< $(LDFLAGS)  
- 	
+	 $(CXX) $(CPPFLAGS) -o bin/$@ $< $(LDFLAGS) 
+
+tau:
+	mkdir -p bin && cp ../bin/libtau.so bin  
+         	
 run:
-	 mkdir -p bin && cp $(EXECUTABLES) bin && cd .. && test/run.sh	
+
+	cp ../bin/libtau.so bin
+#
+#              # && cd .. && test/run.sh
 
 		
 .PHONY: all clean 
 	
--include *.d	
 

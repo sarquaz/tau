@@ -49,7 +49,7 @@ namespace tau
             {
                 m_data.clear();
             }
-            unsigned int length() const
+            ui length() const
             {
                 return data().length();
             }
@@ -58,14 +58,14 @@ namespace tau
                 return length() == 0;
             }
             
-            void add( unsigned int length )
+            void add( ui length )
             {
                 add( Data( ( char* ) NULL, length ) );
             }
             void add( const Data& data );
             void add( Till& );
             
-            Data read( unsigned int length = 0 );
+            Data read( ui length = 0 );
             
             operator const char*() const
             {
@@ -77,7 +77,7 @@ namespace tau
                 return data();
             }
             
-            Data space( unsigned int  length );
+            Data space( ui  length );
             bool next();
             
         private:
@@ -102,11 +102,11 @@ namespace tau
             }
             
             virtual void cleanup();
-            virtual unsigned int code() const
+            virtual ui code() const
             {
                 return typeid( *this ).hash_code();
             }
-            unsigned int last( ) const
+            ui last( ) const
             {
                 return m_last;
             }
@@ -115,7 +115,7 @@ namespace tau
             
         private:
             Type m_type;
-            unsigned int m_last;
+            ui m_last;
             Data m_data;
             Till* m_mapped;
             Till* m_target;
@@ -170,7 +170,7 @@ namespace tau
             }
             
             static const gen::Generators& populate();
-            static unsigned int type()
+            static ui type()
             {
                 return typeid( Set ).hash_code();
             }
@@ -222,7 +222,7 @@ namespace tau
         protected:
             Set(  );
             
-            void send( unsigned int type )
+            void send( ui type )
             {
                 in::Male::dispatch( type );
             }
@@ -326,8 +326,8 @@ namespace tau
                 m_set = &set;
             }
             
-            virtual unsigned int doWrite();
-            virtual unsigned int doRead( );
+            virtual ui doWrite();
+            virtual ui doRead( );
             
         protected:
             Client( )
@@ -402,7 +402,7 @@ namespace tau
                 m_parent = parent; 
             }
             
-            virtual unsigned int code( ) const
+            virtual ui code( ) const
             {
                 return typeid ( *this ).hash_code( );
             }
@@ -415,7 +415,7 @@ namespace tau
             void onError( const tau::Error& error, bool sync = false );
             
             
-            virtual unsigned int doRead( );
+            virtual ui doRead( );
             virtual void onWrite(); 
             
 
@@ -440,7 +440,7 @@ namespace tau
                 return dynamic_cast < Grain* > ( &tok< Bot >()() );
             }
 
-            void send( unsigned int signal ) const
+            void send( ui signal ) const
             {
                 m_process.signal( signal );
             }
@@ -449,7 +449,7 @@ namespace tau
                 m_process.kill( );
             }
             int status( ) const;
-            unsigned int pid( ) const
+            ui pid( ) const
             {
                 return m_process.pid( );
             }
@@ -462,7 +462,7 @@ namespace tau
         private:
             virtual void onStart( const Set::Options& options );
             
-            virtual unsigned int code( ) const
+            virtual ui code( ) const
             {
                 return typeid ( *this ).hash_code( );
             }
@@ -569,9 +569,9 @@ namespace tau
 //                return options( )[ "name" ];
 //            }
 //
-//            void read( unsigned int length = 0 );
+//            void read( ui length = 0 );
 //
-//            virtual unsigned int code( ) const
+//            virtual ui code( ) const
 //            {
 //                return typeid ( *this ).hash_code( );
 //            }
@@ -594,15 +594,15 @@ namespace tau
 //            }
 //            
 //        private:
-//            virtual unsigned int doRead( );
-//            virtual unsigned int available();
+//            virtual ui doRead( );
+//            virtual ui available();
 //            
 //            void onTimer( Grain& );            
 //            
 //        private:
-//            unsigned int m_read;
-//            unsigned int m_length;
-//            unsigned int m_size;
+//            ui m_read;
+//            ui m_length;
+//            ui m_size;
 //            
 //        };
     }

@@ -8,12 +8,12 @@ namespace tau
 {
     namespace si
     {
-        typedef unsigned int Handle;
+        typedef ui Handle;
         
         void* swap( void** target, void* value );
-        unsigned int inc( unsigned int* target );
-        unsigned int dec( unsigned int* target );
-        unsigned int millis( );
+        ui inc( ui* target );
+        ui dec( ui* target );
+        ui millis( );
         
         enum Stream
         {
@@ -23,19 +23,19 @@ namespace tau
         };
             
         void out( const Data& data, Stream stream = Stream::Out );
-        void backtrace( unsigned int length = 15, Stream stream = Stream::Err );
+        void backtrace( ui length = 15, Stream stream = Stream::Err );
         
         struct check
         {
-            unsigned int skip;
+            ui skip;
             long result;
 
-            check( long _result, unsigned int _skip = EWOULDBLOCK )
+            check( long _result, ui _skip = EWOULDBLOCK )
             : skip( _skip ), result( _result )
             {
             }
 
-            unsigned long operator()( const char* format, ... );
+            ul operator()( const char* format, ... );
         };
         
         
@@ -73,10 +73,10 @@ namespace tau
         //         return m_fd;
         //     }
         //
-        //     unsigned int available( ) const;
+        //     ui available( ) const;
         //
-        //     virtual unsigned long write( const Data& data, unsigned long offset = 0 ) const;
-        //     virtual unsigned long read( Data& data, unsigned long offset = 0 );
+        //     virtual ul write( const Data& data, ul offset = 0 ) const;
+        //     virtual ul read( Data& data, ul offset = 0 );
         //
         // protected:
         //     File( Handle fd = 0 )
@@ -87,7 +87,7 @@ namespace tau
         //     void assign( Handle fd, bool nb = true );
         //
         // private:
-        //     void seek( unsigned long offset = 0 ) const;
+        //     void seek( ul offset = 0 ) const;
         //
         // private:
         //     Handle m_fd;
@@ -133,7 +133,7 @@ namespace tau
             //         return &stat;
             //     }
             //
-            //     unsigned long size( ) const
+            //     ul size( ) const
             //     {
             //         return stat.st_size;
             //     }
@@ -227,7 +227,7 @@ namespace tau
 //             Interval m_time;
 //             Handle m_fds[ Handles ];
 //             bool m_started;
-//             unsigned int m_index;
+//             ui m_index;
 //         };
         
        //  class Queue
@@ -308,7 +308,7 @@ namespace tau
 //
 //             void act( Action action, const Set& event, long time = 0 );
 //             virtual void onEvent( const Set& ) = 0;
-//             virtual unsigned int length() = 0;
+//             virtual ui length() = 0;
 //
 //             static Type type( int );
 //
@@ -348,20 +348,20 @@ namespace tau
  //
  //            struct Address
  //            {
- //                unsigned int family;
+ //                ui family;
  //                struct sockaddr_storage a;
  //                struct sockaddr_un un;
  //                socklen_t length;
  //                Type type;
  //                Data host;
- //                unsigned int port;
+ //                ui port;
  //
  //                void parse( const Info& );
  //                void parse( );
  //                void local( const Data& );
  //
  //                Address( const Info* info = NULL );
- //                Address( Type type, const Data& host, unsigned int port = 0 );
+ //                Address( Type type, const Data& host, ui port = 0 );
  //
  //                Ip* ip4( ) const
  //                {
@@ -373,7 +373,7 @@ namespace tau
  //                    return ( Ip6* ) &a;
  //                }
  //
- //                void setPort( unsigned int );
+ //                void setPort( ui );
  //                operator Peer*( ) const;
  //                void operator = ( const Address& );
  //
@@ -419,8 +419,8 @@ namespace tau
  //            void connect(  );
  //            void listen( );
  //
- //            virtual unsigned long write( const Data& data, unsigned long offset = 0 ) const;
- //            virtual unsigned long read( Data& data, unsigned long offset = 0 );
+ //            virtual ul write( const Data& data, ul offset = 0 ) const;
+ //            virtual ul read( Data& data, ul offset = 0 );
  //
  //            const Address& address() const
  //            {

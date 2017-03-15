@@ -116,8 +116,8 @@ private:
     }
     
 private:
-    unsigned int m_count;
-    unsigned int m_tries;
+    ui m_count;
+    ui m_tries;
     si::Link::Type m_type;
 };
 

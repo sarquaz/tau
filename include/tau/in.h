@@ -26,7 +26,7 @@ namespace tau
             void unmale( Male& male );
             
         protected:
-            void handler( unsigned int type, Handler handler )
+            void handler( ui type, Handler handler )
             {
                 m_handlers[ type ].handler = handler;
             }
@@ -36,10 +36,10 @@ namespace tau
             {
             }
             
-            virtual bool handle( unsigned int type, Grain& grain );
+            virtual bool handle( ui type, Grain& grain );
             void clear();
             
-            unsigned int current() const
+            ui current() const
             {
                 return m_type;
             }
@@ -57,14 +57,14 @@ namespace tau
 
             template < class Type > void types( Type type ) const
             {
-                m_handlers.keys( [ & ] ( unsigned long key ){ type( key ); } );
+                m_handlers.keys( [ & ] ( ul key ){ type( key ); } );
             }
             
             
             li::Map< Value > m_handlers;
             li::Map< Male* > m_males;
             
-            unsigned int m_type;
+            ui m_type;
 
         };
         
@@ -75,11 +75,11 @@ namespace tau
             {
             }
             
-            unsigned int dispatch( unsigned int type )
+            ui dispatch( ui type )
             {
                 return dispatch( type, *this );
             }            
-            unsigned int dispatch( unsigned int type, Grain& grain );            
+            ui dispatch( ui type, Grain& grain );            
             
             typedef li::Map< li::Map< Female* > > Types;
             

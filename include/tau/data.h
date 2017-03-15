@@ -14,7 +14,7 @@ namespace tau
             {
                 setup( );
             }
-            Data( const char* data, unsigned int length = 0 )
+            Data( const char* data, ui length = 0 )
             {
                 setup( data, length );
             }
@@ -28,12 +28,12 @@ namespace tau
                 m_data.clear();
             }
         
-            unsigned int offset( ) const
+            ui offset( ) const
             {
                 return m_window.offset;
             }
 
-            unsigned int length( ) const
+            ui length( ) const
             {
                 return m_window.length;
             }
@@ -42,7 +42,7 @@ namespace tau
             {
                 return length( ) == 0;
             }
-            void setOffset( unsigned int offset )
+            void setOffset( ui offset )
             {
                 m_window.offset = offset;
             
@@ -51,23 +51,23 @@ namespace tau
                     space( size( ) + offset );
                 }
             }
-            void move( unsigned int offset )
+            void move( ui offset )
             {
                 setOffset( this->offset( ) + offset );
             }
-            void setLength( unsigned int length )
+            void setLength( ui length )
             {
                 m_window.length = length;
             }
-            void inc( unsigned int length = 1 )
+            void inc( ui length = 1 )
             {
                 setLength( this->length() + length );
             }
-            unsigned int size( ) const
+            ui size( ) const
             {
-                return ( unsigned int ) m_data;
+                return ( ui ) m_data;
             }
-            unsigned int available( ) const
+            ui available( ) const
             {
                 if ( !m_data )
                 {
@@ -107,11 +107,11 @@ namespace tau
             {
                 return *this == Data( data );
             }
-            char operator []( unsigned int offset ) const;
-            char& operator []( unsigned int offset );
+            char operator []( ui offset ) const;
+            char& operator []( ui offset );
 
             Data& add( char data );
-            Data& add( const char* data, unsigned int length = 0 );
+            Data& add( const char* data, ui length = 0 );
             Data& add( const Data& data )
             {
                 return add( data.c(), data.length() );
@@ -121,9 +121,9 @@ namespace tau
                 m_external = NULL;
                 m_window.clear();
             }
-            int find( const Data&, unsigned int offset = 0 ) const;
+            int find( const Data&, ui offset = 0 ) const;
             
-            unsigned long hash() const;
+            ul hash() const;
 
             void vprint( const char* format, va_list args )
             {
@@ -145,18 +145,18 @@ namespace tau
                 return *this;
             }
 
-            static Data get( unsigned int length = 10 );
+            static Data get( ui length = 10 );
 
-            void space( unsigned int length );
+            void space( ui length );
                     
-            void assign( const char* data, unsigned int length = 0 )
+            void assign( const char* data, ui length = 0 )
             {
                 m_external = data;
                 setLength( length ? length : std::strlen( data ) );
             }
             
         private:
-            void setup( const char* data = NULL, unsigned int length = 0 );
+            void setup( const char* data = NULL, ui length = 0 );
             
             const char* data( ) const
             {
@@ -183,7 +183,7 @@ namespace tau
 
                 }
                 
-                Piece( char* _ptr, unsigned int _size )
+                Piece( char* _ptr, ui _size )
                 : m_data( _ptr ), m_size( _size )
                 {
 
@@ -209,24 +209,24 @@ namespace tau
                 {
                     return m_data;
                 }
-                operator unsigned int() const
+                operator ui() const
                 {
                     return m_size;
                 }
                 
-                unsigned long operator()(   ) const;
+                ul operator()(   ) const;
                 
-                void get( unsigned int length );
+                void get( ui length );
                 
             private:
                 char* m_data;
-                unsigned int m_size;
+                ui m_size;
             };
             
             struct Window
             {
-                unsigned int length;
-                unsigned int offset;
+                ui length;
+                ui offset;
                 
                 Window()
                 : length( 0 ), offset( 0 )
@@ -258,7 +258,7 @@ namespace std
 {
     template<> struct hash< tau::si::Data >
     {
-        unsigned long operator()( const tau::si::Data& data ) const
+        ul operator()( const tau::si::Data& data ) const
         {
             return data.hash();
         }

@@ -109,7 +109,7 @@ private:
     }
     
 private:
-    unsigned int m_count;
+    ui m_count;
 };
 
 int main()

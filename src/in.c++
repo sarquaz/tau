@@ -5,7 +5,7 @@ namespace tau
 {
     namespace in
     {
-        unsigned int Male::dispatch( unsigned int type, Grain& grain )
+        ui Male::dispatch( ui type, Grain& grain )
         {
             ref();
             
@@ -28,7 +28,7 @@ namespace tau
         }
         
         
-        bool Female::handle( unsigned int type, Grain& grain )
+        bool Female::handle( ui type, Grain& grain )
         {
             ENTER();
             
@@ -52,13 +52,13 @@ namespace tau
         {
             ENTER();
             male.females().add( *this, true );
-            m_males[ ( unsigned long ) &male ] = &male;
+            m_males[ ( ul ) &male ] = &male;
         }
         
         void Female::unmale( Male& male )
         {          
             TRACE( "removing male 0x%x", &male );
-            if ( m_males.remove( ( unsigned long ) &male ) )
+            if ( m_males.remove( ( ul ) &male ) )
             {
                 male.females().remove( *this, true );
             }
@@ -75,7 +75,7 @@ namespace tau
         {
             TRACE( "0x%x: adding listener 0x%x with %d listeners", &male, &female, female.m_handlers.size() );
             
-            female.types( [ & ] ( unsigned int type ) 
+            female.types( [ & ] ( ui type ) 
             { 
  //               TRACE( "found listener for event %u", type );
                 types[ type ][ &female ] = &female;
@@ -90,9 +90,9 @@ namespace tau
         void Male::Females::remove( const Female& female, bool ref )
         {
             ENTER();
-            female.types( [ & ] ( unsigned int type ) 
+            female.types( [ & ] ( ui type ) 
             { 
-                bool removed = types[ type ].remove( ( unsigned long ) &female );
+                bool removed = types[ type ].remove( ( ul ) &female );
                 TRACE( "0x%x: removed %d listener 0x%x for type %u", &male, removed, &female, type );
                 if ( ref && removed )
                 {

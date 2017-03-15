@@ -64,12 +64,9 @@ else
 		mkdir -p bin && $(RANLIB) bin/$@
 endif
 
-
-
-test: 
+test: rebuild
 	cd test && $(MAKE); 
 	
-	 
 %.o: %.c++
 	$(CXX) -c -o $@ $(TAU_CXXFLAGS) $(CPPDEPS) $<
 

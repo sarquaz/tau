@@ -30,10 +30,10 @@ template < class T > struct Test
     
     Map map;
     List list;
-    unsigned int size;
-    unsigned int count;
+    ui size;
+    ui count;
     
-    Test( unsigned int _size )
+    Test( ui _size )
     : size( _size ), count( 0 )
     {
         

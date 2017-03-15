@@ -90,13 +90,13 @@ namespace tau
             return false;
         }
         
-        Data Till::space( unsigned int  length )
+        Data Till::space( ui  length )
         {
             m_data.space( length );
             return Data( m_data.target(), length );
         }
         
-        Data Till::read( unsigned int length )
+        Data Till::read( ui length )
         {
             const char* last = data();
             if ( !length )
@@ -184,11 +184,11 @@ namespace tau
             return gen::generators( type( ) );
         }
         
-        unsigned int Client::doRead()
+        ui Client::doRead()
         {
             ENTER();
             
-            unsigned int read = 0;
+            ui read = 0;
                 
             auto data = set().out( ).space( file().available( ) );
             if ( data.length( ) )
@@ -200,7 +200,7 @@ namespace tau
             return read;
         }
         
-        unsigned int Client::doWrite()
+        ui Client::doWrite()
         {
             ENTER();
             auto wrote = file().write( set().in().data() );
@@ -317,7 +317,7 @@ namespace tau
             }
         }
         
-        unsigned int Net::doRead( )
+        ui Net::doRead( )
         {
             ENTER( );
                         
@@ -500,7 +500,7 @@ namespace tau
 //            in::Female::handler( Event::Timeout, ( in::Female::Handler ) &File::onTimer );
 //        }
 //        
-//        unsigned int File::doRead( )
+//        ui File::doRead( )
 //        {
 //            auto read = ev::File::doRead( );
 //            m_read += read;
@@ -517,7 +517,7 @@ namespace tau
 //            
 //            return read;
 //        }
-//        void File::read( unsigned int length )
+//        void File::read( ui length )
 //        {
 //            if ( length > m_size )
 //            {
@@ -528,7 +528,7 @@ namespace tau
 //            ev::File::process( ev::In );
 //        }
 //        
-//        unsigned int File::available( )
+//        ui File::available( )
 //        {
 //            auto max = ev::File::available( );
 //            auto length = m_length - m_read;

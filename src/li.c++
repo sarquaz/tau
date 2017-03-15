@@ -8,7 +8,7 @@
 //    {
 ////        namespace map
 ////        {
-////            unsigned long Bash::operator() ()
+////            ul Bash::operator() ()
 ////            {
 ////                auto pos = 0;
 ////                auto length = sizeof( hash );

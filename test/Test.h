@@ -14,7 +14,7 @@ namespace tau
     class Test: public in::Female
     {
     public:
-        Test( unsigned int tries = 1, unsigned int threads = 1 )
+        Test( ui tries = 1, ui threads = 1 )
         : m_manager( NULL ), m_tries( tries )
         {
             handler( Event::Timeout, ( in::Female::Handler ) &Test::timerEvent );
@@ -33,13 +33,13 @@ namespace tau
             si::Signals::assign( new Signals() );
         }
         
-        unsigned int start()
+        ui start()
         {
             m_manager->start();
             return 0;
         }
         
-        unsigned int operator()()
+        ui operator()()
         {
             return start();    
         }
@@ -68,7 +68,7 @@ namespace tau
             si::out( data );
         }
         
-        unsigned int tries() const
+        ui tries() const
         {
             return m_tries;
         }
@@ -79,7 +79,7 @@ namespace tau
             typedef li::List< Set* > Sets;
             li::Map< Sets > sets;
             Event* event;
-            unsigned int tries;
+            ui tries;
             li::Strings strings;
             
             ~State()
@@ -102,7 +102,7 @@ namespace tau
             {
                 ENTER();
                 
-                sets.all( [ & ] ( unsigned long hash, const Sets& sets ) 
+                sets.all( [ & ] ( ul hash, const Sets& sets ) 
                 {
                     sets.all( [ ] ( Set* set ) { set->deref(); } );
                 } );
@@ -260,12 +260,12 @@ namespace tau
         
         void assign( const Set& set, Data& data )
         {
-            m_data[ ( unsigned long ) &set ] = &data;
+            m_data[ ( ul ) &set ] = &data;
         }
         
         Data& data( const Set& set )
         {
-            return *m_data.get( ( unsigned long ) &set );
+            return *m_data.get( ( ul ) &set );
         }
         
             
@@ -414,7 +414,7 @@ namespace tau
         static Test* s_instance;
  
         Time m_interval;
-        unsigned int m_tries;
+        ui m_tries;
         static __thread State* s_state;
         li::Map< Check > m_checks;
         li::Map< Data* > m_data;

@@ -19,12 +19,17 @@
 #include <stdarg.h>
 #include <limits.h>
 
-
     
 
 #define MAX( a, b ) ( a > b ) ? ( a ) : ( b )
 #define MIN( a, b ) ( a < b ) ? ( a ) : ( b )
 #define lengthof( a ) sizeof( a ) / sizeof( a[ 0 ] )
+
+
+typedef unsigned short us;
+typedef unsigned int ui;
+typedef unsigned long ul;
+
 
 
 
