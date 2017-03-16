@@ -9,6 +9,26 @@ namespace tau
     {
         namespace mem
         {
+            class Hash
+            {
+            public:
+                Hash( uchar* what, ui size = sizeof( ul ) )
+                    : m_what( what ), m_size( size )
+                {
+                }
+            
+                ul operator()() const;
+            
+                ~Hash ()
+                {
+                }
+        
+            private:
+                unsigned char* m_what;
+                ui m_size;
+            };
+            
+            
             struct Node
             {
                 void* data;
@@ -82,7 +102,7 @@ namespace tau
             public:
                 Bytes( ui chunk = 0 )
                 : m_chunk( chunk ? chunk : sizeof( Type ) ), m_nodes( mem::sizes()[ typeid( Type ).hash_code() % Sizes::Size ] ),
-                 m_max( 500 ), m_null( NULL ), m_hash( typeid( Type ).hash_code() )
+                 m_null( NULL ), m_hash( typeid( Type ).hash_code() )
                 {                           
                     if ( !m_nodes.type  )
                     {
@@ -115,7 +135,6 @@ namespace tau
                         {
                             *reuse = true;
                         }
-                        
                     }
                     
                     if ( !data )
@@ -128,11 +147,8 @@ namespace tau
                 
                 void free( Type* data, uint chunks = 1 )
                 {
-                    auto freed = sizeof( data ) * chunks;
+                    auto freed = sizeof( *data ) * chunks * m_chunk;
                     auto& first = this->node( chunks );
-                    
-                    printf( "need to free %d bytes have %d, max %d \n", freed, sizes().used, sizes().max );
-                    
                     
                     if ( sizes().used < sizes().max )
                     {
@@ -141,36 +157,15 @@ namespace tau
                         node.next = first;
                         first = &node;
                         
-                        auto size = freed;
-                        printf( "reusing %d bytes \n", size );
-                        sizes().used += size;
-                        
+                        sizes().used += freed;
                     }
                     else
                     {
                         std::free( data );
                     }
                 }
-                
-                ui max( ui max )
-                {
-                    m_max = max;
-                    return 0;
-                }
-                
-                ui max( ) const
-                {
-                    return m_max;
-                }
-                
-                ui size( ) const
-                {
-                    return m_size;
-                }
-                
             protected:
                 ui m_chunk;
-                
                 
             private:
                 Node*& node( ui chunks )
@@ -185,16 +180,12 @@ namespace tau
                 }
                 
             private:
-                Nodes& m_nodes;
-                ui m_max;
-                ui m_size;
-                
+                Nodes& m_nodes;                
                 Node* m_null;
                 ul m_hash;
             };
             
             typedef Bytes< char > Char;
-            
             
             template< class Type > class Types: public Bytes< Type >
             {
@@ -310,7 +301,6 @@ namespace tau
                 {
                     if ( m_list )
                     {
-                        
                         auto& count = m_list->v.got;
                                                 
                         if ( count < m_list->v.count )
@@ -318,7 +308,7 @@ namespace tau
                             auto item = ( Item* ) ( ( ul ) m_list->v.start + count * sizeof( Item ) );                            
                             auto type = &item->type;
                             item->node = m_list;
-                                                        
+
                             count ++;
                             set( [ & ] ( ) { m_size ++; } );
                             

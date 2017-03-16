@@ -29,7 +29,7 @@
 typedef unsigned short us;
 typedef unsigned int ui;
 typedef unsigned long ul;
-
+typedef unsigned char uchar;
 
 
 

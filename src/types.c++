@@ -318,7 +318,11 @@ namespace tau
         {
             Piece old = *this;
             
+            
             auto chunks = Chunk::chunks( m_size + length );
+
+            auto size = chunks * Chunk::Size;
+                        
             m_size += chunks * Chunk::Size;
             m_data = chars().get( m_size );
             
@@ -331,63 +335,7 @@ namespace tau
         
         ul Data::Piece::operator()( ) const
         {            
-            ul hash = 0;
-            auto pos = 0;
-            
-            auto step = sizeof( hash );
-            
-            if ( m_size < step )
-            {
-                step = 1;
-            }
-            
-            ul last = 0;
-            ul* next = NULL;
-            
-            for ( ;; )
-            {
-                auto length = 0;
-                ul number = 0;
-                
-                if ( pos + step >= m_size )
-                {
-                     next = ( ul* ) ( m_data + pos ); 
-                }
-                else
-                {
-                    for ( ;; )
-                    {
-                        auto index = pos + step - length;
-                        if ( index >= m_size )
-                        {
-                            index = index - m_size;
-                        }
-
-                        ( ( char* ) &number )[ step - length ] = m_data[ index ];
-
-                        length ++;
-                        if ( length >= step )
-                        {
-                            break;
-                        }
-                    }
-                    
-                    next = &number;
-                }
-                
-                
-                hash ^= *next * ( ( last + 1 ) ) ;
-                last = *next ^ m_data[ pos ];
-                
-                pos += MIN( step, m_size - pos );
-                
-                if ( pos >= m_size )
-                {
-                    break;
-                }
-            }
-            
-            return hash;
+            return mem::Hash( ( unsigned char* ) m_data, m_size )();
         }
         
         __thread Random* t_random = NULL;
@@ -424,6 +372,67 @@ namespace tau
         
         namespace mem
         {
+            ul Hash::operator()() const
+            {
+                ul hash = 0;
+                auto pos = 0;
+            
+                auto step = sizeof( hash );
+            
+                if ( m_size <= step )
+                {
+                    step = m_size / 2;
+                }
+            
+                ul last = 0;
+                ul* next = NULL;
+            
+                for ( ;; )
+                {
+                    auto length = 0;
+                    ul number = 1;
+                
+                    if ( pos + step > m_size )
+                    {
+                         next = ( ul* ) ( m_what + pos ); 
+                    }
+                    else
+                    {
+                        for ( ;; )
+                        {
+                            auto index = pos + step - length;
+                            if ( index >= m_size )
+                            {
+                                index = index - m_size;
+                            }
+
+                            ( ( char* ) &number )[ step - length ] = m_what[ index ];
+
+                            length ++;
+                            if ( length >= step )
+                            {
+                                break;
+                            }
+                        }
+                    
+                        next = &number;
+                        
+                    }
+                
+                    hash ^= *next * ( ( last + 1 ) ) ;
+                    last = *next ^ m_what[ pos ];
+                
+                    pos += MIN( step, m_size - pos );
+                
+                    if ( pos >= m_size )
+                    {
+                        break;
+                    }
+                }
+            
+                return hash;
+            }
+            
             namespace nodes
             {
                 __thread Node* t_node = NULL;
@@ -478,6 +487,7 @@ namespace tau
                 
                 return *t_sizes;
             }
+        
         }
     }
 }
