@@ -1,7 +1,6 @@
 #ifndef _TAU_LI_H
 #define _TAU_LI_H
 
-#include "../../src/trace.h"
 #include "mem.h"
 
 namespace tau
@@ -204,8 +203,6 @@ namespace tau
                 if ( m_list )
                 {
                     auto& count = m_list->v.got;
-                    TRACE( "got %d items", count );
-                                    
                     //
                     //  if the new item fits in the allocated storage
                     //                
