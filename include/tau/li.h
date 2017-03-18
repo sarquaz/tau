@@ -15,7 +15,6 @@ namespace tau
             Mass( )
             : m_data( m_default ), m_size( Size ), m_length( 0 )
             {
-
             }
 
             ui length( ) const
@@ -57,22 +56,33 @@ namespace tau
 
         private:
             void check( )
-            {
-                auto size = m_size * 2;
-
+            {                
+                //
+                //  check if there is enough space
+                //
                 if ( m_length == m_size )
                 {
-                    if ( m_data == m_default )
+                    //
+                    //  double the size
+                    //
+                    auto size = m_size * 2;
+                    //
+                    //  allocate space
+                    //
+                    auto data = m_bytes.get( size );
+                    //
+                    //  copy data
+                    //
+                    std::memcpy( data, m_data, m_size * sizeof( Data )  );
+                    //
+                    //  free old space if needed
+                    //
+                    if ( m_data != m_default )
                     {
-                        m_data = ( Data* ) std::malloc( size * sizeof ( Data ) );
-                        std::memcpy( m_data, m_default, sizeof ( m_default ) );
+                        m_bytes.free( m_data, m_size );    
                     }
-                    else
-                    {
-                        m_data = ( Data* ) std::realloc( m_data, size );
-                    }
-
                     m_size = size;
+                    m_data = data;
                 }
             }
 
@@ -86,6 +96,7 @@ namespace tau
             Data* m_data;
             ui m_size;
             ui m_length;
+            si::mem::Bytes< Data > m_bytes;
         };
 
         template < class Data > class List
@@ -162,22 +173,22 @@ namespace tau
                 auto& item = head( );
                 auto data = item.v;
 
-                //remove( item );
+                remove( item );
                 return data;
             }
 
-            template< class Logic > List< Data > filter( Logic logic ) const
+            template < class Logic > Mass< Data > filter( Logic logic ) const
             {
-                List< Data > list;
-                all( [ & ]( const Data & data )
+                Mass< Data > mass;
+                all( [ & ]( const Data& data )
                 {
                     if ( logic( data ) )
                     {
-                        list.add( data );
+                        mass.add( data );
                     }
                 } );
 
-                return list;
+                return mass;
             }
 
             void clear( )

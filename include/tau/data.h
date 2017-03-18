@@ -256,7 +256,7 @@ namespace tau
 
 namespace std
 {
-    template<> struct hash< tau::si::Data >
+    template <> struct hash< tau::si::Data >
     {
         ul operator()( const tau::si::Data& data ) const
         {

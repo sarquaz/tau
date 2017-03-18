@@ -101,16 +101,17 @@ namespace tau
             {
             public:
                 Bytes( ui chunk = 0 )
-                : m_chunk( chunk ? chunk : sizeof( Type ) ), m_nodes( mem::sizes()[ typeid( Type ).hash_code() % Sizes::Size ] ),
-                 m_null( NULL ), m_hash( typeid( Type ).hash_code() )
-                {                           
-                    if ( !m_nodes.type  )
+                : m_chunk( chunk ? chunk : sizeof( Type ) ), m_null( NULL ), m_hash( typeid( Type ).hash_code() )
+                {                          
+                    m_nodes = &mem::sizes()[ m_hash % Sizes::Size ];
+                            
+                    if ( !m_nodes->type  )
                     {
-                        m_nodes.type = m_hash;
+                        m_nodes->type = m_hash;
                     }
                     else
                     {
-                        if ( m_nodes.type != m_hash )
+                        if ( m_nodes->type != m_hash )
                         {
                             assert( false );
                         }
@@ -119,10 +120,15 @@ namespace tau
                 
                 Type* get( ui chunks = 1, bool* reuse = NULL )
                 {
-                    auto& node = this->node( chunks );
-                    
                     void* data = NULL;
-                                        
+                    //
+                    //  lookup the  node
+                    //
+                    auto& node = this->node( chunks );
+
+                    //
+                    //  if it was found reuse it
+                    //    
                     if ( node )
                     {
                         data = node->data;
@@ -130,13 +136,15 @@ namespace tau
                         node = node->next;
                                                 
                         found->free();
-                        m_nodes.count -= 1;
+                        m_nodes->count -= 1;
                         if ( reuse )
                         {
                             *reuse = true;
                         }
                     }
-                    
+                    //
+                    //  if not call malloc
+                    //
                     if ( !data )
                     {
                         data = std::malloc( chunks * m_chunk );
@@ -175,12 +183,12 @@ namespace tau
                         return m_null;
                     }
 
-                    auto& node = m_nodes[ chunks - 1 ];
+                    auto& node = ( *m_nodes ) [ chunks - 1 ];
                     return node;
                 }
                 
             private:
-                Nodes& m_nodes;                
+                Nodes* m_nodes;                
                 Node* m_null;
                 ul m_hash;
             };

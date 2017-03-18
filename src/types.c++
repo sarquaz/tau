@@ -36,7 +36,6 @@ namespace tau
     
     namespace ie
     {
-        
         void Tok::destroy( )
         {
             toker( ).dispose( *this );            
@@ -183,7 +182,7 @@ namespace tau
                 
                 space( offset() + length + 1 );
                
-                ::memcpy( target( ), data, length );
+                std::memcpy( target( ), data, length );
                 *( target() + length ) = 0;
             }
             
@@ -318,7 +317,6 @@ namespace tau
         {
             Piece old = *this;
             
-            
             auto chunks = Chunk::chunks( m_size + length );
 
             auto size = chunks * Chunk::Size;
@@ -416,7 +414,6 @@ namespace tau
                         }
                     
                         next = &number;
-                        
                     }
                 
                     hash ^= *next * ( ( last + 1 ) ) ;
