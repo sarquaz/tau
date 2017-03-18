@@ -9,26 +9,6 @@ namespace tau
     {
         namespace mem
         {
-            class Hash
-            {
-            public:
-                Hash( uchar* what, ui size = sizeof( ul ) )
-                    : m_what( what ), m_size( size )
-                {
-                }
-            
-                ul operator()() const;
-            
-                ~Hash ()
-                {
-                }
-        
-            private:
-                unsigned char* m_what;
-                ui m_size;
-            };
-            
-            
             struct Node
             {
                 void* data;

@@ -251,18 +251,21 @@ namespace tau
             Piece m_data;
             Window m_window;
         };
-    }
-}
-
-namespace std
-{
-    template <> struct hash< tau::si::Data >
-    {
-        ul operator()( const tau::si::Data& data ) const
+        
+        //
+        //  hash template specialization
+        //
+        namespace h
         {
-            return data.hash();
+            template <> struct hash< tau::si::Data >
+            {
+                ul operator()( const tau::si::Data& data ) const
+                {
+                    return data.hash();
+                }
+            };
         }
-    };
+    }
 }
 
 #endif

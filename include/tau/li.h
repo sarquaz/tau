@@ -1,34 +1,44 @@
 #ifndef TAU_LI_H
 #define TAU_LI_H
 
-#include "../../src/trace.h"
 #include "mem.h"
 
 namespace tau
 {
     namespace li
      {
-
+         /**
+          * Array wrapper
+         **/
         template < class Data, ui Size = 16 > class Mass
         {
         public:
             Mass( )
-            : m_data( m_default ), m_size( Size ), m_length( 0 )
+                : m_data( m_default ), m_size( Size ), m_length( 0 )
             {
             }
-
-            ui length( ) const
+            
+            /**
+             * Number of items added
+            **/
+            ui length( ) const  
             {
                 return m_length;
             }
 
+            /**
+             * Add item
+            **/
             void add( const Data& value )
             {
                 check( );
                 m_data[ m_length ] = value;
                 m_length ++;
             }
-
+            
+            /**
+             * Get last item
+            **/
             Data& get( )
             {
                 if ( m_length )
@@ -41,11 +51,17 @@ namespace tau
                 }
             }
 
+            /**
+             * Clear all items
+            **/
             void clear( )
             {
                 m_length = 0;
             }
  
+            /**
+             * Iterate through all contained items
+            **/
             template < class All > void all( All all ) const
             {
                 for ( auto i = 0; i < m_length; i++ )
@@ -99,13 +115,16 @@ namespace tau
             si::mem::Bytes< Data > m_bytes;
         };
 
+        /**
+         * List class
+        **/
         template < class Data > class List
         {
         public:
             typedef si::mem::list::Node< Data > Item;
 
             List( )
-            : m_list( NULL )
+                : m_list( NULL )
             {
             }
 
@@ -129,16 +148,17 @@ namespace tau
                 clear( );
             }
 
+            /**
+             * Add item to the list
+            **/
             Item& add( const Data& value )
             {
                 return add( m_items.get( value ) );
             }
 
-            // Item& add( )
-            // {
-            //     return add( m_items.get( ) );
-            // }
-
+            /**
+             * Remove item from list
+            **/
             void remove( Item& item )
             {                
                 if ( m_list == &item )
@@ -147,11 +167,13 @@ namespace tau
                 }
 
                 item.remove();
-
                 m_items.free( item );
             }
             
-            Item& head( )
+            /**
+             * Get last item
+            **/
+            Item& tail( )
             {
                 if ( !m_list )
                 {
@@ -163,14 +185,14 @@ namespace tau
                 }
             }
 
-            const Item& head( ) const
+            const Item& tail( ) const
             {
-                return const_cast< List* >( this )->head();
+                return const_cast< List* >( this )->tail();
             }
 
-            Data get( )
+            Data pop()
             {
-                auto& item = head( );
+                auto& item = tail( );
                 auto data = item.v;
 
                 remove( item );
@@ -261,12 +283,12 @@ namespace tau
                 ui id;
                 
                 _Hash( ul _value = 0, ui _id = 0 )
-                : value( _value ), mod( _value ), id( _id )
+                    : value( _value ), mod( _value ), id( _id )
                 {
                 }
                 
                 _Hash( const _Hash& hash )
-                : value( hash.value ), mod( hash.mod ), id( hash.id )
+                    : value( hash.value ), mod( hash.mod ), id( hash.id )
                 {
                 }
                                 
@@ -320,12 +342,12 @@ namespace tau
                 _Node* prev; 
 
                 _Node( _Node*& _ref )
-                : ref( _ref ), nodes( NULL ), prev( NULL )
+                    : ref( _ref ), nodes( NULL ), prev( NULL )
                 {
                 }
                 
                 _Node( ul hash, const K& key, _Node*& _ref )
-                : item( key, hash ), ref( _ref ), nodes( NULL ), prev( NULL )
+                    : item( key, hash ), ref( _ref ), nodes( NULL ), prev( NULL )
                 {
                 }
 
@@ -382,7 +404,7 @@ namespace tau
 
         public:
             Map( )
-            : m_null( NULL ), m_id( 0 ) 
+                : m_null( NULL ), m_id( 0 ) 
             {
                 m_node = &m_nodes.get( m_null );
                 m_last = m_node;
@@ -395,7 +417,7 @@ namespace tau
 
             Value& operator[ ]( const Key& key )
             {
-                Hash hash( std::hash< Key >( )( key ), m_id );
+                auto hash = this->hash( key );
 
                 Node* parent = NULL;
                 auto item = m_node->get( hash, &parent );
@@ -410,7 +432,7 @@ namespace tau
 
             Value& get( const Key& key )
             {
-                Hash hash( std::hash< Key >( )( key ), m_id );
+                Hash hash( si::h::hash< Key >( )( key ), m_id );
                 auto item = m_node->get( hash );
 
                 if ( item )
@@ -481,6 +503,11 @@ namespace tau
             }
 
         private:
+            Hash hash( const Key& key ) const
+            {
+                return Hash( si::h::hash< Key >( )( key ), m_id );
+            }
+            
             void item( Item& item, const Hash& hash, const Key& key )
             {
                 item.hash = hash;
