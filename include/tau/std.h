@@ -1,5 +1,5 @@
-#ifndef TAU_STD_H
-#define TAU_STD_H
+#ifndef _TAU_STD_H
+#define _TAU_STD_H
 
 #define TAU_NAME "tau"
 

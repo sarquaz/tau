@@ -1,6 +1,7 @@
-#ifndef TAU_LI_H
-#define TAU_LI_H
+#ifndef _TAU_LI_H
+#define _TAU_LI_H
 
+#include "../../src/trace.h"
 #include "mem.h"
 
 namespace tau
@@ -114,6 +115,233 @@ namespace tau
             ui m_length;
             si::mem::Bytes< Data > m_bytes;
         };
+        
+        template < class Value > struct _Node
+        {
+            Value v;
+            _Node* next;
+            _Node* prev;
+
+            _Node( const Value& value )
+                : next( NULL ), prev( NULL ), v( value )
+            {
+            }
+
+            _Node( )
+                : next( NULL ), prev( NULL )
+            {
+            }
+        
+            void remove( )
+            {
+                if ( prev )
+                {
+                    prev->next = next;
+                }
+
+                if ( next )
+                {
+                    next->prev = prev;
+                }
+            }
+
+            void after( _Node& node )
+            {
+                this->next = &node;
+                node.prev = this;
+            
+            }
+        };
+
+        template < class Type > class Pile
+        {               
+            struct Chunk
+            {
+                ui got;
+                ui count;
+                ui freed;
+                void* start;
+        
+                Chunk( ui _count = 0 )
+                    : count( _count ), got( 0 ), freed( 0 ) 
+                {
+                }
+            };
+     
+            typedef _Node< Chunk > Node;
+    
+            template < class _Type > struct _Item
+            {
+                Node* node;
+                _Type type;
+            };
+    
+            typedef _Item< Type > Item;
+    
+            enum 
+            {
+                Count = 10
+            };
+    
+        public:
+            ui count;
+    
+            Pile( ui _count = Count )
+                : count( _count ), m_list( NULL ), m_size( 0 )
+            {
+            }
+    
+            ~Pile()
+            {
+                clear();
+            }
+    
+            template < class ... Args > Type& get( Args&&... args )
+            {
+                //
+                //  check if the space was allocated
+                //
+                if ( m_list )
+                {
+                    auto& count = m_list->v.got;
+                    TRACE( "got %d items", count );
+                                    
+                    //
+                    //  if the new item fits in the allocated storage
+                    //                
+                    if ( count < m_list->v.count )
+                    {
+                        //
+                        //  get the pointer
+                        //
+                        auto item = ( Item* ) ( ( ul ) m_list->v.start + count * sizeof( Item ) );                            
+                        auto type = &item->type;
+                        item->node = m_list;
+                        //
+                        //  increase count
+                        //
+                        count ++;
+                        //
+                        //  increase size
+                        //
+                        set( [ & ] ( ) { m_size ++; } );
+                        //
+                        //  call item constructor
+                        //
+                        new ( type ) Type( std::forward< Args >( args ) ... );
+                        return *type;
+                    }
+                }
+                //
+                //  allocate space
+                //
+                auto& node = this->node( );
+                if ( m_list )
+                {
+                    m_list->after( node );
+                }
+                m_list = &node;
+                //
+                //  call itself again (with enough space)
+                //
+                return get( std::forward< Args >( args ) ... );
+            }
+    
+            void free( Type& type )
+            {
+                //
+                //  call desctuctor
+                //
+                type.~Type();
+        
+                //
+                //  get pointer to item
+                //
+                auto item = ( Item* ) ( ( ul ) &type - sizeof( Node* ) );
+                auto node = item->node;
+                auto& freed = node->v.freed;
+                freed ++;
+                //
+                //  decrease size
+                //
+                set( [ & ] ( ) { m_size --; } );
+        
+                //
+                //  if all items contained in this node were freed 
+                //
+                if ( freed == node->v.count )
+                {
+                    if ( m_list == node )
+                    {
+                        m_list = dynamic_cast< Node* > ( node->prev );
+                    }
+            
+                    free( *node );
+                }
+            }
+    
+            void free( Node& node )
+            {
+                //
+                //  remove node
+                //  
+                node.remove();
+                //
+                //  free allocated space
+                //
+                m_items.free( ( Item* ) ( node.v.start ), node.v.count );
+                m_nodes.free( node );                        
+            }
+    
+            void clear()
+            {
+                auto& node = m_list;
+                while ( node )
+                {
+                    auto prev = node->prev;
+                    free( *node );
+                    node = prev;
+                }
+        
+                m_size = 0;
+                count = Count;
+            }
+    
+            ui size() const
+            {
+                return m_size;
+            }
+    
+        private:
+            template < class Op > void set( Op op )
+            {
+                auto size = m_size;
+                op( );
+        
+                if ( !( m_size % Count ) )
+                {
+                    auto& count = this->count;
+                    auto change = m_size / count;
+                    count = ( m_size > size ? +change : -change ) + count;
+                }                    
+            }
+    
+            Node& node()
+            {
+                auto& node = m_nodes.get();
+        
+                node.v.start = m_items.get( count );
+                node.v.count = count;
+        
+                return node;
+            }
+                    
+        private:
+            si::mem::Types< Node > m_nodes;
+            si::mem::Bytes< Item > m_items;
+            Node* m_list;
+            ui m_size;
+        };
 
         /**
          * List class
@@ -121,7 +349,7 @@ namespace tau
         template < class Data > class List
         {
         public:
-            typedef si::mem::list::Node< Data > Item;
+            typedef _Node< Data > Item;
 
             List( )
                 : m_list( NULL )
@@ -129,7 +357,7 @@ namespace tau
             }
 
             List( std::initializer_list< Data > list )
-            : m_list( NULL )
+                : m_list( NULL )
             {
                 for ( auto i = list.begin( ); i != list.end( ); i++ )
                 {
@@ -138,7 +366,7 @@ namespace tau
             }
 
             List( const List& list )
-            : m_list( NULL )
+                : m_list( NULL )
             {
                 list.all( [ & ] ( const Data & value ) { add( value ); } );
             }
@@ -264,14 +492,13 @@ namespace tau
                 }
                 
                 m_list = &item;
-                
                 return *m_list;
             }
 
             
         private:
             Item* m_list;
-            si::mem::Pile< Item > m_items;
+            Pile< Item > m_items;
         };
 
         template < class Key, class Value, ui Size = 64 > class Map
@@ -580,7 +807,7 @@ namespace tau
         private:
             Node* m_node;
             Node* m_null;
-            si::mem::Pile< Node > m_nodes;
+            Pile< Node > m_nodes;
             si::mem::Bytes< Node* > m_pools;
             Items m_items;
             Node* m_last;
