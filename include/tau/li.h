@@ -341,7 +341,7 @@ namespace tau
         };
 
         /**
-         * List class
+         * List class (std::list replacement)
         **/
         template < class Data > class List
         {
@@ -497,7 +497,10 @@ namespace tau
             Item* m_list;
             Pile< Item > m_items;
         };
-
+        
+        /**
+         * Map class (std::map replacement)
+        **/
         template < class Key, class Value, ui Size = 64 > class Map
         {
             template < ui S > struct _Hash

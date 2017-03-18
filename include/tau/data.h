@@ -1,5 +1,5 @@
-#ifndef TAU_DATA_H
-#define TAU_DATA_H
+#ifndef _TAU_DATA_H
+#define _TAU_DATA_H
 
 #include "std.h"    
 
@@ -7,6 +7,9 @@ namespace tau
 {
     namespace si
     {
+        /**
+         * General purpose binary safe buffer class (std::string replacement)
+        **/
         class Data
         {
         public:
@@ -27,22 +30,11 @@ namespace tau
             {
                 m_data.clear();
             }
-        
             ui offset( ) const
             {
                 return m_window.offset;
             }
-
-            ui length( ) const
-            {
-                return m_window.length;
-            }
-
-            bool empty( ) const
-            {
-                return length( ) == 0;
-            }
-            void setOffset( ui offset )
+            ui offset( ui offset )
             {
                 m_window.offset = offset;
             
@@ -50,18 +42,29 @@ namespace tau
                 {
                     space( size( ) + offset );
                 }
+                
+                return 0;
+            }
+            ui length( ) const
+            {
+                return m_window.length;
+            }
+            ui length( ui length )
+            {
+                m_window.length = length;
+                return 0;
+            }
+            bool empty( ) const
+            {
+                return length( ) == 0;
             }
             void move( ui offset )
             {
-                setOffset( this->offset( ) + offset );
-            }
-            void setLength( ui length )
-            {
-                m_window.length = length;
+                this->offset( this->offset( ) + offset );
             }
             void inc( ui length = 1 )
             {
-                setLength( this->length() + length );
+                this->length( this->length() + length );
             }
             ui size( ) const
             {
@@ -152,22 +155,19 @@ namespace tau
             void assign( const char* data, ui length = 0 )
             {
                 m_external = data;
-                setLength( length ? length : std::strlen( data ) );
+                this->length( length ? length : std::strlen( data ) );
             }
             
         private:
             void setup( const char* data = NULL, ui length = 0 );
-            
             const char* data( ) const
             {
                 return m_external ? m_external : m_data;
             }
-
             char* data( )
             {
                 return m_data;
             }
-
             char* target( )
             {
                 return *this + length( );
@@ -178,19 +178,19 @@ namespace tau
             
             public:
                 Piece( )
-                : m_data( NULL ), m_size( 0 )
+                    : m_data( NULL ), m_size( 0 )
                 {
 
                 }
                 
                 Piece( char* _ptr, ui _size )
-                : m_data( _ptr ), m_size( _size )
+                    : m_data( _ptr ), m_size( _size )
                 {
 
                 }
                 
                 Piece( const Piece& piece )
-                : m_data( piece.m_data ), m_size( piece.m_size )
+                    : m_data( piece.m_data ), m_size( piece.m_size )
                 {
                     
                 }
@@ -229,7 +229,7 @@ namespace tau
                 ui offset;
                 
                 Window()
-                : length( 0 ), offset( 0 )
+                    : length( 0 ), offset( 0 )
                 {
                 }
                 

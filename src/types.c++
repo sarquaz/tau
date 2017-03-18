@@ -141,7 +141,7 @@ namespace tau
                 length = std::strlen( data );
             };
             
-            setLength( length );
+            this->length( length );
         }
         
         

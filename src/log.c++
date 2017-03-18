@@ -60,7 +60,7 @@ namespace tau
             int brace = m_scope.find( "(" );
             if ( brace > 0 )
             {
-                m_scope.setLength( brace );
+                m_scope.length( brace );
             }
             
             m_scope.add( "()" );
