@@ -432,7 +432,7 @@ namespace tau
 
             Value& get( const Key& key )
             {
-                Hash hash( si::h::hash< Key >( )( key ), m_id );
+                auto hash = this->hash( key );
                 auto item = m_node->get( hash );
 
                 if ( item )
@@ -450,8 +450,7 @@ namespace tau
             
             bool remove( const Key& key )
             {
-                Hash hash( std::hash< Key >( )( key ), m_id );
-
+                auto hash = this->hash( key );
                 auto item = m_node->get( hash );
 
                 if ( item )
