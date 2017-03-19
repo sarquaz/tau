@@ -9,10 +9,18 @@ namespace tau
     {
         struct Interval
         {
+            struct timeval time;
+             
             long long value;
             
             Interval( long millis = 0, long micros = 0 )
             {
+                if ( !millis && !micros )
+                {
+                    ::gettimeofday( &time, NULL );
+                    return;
+                }
+                
                 if ( millis == Infinite )
                 {
                     value = millis;
@@ -20,7 +28,10 @@ namespace tau
                 }
 
                 value = millis * 1000;
+                
+                time.tv_sec = value;
                 value += micros;
+                time.tv_usec = micros;
             }
 
             Interval( const Interval& interval )
@@ -43,6 +54,28 @@ namespace tau
             {
                 return value == -1;
             }
+            
+            operator const struct timespec* () const
+            {
+                return ( struct timespec* ) &time;
+            }
+            
+            operator struct timeval* ()  
+            {
+                return &time;
+            }
+            
+            ul s() const
+            {
+                return time.tv_sec;
+            }
+            
+            ul ms() const
+            {
+                return time.tv_usec;
+            }
+            
+            
         };
 
         class Random

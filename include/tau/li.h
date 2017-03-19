@@ -2,6 +2,7 @@
 #define _TAU_LI_H
 
 #include "mem.h"
+#include "../../src/trace.h"
 
 namespace tau
 {
@@ -208,6 +209,7 @@ namespace tau
                     //                
                     if ( count < m_list->v.count )
                     {
+
                         //
                         //  get the pointer
                         //
@@ -229,6 +231,7 @@ namespace tau
                         return *type;
                     }
                 }
+                
                 //
                 //  allocate space
                 //

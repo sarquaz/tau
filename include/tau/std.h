@@ -18,6 +18,8 @@
     
 #include <stdarg.h>
 #include <limits.h>
+#include <time.h>
+
 
 #define MAX( a, b ) ( a > b ) ? ( a ) : ( b )
 #define MIN( a, b ) ( a < b ) ? ( a ) : ( b )

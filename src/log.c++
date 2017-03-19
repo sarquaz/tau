@@ -5,20 +5,20 @@ namespace tau
 {
     void Trace::handler( log::Level level, si::Data& data )
     {
-        data( "%s [%u] %u", TAU_NAME, 0, /*si::Thread::id( ),*/ si::millis( ) );
+        data( "%s [%u] %u", TAU_NAME, si::th::Thread::id( ), si::millis( ) );
     }
             
     namespace log
     {
         Enter::Enter( const Trace& _trace )
-        : trace( _trace )
+            : trace( _trace )
         {
             trace( Info, "Entering" );
         }
 
         Enter::~Enter( )
         {
-            trace ( Info, "Leaving" );
+            trace( Info, "Leaving" );
         }
         
         namespace data
@@ -37,7 +37,7 @@ namespace tau
         }
         
         Trace::Trace( const char* scope, void* _instance  )
-        : m_instance( _instance ), m_handler( NULL ) 
+            : m_instance( _instance ), m_handler( NULL ) 
         {
             if ( scope )
             {
