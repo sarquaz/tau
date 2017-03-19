@@ -1,9 +1,8 @@
 #ifndef TAU_DEBUG_H
 #define TAU_DEBUG_H
 
-#include "data.h"
+#include "tau.h"
 
-#pragma clang diagnostic ignored "-Wformat"
 
 namespace tau
 {

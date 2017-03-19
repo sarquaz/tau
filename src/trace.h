@@ -1,7 +1,6 @@
 #ifndef _TAU_TRACE_H_
 #define _TAU_TRACE_H_
 
-#include <typeinfo>
 #include "log.h"
 
 namespace tau

@@ -1,9 +1,13 @@
 #ifndef TAU_SYS_H
 #define TAU_SYS_H
 
+//
+//  POSIX threads
+//      
 #include <pthread.h>
-#include <semaphore.h>
-#include <sys/sem.h>
+//
+//  BSD 
+//
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/types.h>
@@ -26,17 +30,18 @@
     #include <sys/eventfd.h>
 #endif
 
+//  
+//  Berkeley sockets
+//
 #include <netinet/in.h>
 #include <netdb.h>
 #include <signal.h>
 #include <dlfcn.h>
 #include <arpa/inet.h>
+
+
 #include <execinfo.h>
 #include <unistd.h> 
 #include <errno.h> 
-
-
-
-
 
 #endif

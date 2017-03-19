@@ -1,93 +1,13 @@
-#ifndef TAU_SI_H
-#define TAU_SI_H
+#ifndef _TAU_SI_H
+#define _TAU_SI_H
 
-#include "sys.h"
 #include "types.h"
+#include "si/th.h"
 
 namespace tau
 {
     namespace si
-    {
-        typedef ui Handle;
-        
-        void* swap( void** target, void* value );
-        ui inc( ui* target );
-        ui dec( ui* target );
-        ui millis( );
-        
-        Time time();
-        
-        enum Stream
-        {
-            In = STDIN_FILENO,
-            Out = STDOUT_FILENO,
-            Err = STDERR_FILENO
-        };
-            
-        void out( const Data& data, Stream stream = Stream::Out );
-        void backtrace( ui length = 15, Stream stream = Stream::Err );
-        
-        struct check
-        {
-            ui skip;
-            long result;
-
-            check( long _result, ui _skip = EWOULDBLOCK )
-            : skip( _skip ), result( _result )
-            {
-            }
-
-            ul operator()( const char* format, ... );
-        };
-        
-        namespace th
-        {
-            class Condition
-            {
-                typedef pthread_cond_t Cond;
-                typedef pthread_mutex_t Mutex;
-                
-            public:
-                Condition();
-                ~Condition();
-                
-                void wait( const Time* time = NULL );
-                void signal();
-                                
-            private:
-                Cond m_cond;
-                Mutex m_mutex;
-            };
-            
-            class Thread
-            {
-                typedef pthread_t Handle;
-                
-            public:
-                Thread( )
-                {
-                }
-
-                virtual ~Thread( )
-                {
-                }
-
-                void join( ) const;
-                void start( );
-                
-                static ul id( );
-            private:
-                static void routine( void* data );
-                virtual void run( ) = 0;
-            
-            private:
-                Handle m_handle;
-            };
-            
-
-        }
-        
-        
+    {        
         
         // class File
         // {
@@ -504,9 +424,9 @@ namespace tau
  //            Address m_address;
  //        };
  // 
-        
-        
     }
 }
+
+
 
 #endif

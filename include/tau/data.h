@@ -1,7 +1,7 @@
 #ifndef _TAU_DATA_H
 #define _TAU_DATA_H
 
-#include "std.h"    
+#include "std.h"
 
 namespace tau
 {
@@ -250,21 +250,7 @@ namespace tau
             const char* m_external;
             Piece m_data;
             Window m_window;
-        };
-        
-        //
-        //  hash template specialization
-        //
-        namespace h
-        {
-            template <> struct hash< tau::si::Data >
-            {
-                ul operator()( const tau::si::Data& data ) const
-                {
-                    return data.hash();
-                }
-            };
-        }
+        };      
     }
 }
 
