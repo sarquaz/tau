@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "si/th.h"
+#include "si/os.h"
 
 namespace tau
 {

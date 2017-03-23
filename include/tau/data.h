@@ -19,7 +19,8 @@ namespace tau
             }
             Data( const char* data, ui length = 0 )
             {
-                setup( data, length );
+                setup( );
+                add( data, length );
             }
             Data( const Data& data )
             {
@@ -175,7 +176,6 @@ namespace tau
             
             class Piece
             {
-            
             public:
                 Piece( )
                     : m_data( NULL ), m_size( 0 )

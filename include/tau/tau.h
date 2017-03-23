@@ -286,5 +286,6 @@ namespace tau
 
 #include "si.h"
 #include "li.h"
+#include "main.h"
 
 #endif

@@ -5,7 +5,7 @@ namespace tau
 {
     void Trace::handler( log::Level level, si::Data& data )
     {
-        data( "%s [%u] %u", TAU_NAME, si::th::Thread::id( ), si::time().ms() );
+        data( "%s [%u] %u", TAU_NAME, si::os::Thread::id( ), si::time().ms() );
     }
             
     namespace log

@@ -733,6 +733,7 @@ namespace tau
         private:
             Hash hash( const Key& key ) const
             {
+                printf( "need hash for key %s \n", key.c() );
                 return Hash( si::h::hash< Key >( )( key ), m_id );
             }
             
@@ -819,6 +820,25 @@ namespace tau
         template< class Value > class Set : public Map< Value, Value >
         {
         public:
+            Set()
+                : Map< Value, Value >()
+            {
+                
+            }
+            Set( const Set& set )
+                : Map< Value, Value >()
+            {
+                operator =( set );
+            }
+            Set( std::initializer_list< std::pair< Value, Value > > list )
+                : Map< Value, Value >()
+            {
+                for ( auto i = list.begin(); i != list.end(); i++ )
+                {
+                    ( *this )[ i->first ] = i->second;
+                }
+            }
+            
             virtual ~Set()
             {
                 
@@ -827,10 +847,8 @@ namespace tau
             void set( const Value& value )
             {
                 ( *this )[ value ] = value;
-            }            
+            }       
         };
-
-        typedef Set< Data > Strings;
 
         template< class Type > struct cycle
         {

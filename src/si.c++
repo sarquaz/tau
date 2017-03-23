@@ -439,6 +439,8 @@ namespace tau
                         {
                             index = index - m_size;
                         }
+                        
+                        TRACE( " what: %d", *m_what )
 
                         ( ( char* ) &number )[ step - length ] = m_what[ index ];
 
