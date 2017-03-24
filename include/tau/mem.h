@@ -81,8 +81,11 @@ namespace tau
             {
             public:
                 Bytes( ui chunk = 0 )
-                : m_chunk( chunk ? chunk : sizeof( Type ) ), m_null( NULL ), m_hash( typeid( Type ).hash_code() )
+                : m_chunk( chunk ? chunk : sizeof( Type ) ), m_null( NULL ) 
                 {                          
+                    ul type = typeid( Type ).hash_code();
+                    m_hash = Hash( ( uchar* ) &type )();
+                    
                     m_nodes = &mem::sizes()[ m_hash % Sizes::Size ];
                             
                     if ( !m_nodes->type  )
@@ -93,6 +96,9 @@ namespace tau
                     {
                         if ( m_nodes->type != m_hash )
                         {
+                            //
+                            //  should not get here
+                            //  
                             assert( false );
                         }
                     }

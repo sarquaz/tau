@@ -830,14 +830,7 @@ namespace tau
             {
                 operator =( set );
             }
-            Set( std::initializer_list< std::pair< Value, Value > > list )
-                : Map< Value, Value >()
-            {
-                for ( auto i = list.begin(); i != list.end(); i++ )
-                {
-                    ( *this )[ i->first ] = i->second;
-                }
-            }
+            
             
             virtual ~Set()
             {

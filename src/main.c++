@@ -18,8 +18,6 @@ namespace tau
             ret = value;
         }
         
-        TRACE( "%s", ret.c() );
-        
         return ret;
     }
     
@@ -35,20 +33,63 @@ namespace tau
     
     void start( const Strings& options )
     {
-        SENTER();
+
         auto threads = options.number( "threads" );
-        STRACE( "%d", threads );
+        threads = threads ? threads : 1;
+        STRACE( "need to start %d threads", threads );        
         
-        main.start();
+        main.start( threads );
     }
     
     void stop()
     {
         SENTER();
+        
+        main.stop();
     }
     
-    void Main::start()
+    void listen( Listener* listener )
+    {
+        main.listener( listener );
+    }
+    
+    void Result::dispatch( Result* what ) const
     {
         ENTER();
+        
+        m_listeners.all( [ & ] ( Listener* listener ) { listener->result( what ); } );
     }
+    
+    void Main::start( us threads )
+    {
+        ENTER();
+        
+        for ( auto i = 0; i < threads; i++ )
+        {
+            //
+            //  create new thread
+            //
+            auto thread = new Thread();
+            
+            //
+            //  send it to listener
+            //
+            Result::dispatch( thread );
+            
+            //
+            //  start the thread
+            //
+            thread->start();
+            
+            m_lock.with( [ & ] ( ) { m_threads.add( thread ); } );
+        }                
+    }
+    
+    void Main::stop( )
+    {
+        m_threads.all( [ & ] ( Thread* thread ) { thread->join(); } );
+    }
+    
+    
+    
 }
