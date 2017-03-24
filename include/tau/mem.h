@@ -83,9 +83,19 @@ namespace tau
                 Bytes( ui chunk = 0 )
                 : m_chunk( chunk ? chunk : sizeof( Type ) ), m_null( NULL ) 
                 {                          
-                    ul type = typeid( Type ).hash_code();
-                    m_hash = Hash( ( uchar* ) &type )();
+                     ul type = typeid( Type ).hash_code();
                     
+#if(__linux__)
+                    //
+                    // GCC hash_code() implementation is solid
+                    //
+                    m_hash = type;
+#else
+                    //
+                    // LLVM is not
+                    //
+                    m_hash = Hash( ( uchar* ) &type )();
+#endif
                     m_nodes = &mem::sizes()[ m_hash % Sizes::Size ];
                             
                     if ( !m_nodes->type  )
