@@ -1,8 +1,6 @@
 #ifndef _TAU_LI_H
 #define _TAU_LI_H
 
-#include "mem.h"
-
 namespace tau
 {
     namespace li

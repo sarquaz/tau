@@ -3,9 +3,9 @@
 
 namespace tau
 {
-    void Trace::handler( log::Level level, si::Data& data )
+    void Trace::handler( log::Level level, data::Data& data )
     {
-        data( "%s [%u] %u", TAU_NAME, si::os::Thread::id( ), si::time().ms() );
+        data( "%s [%u] %u", TAU_NAME, out::id( ), time().ms() );
     }
             
     namespace log
@@ -21,15 +21,15 @@ namespace tau
             trace( Info, "Leaving" );
         }
         
-        namespace data
+        namespace d
         {
-            __thread si::Data* t_data = NULL;
+            __thread data::Data* t_data = NULL;
             
-            si::Data& data( ) 
+            data::Data& data( ) 
             {
                 if ( !t_data )
                 {
-                    t_data = new si::Data();
+                    t_data = new data::Data();
                 }
                 
                 return *t_data;
@@ -45,7 +45,7 @@ namespace tau
             }
         }
         
-        void Trace::handle( Level level, si::Data& data )
+        void Trace::handle( Level level, data::Data& data )
         {
             if ( m_handler )
             {
@@ -68,14 +68,14 @@ namespace tau
         
         void Trace::operator()( Level level, const char *format, ... )
         {
-            auto& data = data::data();
-            auto file = si::Stream::Out;
+            auto& data = d::data();
+            auto file = out::Stream::Out;
             
             handle( level, data );
             
             if ( level == Error )
             {
-                file = si::Stream::Err;
+                file = out::Stream::Err;
             }
             else if ( level == Info )
             {
@@ -100,7 +100,7 @@ namespace tau
             PRINT( data, format );
             data.add( "\n" );
             
-            si::out( data, file );
+            out::out( data, file );
             data.clear();
         }
     }

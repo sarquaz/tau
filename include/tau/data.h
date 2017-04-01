@@ -5,7 +5,7 @@
 
 namespace tau
 {
-    namespace si
+    namespace data
     {
         /**
          * General purpose binary safe buffer class (std::string replacement)
@@ -252,6 +252,54 @@ namespace tau
             Window m_window;
         };      
     }
+    
+#define EPRINT( data, format )\
+    data("%s error: ", TAU_NAME );\
+    PRINT( data, format );
+    
+    struct Error
+    {
+        data::Data message;
+        
+        Error(  )
+        {
+        }
+        
+        Error( const char* format, ... )
+        {
+            PRINT( message, format );
+        }
+        Error( const data::Data& error )
+        : message( error )
+        {
+            
+        }
+        Error( const Error& error )
+        {
+            *this = error;
+        }
+        virtual ~Error()
+        {
+            
+        }
+        void operator = ( const Error& error )
+        {
+            message.clear();
+            message.add( error.message );
+        }
+        operator const char* () const
+        {
+            return message;
+        }
+        
+        static Error Tau( const char* format, ... )
+        {
+            Error error;
+            EPRINT( error.message, format );
+            return error;   
+        }
+    };
+    
 }
 
 #endif

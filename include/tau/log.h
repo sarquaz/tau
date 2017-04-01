@@ -1,8 +1,7 @@
 #ifndef TAU_DEBUG_H
 #define TAU_DEBUG_H
 
-#include "tau.h"
-
+#include "out.h"
 
 namespace tau
 {
@@ -30,25 +29,25 @@ namespace tau
             }
             
         protected:
-            typedef void ( Trace::*Handler )( Level level, si::Data& data );
+            typedef void ( Trace::*Handler )( Level level, data::Data& data );
             
             void handler( Handler handler )
             {
                 m_handler = handler;
             }
             
-            const si::Data& scope() const
+            const data::Data& scope() const
             {
                 return m_scope;
             }
             
         private:
             void context( const char* _scope );
-            void handle( Level level, si::Data& data );
+            void handle( Level level, data::Data& data );
             
         private:
             void* m_instance;
-            si::Data m_scope;
+            data::Data m_scope;
             Handler m_handler; 
         };
                 

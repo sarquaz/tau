@@ -1,7 +1,6 @@
 #include "tau.h"
 #include "trace.h"  
 
-
 namespace tau
 {
     void Rock::ref( )
@@ -118,273 +117,9 @@ namespace tau
         // }
     }
     
-
-    namespace si
+    namespace r
     {
-        void* swap( void** target, void* value )
-        {
-            void* oldValue = __sync_fetch_and_add( target, 0 );
-            return __sync_val_compare_and_swap( target, oldValue, value );
-        }
-        
-        ui inc( ui* target )
-        {
-            ui result = __sync_fetch_and_add( target, 1 );
-            return result + 1;
-        }
-
-        ui dec( ui* target )
-        {
-            ui result = __sync_fetch_and_sub( target, 1 );
-            return result - 1;
-        }
-        
-        void backtrace( ui length, Stream stream )
-        {
-            void* array[ length ];
-            auto size = ::backtrace( array, length );
-            ::backtrace_symbols_fd( array, size, stream );
-        }
-        
-        Interval time()
-        {
-            Interval time;
-            return time;
-        }
-        
-        void out( const Data& data, Stream stream  )
-        {
-            auto wrote = ::write( stream, data, data.length() );
-        }
-        
-        int Data::find( const Data& data, ui offset ) const
-        {
-            auto found = ( char* ) ::memmem( *this + offset, length(), data, data.length() );
-            
-            if ( found )
-            {
-                auto pos = found - *this;
-                return ( pos < length() ) ? pos : -1;
-            }
-            
-            return -1;
-        }
-        
-        void Data::setup( const char* data, ui length )
-        {
-            m_external = data;
-            
-            if ( !length && data )
-            {
-                length = std::strlen( data );
-            };
-            
-            this->length( length );
-        }
-        
-        
-        Data& Data::add( char data )
-        {
-            if ( !data )
-            {
-                return *this;
-            }
-            
-           if ( !m_external )
-           {
-               space( 1 );
-                *( target() ) = data;
-                inc( );
-            }
-            
-            return *this;
-        }
-        
-        Data& Data::add( const char* data, ui length )
-        {
-            if ( !data )
-            {
-                return *this;
-            }
-            
-            if ( m_external )
-            {
-                 assert( false );
-            }
-            else
-            {
-                if ( !length )
-                {
-                    length = std::strlen( data );
-                }
-                
-                space( offset() + length + 1 );
-               
-                std::memcpy( target( ), data, length );
-                *( target() + length ) = 0;
-            }
-            
-            inc( length );
-            return *this;
-        }
-        
-        void Data::space( ui length )
-        {
-            if ( m_external )
-            {
-                return;
-            }
-            
-            if ( available() > length )
-            {
-                return;
-            }
-                        
-            m_data.get( length );
-        }
-        
-                        
-        char& Data::operator[]( ui offset )
-        {
-            if ( !data( ) || offset > ( ui ) m_data )
-            {
-                throw Error();
-            }
-
-            return *( data( ) + offset );
-        }
-
-        char Data::operator[]( ui offset ) const
-        {
-            if ( !data( ) || offset > ( ui ) m_data )
-            {
-                return 0;
-            }
-
-            return *( data( ) + offset );
-        }
-
-        
-        Data Data::get( ui length )
-        {
-            Data data;
-            
-            auto start = 33;
-            auto range = 126 - start;
-            
-            ui number = 0;
-            auto pos = 0;
-            
-            while ( data.length() < length )
-            {
-                if ( !number )
-                {
-                    number = random( UINT_MAX );
-                }
-                
-                unsigned char current = ( ( char* ) &number )[ pos ];
-                                
-                data.add( start + ( current % range ) );
-                pos ++;
-                
-                if ( pos == sizeof( number ) )
-                {
-                    pos = 0;
-                    number = 0;
-                }
-            }
-                            
-            return data;
-        }
-        
-        ul Data::hash( ) const
-        {
-            auto hash = Piece( ( char* ) ( const char *) m_data, length() )();
-
-            return hash;
-        }
-        
-        __thread mem::Char* t_mem = NULL;  
-        
-        struct Chunk
-        {
-            enum
-            {
-
-                Size = 0x40
-            };
-
-            static ui bytes( ui size )
-            {
-                return chunks( size ) * Size;
-            }
-
-            static ui chunks( ui length )
-            {
-                auto size = length / Size;
-
-                if ( size * Size < length )
-                {
-                    size += 1;
-                }
-
-                return size;
-            }
-        };
-        
-        mem::Char& chars()
-        {
-            if ( !t_mem )
-            {
-                t_mem = new mem::Char( Chunk::Size );
-            }
-            
-            return *t_mem;
-        }
-        
-        void Data::Piece::clear( )
-        {
-            if ( m_data )
-            {
-                chars().free( m_data, m_size / Chunk::Size );
-                m_size = 0;
-            }
-        }
-         
-        void Data::Piece::get( ui length )
-        {
-            Piece old = *this;
-            
-            auto chunks = Chunk::chunks( m_size + length );
-
-            auto size = chunks * Chunk::Size;
-                        
-            m_size += chunks * Chunk::Size;
-            m_data = chars().get( m_size );
-            
-            if ( old.m_data )
-            {
-                std::memcpy( m_data, old.m_data, old.m_size );
-                old.clear( );
-            }
-        }
-        
-        ul Data::Piece::operator()( ) const
-        {            
-            return si::Hash( ( unsigned char* ) m_data, m_size )();
-        }
-        
         __thread Random* t_random = NULL;
-
-        ul random( ui max )
-        {
-            if ( !t_random )
-            {
-                t_random = new Random( );
-            }
-
-            return( *t_random ) ( max );
-        }
         
         Random::Random( )
         : m_random( time().ms() /* + Thread::id( )*/ )
@@ -406,79 +141,142 @@ namespace tau
             return random;
         }
         
-        ul Hash::operator()() const
+        ul random( ui max )
         {
-            ul hash = 0;
-            auto pos = 0;
-        
-            auto step = sizeof( hash );
-        
-            if ( m_size <= step )
+            if ( !t_random )
             {
-                step = m_size / 2;
+                t_random = new Random( );
             }
-        
-            ul last = 0;
-            ul* next = NULL;
-        
-            for ( ;; )
-            {
-                auto length = 0;
-                ul number = 1;
-            
-                if ( pos + step > m_size )
-                {
-                     next = ( ul* ) ( m_what + pos ); 
-                }
-                else
-                {
-                    for ( ;; )
-                    {
-                        auto index = pos + step - length;
-                        if ( index >= m_size )
-                        {
-                            index = index - m_size;
-                        }
-                        
-                        ( ( char* ) &number )[ step - length ] = m_what[ index ];
 
-                        length ++;
-                        if ( length >= step )
-                        {
-                            break;
-                        }
-                    }
-                
-                    next = &number;
-                }
-            
-                hash ^= *next * ( ( last + 1 ) ) ;
-                last = *next ^ m_what[ pos ];
-            
-                pos += MIN( step, m_size - pos );
-            
-                if ( pos >= m_size )
-                {
-                    break;
-                }
-            }
-        
-            return hash;
+            return( *t_random ) ( max );
         }
             
+    }
+    
+
+    namespace si
+    {
+        void* swap( void** target, void* value )
+        {
+            void* oldValue = __sync_fetch_and_add( target, 0 );
+            return __sync_val_compare_and_swap( target, oldValue, value );
+        }
+        
+        ui inc( ui* target )
+        {
+            ui result = __sync_fetch_and_add( target, 1 );
+            return result + 1;
+        }
+
+        ui dec( ui* target )
+        {
+            ui result = __sync_fetch_and_sub( target, 1 );
+            return result - 1;
+        }
+        
+        // void backtrace( ui length, Stream stream )
+        // {
+        //
+        // }
+        
+        
+        
+        // void out( const Data& data, Stream stream  )
+        // {
+        //     auto wrote = ::write( stream, data, data.length() );
+        // }
+        
+        
+        
+        
+
+        
+        
+        
+        
+    }
+    
+    
+        
+             
+        // namespace map
+        // {
+        //     ul Hash::operator()() const
+        //     {
+        //         ul hash = 0;
+        //         auto pos = 0;
+        //
+        //         auto step = sizeof( hash );
+        //
+        //         if ( m_size <= step )
+        //         {
+        //             step = m_size / 4;
+        //         }
+        //
+        //         ul last = 1;
+        //         ul* next = NULL;
+        //
+        //         for ( ;; )
+        //         {
+        //             auto length = 0;
+        //             ul number = 1;
+        //
+        //             if ( pos + step > m_size )
+        //             {
+        //                  next = ( ul* ) ( m_what + pos );
+        //             }
+        //             else
+        //             {
+        //                 for ( ;; )
+        //                 {
+        //                     auto index = pos + step - length;
+        //                     if ( index >= m_size )
+        //                     {
+        //                         index = index - m_size;
+        //                     }
+        //
+        //                     ( ( char* ) &number )[ step - length ] = m_what[ index ];
+        //
+        //                     length ++;
+        //                     if ( length >= step )
+        //                     {
+        //                         break;
+        //                     }
+        //                 }
+        //
+        //                 next = &number;
+        //             }
+        //
+        //             hash ^= *next * ( ( last + 1 ) ) ;
+        //             last = *next ^ m_what[ pos ];
+        //
+        //             pos += MIN( step, m_size - pos );
+        //
+        //             if ( pos >= m_size )
+        //             {
+        //                 break;
+        //             }
+        //         }
+        //
+        //         return hash;
+        //     }
+        // }
+        
+    namespace si
+    {
         namespace mem
         {
             namespace nodes
             {
                 __thread Node* t_node = NULL;
-                
+
                 Node& node()
                 {
                     if ( !t_node )
                     {
                         t_node = new Node( );
                     }
-                    
+
                     return *t_node;
                 }
 
@@ -487,10 +285,10 @@ namespace tau
                     auto& node = nodes::node();
                     t_node = node.next;
                     node.clear();
-                                        
+
                     return node;
                 }
-                
+
                 void free( Node& node )
                 {
                     node.next = t_node;
@@ -522,7 +320,72 @@ namespace tau
                 
                 return *t_sizes;
             }
-        
         }
+    }
+    
+    namespace box
+    {
+        ul Hash::operator()() const
+        {
+            ul hash = 179426173;
+            auto pos = 0;
+
+            auto step = sizeof( hash );
+
+            if ( m_size <= step )
+            {
+                step = m_size / 2;
+            }
+
+            ul last = 1;
+            ul* next = NULL;
+
+            for ( ;; )
+            {
+                auto length = 0;
+                ul number = step ^ m_size;
+
+                if ( pos + step <= m_size )
+                {
+                     next = ( ul* ) ( m_what + pos ); 
+                }
+                else
+                {
+                    for ( ;; )
+                    {
+                        auto index = pos + step - length;
+                        
+                        if ( index >= m_size )
+                        {
+                            index = index - m_size;
+                        }
+        
+                        ( ( char* ) &number )[ step - length ] = m_what[ index ];
+
+                        length ++;
+                        if ( length >= step )
+                        {
+                            break;
+                        }
+                    }
+
+                    next = &number;
+                }
+
+                
+                hash ^= ( *next * last );
+                last *=  m_what[ pos ];
+                
+                pos += MIN( step, m_size - pos );
+
+                if ( pos >= m_size )
+                {
+                    break;
+                }
+            }
+
+            return hash;
+        }
+        
     }
 }

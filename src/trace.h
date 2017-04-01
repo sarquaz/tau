@@ -23,7 +23,7 @@ namespace tau
         {
         }
         
-        void handler( log::Level level, si::Data& data );
+        void handler( log::Level level, data::Data& data );
         
     };
     

@@ -1,12 +1,17 @@
 #ifndef _TAU_MEM_H
 #define _TAU_MEM_H
 
-#include "std.h"
+#include "box.h"
 
 namespace tau
 {
     namespace si
     {
+        namespace map
+        {
+
+            
+        }
         namespace mem
         {
             struct Node
@@ -58,15 +63,15 @@ namespace tau
                 }
             };
             
-            struct Sizes: Root< Nodes, 0x500 >
+            struct Sizes: Root< Nodes, 0x5000 >
             {
                 enum 
                 {
-                    Size = 0x500
+                    Size = 0x5000
                 };                
                 
                 Sizes()
-                : used( 0 ), max( 1024 * 1024 * 5 /* 5 MB default */)
+                : used( 0 ), max( 0 )
                 {
                     std::memset( data, 0, sizeof( data ) );
                 }
@@ -84,34 +89,36 @@ namespace tau
                 : m_chunk( chunk ? chunk : sizeof( Type ) ), m_null( NULL ) 
                 {                          
                      ul type = typeid( Type ).hash_code();
-                    
-#if(__linux__)
-                    //
-                    // GCC hash_code() implementation is solid
-                    //
-                    m_hash = type;
-#else
-                    //
-                    // LLVM is not
-                    //
-                    m_hash = Hash( ( uchar* ) &type )();
-#endif
-                    m_nodes = &mem::sizes()[ m_hash % Sizes::Size ];
-                            
-                    if ( !m_nodes->type  )
-                    {
-                        m_nodes->type = m_hash;
-                    }
-                    else
-                    {
-                        if ( m_nodes->type != m_hash )
-                        {
-                            //
-                            //  should not get here
-                            //  
-                            assert( false );
-                        }
-                    }
+//
+// #if(__linux__)
+//                     //
+//                     // GCC hash_code() implementation is solid
+//                     //
+//                     m_hash = type;
+//
+//
+// #else
+//                     //
+//                     // LLVM is not
+//                     //
+//                     m_hash = box::Hash( ( uchar* ) &type )();
+// #endif
+//                     m_nodes = &mem::sizes()[ m_hash % Sizes::Size ];
+//
+//                     if ( !m_nodes->type  )
+//                     {
+//                         m_nodes->type = m_hash;
+//                     }
+//                     else
+//                     {
+//                         if ( m_nodes->type != m_hash )
+//                         {
+//                             //
+//                             //  should not get here
+//                             //
+//                             assert( false );
+//                         }
+//                     }
                 }
                 
                 Type* get( ui chunks = 1, bool* reuse = NULL )
@@ -138,6 +145,8 @@ namespace tau
                             *reuse = true;
                         }
                     }
+                    
+                    data = NULL;
                     //
                     //  if not call malloc
                     //

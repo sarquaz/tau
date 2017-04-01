@@ -139,7 +139,7 @@ namespace tau
                 Options()
                 {
                 }
-                Options( std::initializer_list< std::pair< si::Data, si::Data > > list )
+                Options( std::initializer_list< std::pair< data::Data, data::Data > > list )
                 {
                     for ( auto i = list.begin(); i != list.end(); i++ )
                     {
@@ -174,7 +174,7 @@ namespace tau
             {
                 return typeid( Set ).hash_code();
             }
-            static Set& get( const si::Data& name )
+            static Set& get( const data::Data& name )
             {
                 return dynamic_cast < Set& > ( gen::grain( type(), name ) );
             }
@@ -454,7 +454,7 @@ namespace tau
                 return m_process.pid( );
             }
             
-            const si::Data& command() const
+            const data::Data& command() const
             {
                 return options()[ "command" ];
             }
@@ -556,7 +556,7 @@ namespace tau
 //            {
 //                return dynamic_cast < Grain* > ( &tok< File > ()() );
 //            }
-//            static File& get( const si::Data& name );
+//            static File& get( const data::Data& name );
 //
 //            virtual ~File( )
 //            {
@@ -564,7 +564,7 @@ namespace tau
 //            
 //            virtual void onStart( const Set::Options& options );
 //
-//            const si::Data& name( ) const
+//            const data::Data& name( ) const
 //            {
 //                return options( )[ "name" ];
 //            }
