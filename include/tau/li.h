@@ -402,6 +402,15 @@ namespace tau
             {
                 return !( this->length() );
             }
+            
+            void clear()
+            {
+                ENTER();
+                
+                box::list::List< Value >::clear();
+                TRACE( "0x%x 0x%x", this->head(), this->tail() );
+                
+            }
         };
         
         
@@ -457,6 +466,13 @@ namespace tau
                 }
                  
                 throw Error( "value not found" );    
+            }
+            
+            bool remove( const Key& key )
+            {
+                ENTER();
+                
+                return box::map::Map< Data< Key, Value >, Size >::remove( box::h::hash< Key >()( key ) );
             }
         };
 

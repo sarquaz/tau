@@ -1,6 +1,9 @@
 #ifndef _TAU_BOX_H_
 #define _TAU_BOX_H_
 
+#include "../../src/trace.h"
+
+
 namespace tau
 {
     namespace box
@@ -144,37 +147,42 @@ namespace tau
         
         namespace list
         {
+            enum Direction 
+            {
+                Tail,
+                Head
+            };
+            
             template < class, class > class List;
                     
             template < class Data, class Allocator > class _Node
             {                
+                template < class, class > friend class List;
+                
             public:
                 _Node( const Data& data, List< Data, Allocator >* list = NULL )
                     : m_data( data ), m_next( 0 ), m_prev( 0 ), m_list( list ), m_custom( NULL )
                 {
                 }
             
-                virtual ~_Node()
+                ~_Node()
                 {
                 }
             
-        
-                void before( _Node* node, const Data& data )
+                void link( _Node* node, Direction direction = Tail )
                 {
-                    m_prev = node;
-                    node->m_next = this;
-                
-                    update( node, m_list->m_head );
+                    if ( direction == Tail )
+                    {
+                        m_next = node;
+                        node->m_prev = this;
+                    }
+                    else
+                    {
+                        m_prev = node;
+                        node->m_next = this;
+                    }
                 }
 
-                void after( _Node* node, const Data& data )
-                {
-                    m_next = node;
-                    node->m_prev = this;
-            
-                    update( node, m_list->m_tail );
-                }
-            
                 const Data& data() const
                 {
                     return m_data;
@@ -229,7 +237,7 @@ namespace tau
                     //
                     //  let list know
                     //
-                    m_list->update( List< Data, Allocator >::Removed );
+                    m_list->update( this, List< Data, Allocator >::Remove );
                 
                     //
                     //  free memory
@@ -249,22 +257,6 @@ namespace tau
                 }
             
             private:
-                void update( _Node* node, _Node*& list )
-                {
-                    assert( m_list != NULL );
-                
-                    node->m_list = m_list;
-            
-                    //
-                    //  update list pointer if necessary
-                    //  
-                    if ( list == this )
-                    {
-                        list = node;
-                    }
-                }
-                        
-            private:
                 Data m_data;
                 _Node* m_next;
                 _Node* m_prev;
@@ -277,20 +269,13 @@ namespace tau
                 template< class _Data, class _Allocator > friend class _Node;
             
             public:
-                enum Direction 
-                {
-                    Tail,
-                    Head
-                };
-                
                 enum Action
                 {
-                    Added,
-                    Removed
+                    Add,
+                    Remove
                 };
             
                 typedef _Node<  Data, Allocator > Node;
-                
             
                 List( )
                     : m_tail( NULL ), m_head( NULL ), m_length( 0 )
@@ -298,13 +283,19 @@ namespace tau
                 }
             
                 List( const List& list )
-                    : m_head( list.m_head ), m_tail( list.m_tail ), m_length( list.m_length )
+                    : m_tail( NULL ), m_head( NULL ), m_length( 0 )
                 {
+                    operator = ( list );
                 }
             
                 virtual ~List()
                 {
                     clear();
+                }
+                
+                void operator = ( const List& list )
+                {
+                    list.nodes( [ & ]( Node* node ) { append( node->data() ); } );
                 }
             
                 Node* tail() const
@@ -334,9 +325,7 @@ namespace tau
             
                 template < class Nodes > void nodes( Nodes nodes, Direction direction = Head ) 
                 {
-                    auto head = direction == Head;
-                
-                    auto node = head ? m_head : m_tail;
+                    auto node = direction == Head ? m_head : m_tail;
                     
                     for ( ;; )
                     {
@@ -347,7 +336,7 @@ namespace tau
                         //
                         //  get next node since node might be freed in provided function
                         //
-                        auto next = head ? node->next() : node->prev();
+                        auto next = direction == Head ? node->next() : node->prev();
                         //
                         //  call provided function
                         //
@@ -388,9 +377,7 @@ namespace tau
             
                 void clear()
                 {
-                    nodes( [ & ]( Node* node ) { box::detype< Node, Allocator >( node ); }, Tail );
-//                    m_head = NULL;
-  //                  m_tail = NULL;
+                    nodes( [ & ]( Node* node ) { node->remove(); }, Tail );
                 }    
             
             private:
@@ -400,14 +387,16 @@ namespace tau
                 
                     if ( !m_head || !m_tail )
                     {
-                        this->init( node );
+                        init( node );
                     }
                     else
                     {
-                        direction == Head ? m_head->before( node, data ) : m_tail->after( node, data );
+                        Node*& list = direction == Head ? m_head : m_tail;
+                        list->link( node, direction );
+                        list = node;
                     }
                 
-                    update( Added );
+                    update( node, Add );
 
                     return node;
                 }
@@ -423,16 +412,33 @@ namespace tau
                     return box::type< Node, Allocator >( data , this );
                 }
             
-                void update( Action action )
+                void update( Node* node, Action action, Direction direction = Head )
                 {
                     switch ( action )
                     {
-                        case Added:
-                            m_length ++;
+                        case Add:
+                            {
+                                node->m_list = this;
+                                m_length ++;
+                            }
+                            
                             break;
                     
-                        case Removed:
-                            m_length --;
+                        case Remove:
+                            {
+                                if ( m_tail == node )
+                                {
+                                    m_tail = NULL;
+                                }
+                            
+                                if ( m_head == node )
+                                {
+                                    m_head = NULL;
+                                }
+                            
+                                m_length --;
+                            }
+                            
                             break;    
                     }
                 }
@@ -458,9 +464,14 @@ namespace tau
                     return m_size;
                 }
                 
-                void inc( ui size )
+                void inc( ui size = 1 )
                 {
                     m_size += size;
+                }
+                
+                void dec( ui size = 1 )
+                {
+                    m_size -= size;
                 }
                 
             protected:
@@ -552,6 +563,13 @@ namespace tau
                     std::memset( m_nodes, 0, sizeof( m_nodes ) );
                 }
                 
+                Map( const Map& map )
+                    : Sizeable(), m_sizeable( NULL )
+                {
+                    std::memset( m_nodes, 0, sizeof( m_nodes ) );
+                    operator = ( map );
+                }
+                
                 virtual ~Map()
                 {
                     for ( auto i = 0; i < Size; i++ )
@@ -619,6 +637,21 @@ namespace tau
                         
                         nodes( node );
                     }    
+                }
+                
+                bool remove( ul hash )
+                {
+                    auto& node = find( hash );
+                    if ( node )
+                    {
+                        node->sizeable()->dec();
+                        box::detype< Node, Allocator >( node );
+                        node = NULL;
+                        
+                        return true;
+                    }
+                    
+                    return false;
                 }
                 
             protected:

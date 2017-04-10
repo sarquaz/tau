@@ -26,7 +26,7 @@ typedef unsigned char uchar;
 
 
 #include "sys.h"
-#include "box.h"
+
 
 
 
