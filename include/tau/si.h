@@ -8,7 +8,36 @@
 namespace tau
 {
     namespace si
-    {        
+    {
+//        void out( const Data& data, Stream stream  );
+        
+        struct check
+        {
+            ui skip;
+            long result;
+
+            check( long _result, ui _skip = EWOULDBLOCK )
+            : skip( _skip ), result( _result )
+            {
+            }
+
+            ul operator()( const char* format, ... )
+            {
+                if ( errno == skip || result != -1 )
+                {
+                    return result;
+                }
+
+                Error error;
+                EPRINT( error.message, format );
+                error.message( ", errno %d", errno );
+                throw error;
+            }
+        };
+        
+             
+    }
+        
         
         // class File
         // {
@@ -425,7 +454,7 @@ namespace tau
  //            Address m_address;
  //        };
  // 
-    }
+
 }
 
 

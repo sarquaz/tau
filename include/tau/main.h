@@ -56,7 +56,7 @@ namespace tau
         
         void listener( Listener* listener )
         {
-            m_listeners.add( listener );
+            m_listeners.append( listener );
         }
         
     protected:

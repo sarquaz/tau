@@ -1,5 +1,7 @@
-#ifndef _TAU_LI_H
-#define _TAU_LI_H
+#ifndef _TAU_LI_H_
+#define _TAU_LI_H_
+
+#include "../../src/trace.h"
 
 namespace tau
 {
@@ -113,706 +115,349 @@ namespace tau
             si::mem::Bytes< Data > m_bytes;
         };
         
-        template < class Value > struct _Node
-        {
-            Value v;
-            _Node* next;
-            _Node* prev;
-
-            _Node( const Value& value )
-                : next( NULL ), prev( NULL ), v( value )
-            {
-            }
-
-            _Node( )
-                : next( NULL ), prev( NULL )
-            {
-            }
-        
-            void remove( )
-            {
-                if ( prev )
-                {
-                    prev->next = next;
-                }
-
-                if ( next )
-                {
-                    next->prev = prev;
-                }
-            }
-
-            void after( _Node& node )
-            {
-                this->next = &node;
-                node.prev = this;
-            
-            }
-        };
-
-        template < class Type > class Pile
-        {               
-            struct Chunk
-            {
-                ui got;
-                ui count;
-                ui freed;
-                void* start;
-        
-                Chunk( ui _count = 0 )
-                    : count( _count ), got( 0 ), freed( 0 ) 
-                {
-                }
-            };
-     
-            typedef _Node< Chunk > Node;
-    
-            template < class _Type > struct _Item
-            {
-                Node* node;
-                _Type type;
-            };
-    
-            typedef _Item< Type > Item;
-    
-            enum 
-            {
-                Count = 10
-            };
-    
-        public:
-            ui count;
-    
-            Pile( ui _count = Count )
-                : count( _count ), m_list( NULL ), m_size( 0 )
-            {
-            }
-    
-            ~Pile()
-            {
-                clear();
-            }
-    
-            template < class ... Args > Type& get( Args&&... args )
-            {
-                //
-                //  check if the space was allocated
-                //
-                if ( m_list )
-                {
-                    auto& count = m_list->v.got;
-                    //
-                    //  if the new item fits in the allocated storage
-                    //                
-                    if ( count < m_list->v.count )
-                    {
-
-                        //
-                        //  get the pointer
-                        //
-                        auto item = ( Item* ) ( ( ul ) m_list->v.start + count * sizeof( Item ) );                            
-                        auto type = &item->type;
-                        item->node = m_list;
-                        //
-                        //  increase count
-                        //
-                        count ++;
-                        //
-                        //  increase size
-                        //
-                        set( [ & ] ( ) { m_size ++; } );
-                        //
-                        //  call item constructor
-                        //
-                        new ( type ) Type( std::forward< Args >( args ) ... );
-                        return *type;
-                    }
-                }
-                
-                //
-                //  allocate space
-                //
-                auto& node = this->node( );
-                if ( m_list )
-                {
-                    m_list->after( node );
-                }
-                m_list = &node;
-                //
-                //  call itself again (with enough space)
-                //
-                return get( std::forward< Args >( args ) ... );
-            }
-    
-            void free( Type& type )
-            {
-                //
-                //  call desctuctor
-                //
-                type.~Type();
-        
-                //
-                //  get pointer to item
-                //
-                auto item = ( Item* ) ( ( ul ) &type - sizeof( Node* ) );
-                auto node = item->node;
-                auto& freed = node->v.freed;
-                freed ++;
-                //
-                //  decrease size
-                //
-                set( [ & ] ( ) { m_size --; } );
-        
-                //
-                //  if all items contained in this node were freed 
-                //
-                if ( freed == node->v.count )
-                {
-                    if ( m_list == node )
-                    {
-                        m_list = dynamic_cast< Node* > ( node->prev );
-                    }
-            
-                    free( *node );
-                }
-            }
-    
-            void free( Node& node )
-            {
-                //
-                //  remove node
-                //  
-                node.remove();
-                //
-                //  free allocated space
-                //
-                m_items.free( ( Item* ) ( node.v.start ), node.v.count );
-                m_nodes.free( node );                        
-            }
-    
-            void clear()
-            {
-                auto& node = m_list;
-                while ( node )
-                {
-                    auto prev = node->prev;
-                    free( *node );
-                    node = prev;
-                }
-        
-                m_size = 0;
-                count = Count;
-            }
-    
-            ui size() const
-            {
-                return m_size;
-            }
-    
-        private:
-            template < class Op > void set( Op op )
-            {
-                auto size = m_size;
-                op( );
-        
-                if ( !( m_size % Count ) )
-                {
-                    auto& count = this->count;
-                    auto change = m_size / count;
-                    count = ( m_size > size ? +change : -change ) + count;
-                }                    
-            }
-    
-            Node& node()
-            {
-                auto& node = m_nodes.get();
-        
-                node.v.start = m_items.get( count );
-                node.v.count = count;
-        
-                return node;
-            }
-                    
-        private:
-            si::mem::Types< Node > m_nodes;
-            si::mem::Bytes< Item > m_items;
-            Node* m_list;
-            ui m_size;
-        };
+        // template < class Value > struct _Node
+        // {
+        //     Value v;
+        //     _Node* next;
+        //     _Node* prev;
+        //
+        //     _Node( const Value& value )
+        //         : next( NULL ), prev( NULL ), v( value )
+        //     {
+        //     }
+        //
+        //     _Node( )
+        //         : next( NULL ), prev( NULL )
+        //     {
+        //     }
+        //
+        //     void remove( )
+        //     {
+        //         if ( prev )
+        //         {
+        //             prev->next = next;
+        //         }
+        //
+        //         if ( next )
+        //         {
+        //             next->prev = prev;
+        //         }
+        //     }
+        //
+        //     void after( _Node& node )
+        //     {
+        //         this->next = &node;
+        //         node.prev = this;
+        //
+        //     }
+        // };
+        //
+        // template < class Type > class Pile
+        // {
+        //     struct Chunk
+        //     {
+        //         ui got;
+        //         ui count;
+        //         ui freed;
+        //         void* start;
+        //
+        //         Chunk( ui _count = 0 )
+        //             : count( _count ), got( 0 ), freed( 0 )
+        //         {
+        //         }
+        //     };
+        //
+        //     typedef _Node< Chunk > Node;
+        //
+        //     template < class _Type > struct _Item
+        //     {
+        //         Node* node;
+        //         _Type type;
+        //     };
+        //
+        //     typedef _Item< Type > Item;
+        //
+        //     enum
+        //     {
+        //         Count = 10
+        //     };
+        //
+        // public:
+        //     ui count;
+        //
+        //     Pile( ui _count = Count )
+        //         : count( _count ), m_list( NULL ), m_size( 0 )
+        //     {
+        //     }
+        //
+        //     ~Pile()
+        //     {
+        //         clear();
+        //     }
+        //
+        //     template < class ... Args > Type& get( Args&&... args )
+        //     {
+        //         //
+        //         //  check if the space was allocated
+        //         //
+        //         if ( m_list )
+        //         {
+        //             auto& count = m_list->v.got;
+        //             //
+        //             //  if the new item fits in the allocated storage
+        //             //
+        //             if ( count < m_list->v.count )
+        //             {
+        //
+        //                 //
+        //                 //  get the pointer
+        //                 //
+        //                 auto item = ( Item* ) ( ( ul ) m_list->v.start + count * sizeof( Item ) );
+        //                 auto type = &item->type;
+        //                 item->node = m_list;
+        //                 //
+        //                 //  increase count
+        //                 //
+        //                 count ++;
+        //                 //
+        //                 //  increase size
+        //                 //
+        //                 set( [ & ] ( ) { m_size ++; } );
+        //                 //
+        //                 //  call item constructor
+        //                 //
+        //                 new ( type ) Type( std::forward< Args >( args ) ... );
+        //                 return *type;
+        //             }
+        //         }
+        //
+        //         //
+        //         //  allocate space
+        //         //
+        //         auto& node = this->node( );
+        //         if ( m_list )
+        //         {
+        //             m_list->after( node );
+        //         }
+        //         m_list = &node;
+        //         //
+        //         //  call itself again (with enough space)
+        //         //
+        //         return get( std::forward< Args >( args ) ... );
+        //     }
+        //
+        //     void free( Type& type )
+        //     {
+        //         //
+        //         //  call desctuctor
+        //         //
+        //         type.~Type();
+        //
+        //         //
+        //         //  get pointer to item
+        //         //
+        //         auto item = ( Item* ) ( ( ul ) &type - sizeof( Node* ) );
+        //         auto node = item->node;
+        //         auto& freed = node->v.freed;
+        //         freed ++;
+        //         //
+        //         //  decrease size
+        //         //
+        //         set( [ & ] ( ) { m_size --; } );
+        //
+        //         //
+        //         //  if all items contained in this node were freed
+        //         //
+        //         if ( freed == node->v.count )
+        //         {
+        //             if ( m_list == node )
+        //             {
+        //                 m_list = dynamic_cast< Node* > ( node->prev );
+        //             }
+        //
+        //             free( *node );
+        //         }
+        //     }
+        //
+        //     void free( Node& node )
+        //     {
+        //         //
+        //         //  remove node
+        //         //
+        //         node.remove();
+        //         //
+        //         //  free allocated space
+        //         //
+        //         m_items.free( ( Item* ) ( node.v.start ), node.v.count );
+        //         m_nodes.free( node );
+        //     }
+        //
+        //     void clear()
+        //     {
+        //         auto& node = m_list;
+        //         while ( node )
+        //         {
+        //             auto prev = node->prev;
+        //             free( *node );
+        //             node = prev;
+        //         }
+        //
+        //         m_size = 0;
+        //         count = Count;
+        //     }
+        //
+        //     ui size() const
+        //     {
+        //         return m_size;
+        //     }
+        //
+        // private:
+        //     template < class Op > void set( Op op )
+        //     {
+        //         auto size = m_size;
+        //         op( );
+        //
+        //         if ( !( m_size % Count ) )
+        //         {
+        //             auto& count = this->count;
+        //             auto change = m_size / count;
+        //             count = ( m_size > size ? +change : -change ) + count;
+        //         }
+        //     }
+        //
+        //     Node& node()
+        //     {
+        //         auto& node = m_nodes.get();
+        //
+        //         node.v.start = m_items.get( count );
+        //         node.v.count = count;
+        //
+        //         return node;
+        //     }
+        //
+        // private:
+        //     si::mem::Types< Node > m_nodes;
+        //     si::mem::Bytes< Item > m_items;
+        //     Node* m_list;
+        //     ui m_size;
+        // };
 
         /**
          * List class (std::list replacement)
         **/
-        template < class Data > class List
+        template < class Value > class List: public box::list::List< Value >
         {
         public:
-            typedef _Node< Data > Item;
-
             List( )
-                : m_list( NULL )
+                : box::list::List< Value >()
             {
             }
 
-            List( std::initializer_list< Data > list )
-                : m_list( NULL )
+            List( std::initializer_list< Value > list )
+                : box::list::List< Value >()
             {
                 for ( auto i = list.begin( ); i != list.end( ); i++ )
                 {
-                    add( *i );
+                    append( *i );
                 }
             }
 
             List( const List& list )
-                : m_list( NULL )
+                : box::list::List< Value >( list )
             {
-                list.all( [ & ] ( const Data & value ) { add( value ); } );
             }
 
-            ~List( )
+            virtual ~List( )
             {
-                clear( );
             }
 
-            /**
-             * Add item to the list
-            **/
-            Item& add( const Data& value )
+            Value pop()
             {
-                return add( m_items.get( value ) );
-            }
-
-            /**
-             * Remove item from list
-            **/
-            void remove( Item& item )
-            {                
-                if ( m_list == &item )
+                auto node = this->tail( );
+                if ( node )
                 {
-                    m_list = item.next;
+                    auto data = node->data();
+                    node->remove();
+                    return data;    
                 }
-
-                item.remove();
-                m_items.free( item );
-            }
-            
-            /**
-             * Get last item
-            **/
-            Item& tail( )
-            {
-                if ( !m_list )
-                {
-                    throw Error( );
-                }
-                else
-                {
-                    return *m_list;
-                }
-            }
-
-            const Item& tail( ) const
-            {
-                return const_cast< List* >( this )->tail();
-            }
-
-            Data pop()
-            {
-                auto& item = tail( );
-                auto data = item.v;
-
-                remove( item );
-                return data;
+                
+                throw Error();
             }
 
             template < class Logic > Mass< Data > filter( Logic logic ) const
             {
                 Mass< Data > mass;
-                all( [ & ]( const Data& data )
+                all( [ & ]( const Value& value )
                 {
-                    if ( logic( data ) )
+                    if ( logic( value ) )
                     {
-                        mass.add( data );
+                        mass.add( value );
                     }
                 } );
 
                 return mass;
             }
 
-            void clear( )
-            {
-                m_items.clear();
-                m_list = NULL;
-            }
-
-            template< class All > void all( All all ) const
-            {
-                items( [ & ] ( const Item & node ) { all( node.v ); } );
-            }
-
-            template< class All > void all( All all )
-            {
-                items( [ & ] ( Item & node ) { all( node.v ); } );
-            }
-
-            template < class Items > void items( Items items ) const
-            {
-                return const_cast< List* >( this )->items( items );
-            }
-
-            template < class Items > void items( Items items )
-            {
-                auto tail = m_list;
-                while ( tail )
-                {
-                    auto prev = tail->prev;
-                    items( *tail );
-                    tail = prev;
-                }
-            }
-
-            ui size( ) const
-            {
-                return m_items.size();
-            }
-
             bool empty( ) const
             {
-                return !size();
+                return !( this->length() );
             }
-
-        private:
-            Item& add( Item& item )
-            {
-                if ( m_list )
-                {
-                    m_list->after( item );
-                }
-                
-                m_list = &item;
-                return *m_list;
-            }
-
-            
-        private:
-            Item* m_list;
-            Pile< Item > m_items;
         };
         
-        /**
+        
+        template < class Key, class Value > struct Data
+        {
+            Key key;
+            Value value;
+            
+            Data(  )
+            {
+            }
+            
+            Data( const Data& data )
+                : key( data.key ), value( data.value )
+            {
+            }
+        };
+        
+        /**retu
          * Map class (std::map replacement)
         **/
-        template < class Key, class Value, ui Size = 64 > class Map
+        template < class Key, class Value, ui Size = 64 > class Map: public box::map::Map< Data< Key, Value >, Size > 
         {
-            template < ui S > struct _Hash
-            {
-                ul value;
-                ul mod;
-                ui id;
-                
-                _Hash( ul _value = 0, ui _id = 0 )
-                    : value( _value ), mod( _value ), id( _id )
-                {
-                }
-                
-                _Hash( const _Hash& hash )
-                    : value( hash.value ), mod( hash.mod ), id( hash.id )
-                {
-                }
-                                
-                void operator =( const _Hash& hash )
-                {
-                    value = hash.value;
-                    mod = hash.mod;
-                    id = hash.id;
-                }
-                
-                void operator()()
-                {
-                    mod = mod > S ? mod / S : mod;
-                }
-                
-                operator ul() const
-                {
-                    return value;
-                }
-                
-                bool operator ==( const _Hash& hash ) const
-                {
-                    return value == hash.value && id == hash.id;
-                }
-            };
-            
-            template < class K, class V, ui S > struct _Item
-            {
-                typedef _Hash< S > Hash;
-                
-                K key;
-                V value;
-                Hash hash;
-                
-                typename List< _Item* >::Item* list;
-                
-                _Item( )
-                : list( NULL )
-                {
-                }
-            };
-            
-            template < class K, class V, ui S > struct _Node 
-            {
-                typedef _Item< K, V, S > Item;
-                typedef typename Item::Hash Hash;
-                
-                Item item;
-                _Node*& ref;
-                _Node** nodes;
-                _Node* prev; 
-
-                _Node( _Node*& _ref )
-                    : ref( _ref ), nodes( NULL ), prev( NULL )
-                {
-                }
-                
-                _Node( ul hash, const K& key, _Node*& _ref )
-                    : item( key, hash ), ref( _ref ), nodes( NULL ), prev( NULL )
-                {
-                }
-
-                ~_Node( )
-                {
-                    ref = NULL;
-                }
-
-                Item* get( Hash& hash, _Node** parent = NULL )
-                {
-                    if ( parent )
-                    {
-                        *parent = this;
-                    }
-                    
-                    hash(); 
-                    
-                    if ( item.hash == hash )
-                    {
-                        return &item;
-                    }
-                    
-                    if ( nodes )
-                    {
-                        auto node = ( *this )[ hash ];
-                        if ( node )
-                        {
-                            auto& item = node->item;
-                            
-                            if ( item.hash == hash )
-                            {
-                                return &item;
-                            }
-                            else
-                            {
-                                return node->get( hash, parent );
-                            }
-                        }
-                    }
-
-                    return NULL;
-                }
-                
-                _Node*& operator []( const Hash& hash )
-                {
-                    return nodes[ hash.mod % S ];
-                }
-            };
-            
-            typedef _Item< Key, Value, Size > Item; 
-            typedef typename Item::Hash Hash; 
-            typedef _Node< Key, Value, Size > Node;
-            typedef List< Item* > Items;
-
         public:
-            Map( )
-                : m_null( NULL ), m_id( 0 ) 
+            Map()
+                : box::map::Map< Data< Key, Value >, Size > ()
             {
-                m_node = &m_nodes.get( m_null );
-                m_last = m_node;
+            }
+            virtual ~Map()
+            {
+                
             }
             
-            virtual ~Map( )
+            
+            Value& operator[]( const Key& key )
             {
-                clear( true );
-            }
-
-            Value& operator[ ]( const Key& key )
-            {
-                auto hash = this->hash( key );
-
-                Node* parent = NULL;
-                auto item = m_node->get( hash, &parent );
-
-                if ( item )
-                {
-                    return item->value;
-                }
-
-                return set( hash, key, *parent ).item.value;
-            }
-
-            Value& get( const Key& key )
-            {
-                auto hash = this->hash( key );
-                auto item = m_node->get( hash );
-
-                if ( item )
-                {
-                    return item->value;
-                }
-
-                throw Error( );
+                ENTER();
+                
+                ul hash = box::h::hash< Key >()( key );    
+                auto& data = box::map::Map< Data< Key, Value >, Size >::operator[]( hash );
+                data.key = key;
+                return data.value;
             }
             
             const Value& get( const Key& key ) const
             {
-                return const_cast < Map* > ( this )->get( key );
-            }
-            
-            bool remove( const Key& key )
-            {
-                auto hash = this->hash( key );
-                auto item = m_node->get( hash );
-
-                if ( item )
-                {
-                    remove( *item );
-                    return true;
-                }
-
-                return false;
-            }
-
-            ui size( ) const
-            {
-                return m_items.size( );
-            }
-            
-            bool empty() const
-            {
-                return !size();
-            }
-            
-            void clear( bool pools = false )
-            {
-                if ( pools )
-                {
-                    free();
-                }
-                else
-                {
-                    m_id ++;
-                }
+                ul hash = box::h::hash< Key >()( key );    
+                auto node = ( const_cast< Map* >( this ) )->find( hash );
                 
-                m_items.clear();
-            }
-
-            template < class Values > void values( Values values ) const
-            {
-                m_items.all( [ & ] ( const Item* item ) { values( item->value ); } );
-            }
-
-            template < class Keys > void keys( Keys keys ) const
-            {
-                m_items.all( [ & ] ( const Item* item ) { keys( item->key ); } );
-            }
-
-            template < class All > void all( All all ) const
-            {
-                m_items.all( [ & ] ( const Item* item ) { all( item->key, item->value ); } );
-            }
-
-        private:
-            Hash hash( const Key& key ) const
-            {
-                printf( "need hash for key %s \n", key.c() );
-                return Hash( si::h::hash< Key >( )( key ), m_id );
-            }
-            
-            void item( Item& item, const Hash& hash, const Key& key )
-            {
-                item.hash = hash;
-                item.key = key;
-                item.list = &m_items.add( &item );
-            }
-            void free()
-            {
-                auto& last = m_last;
-                while ( last )
+                if ( node )
                 {
-                    auto prev = last->prev;
-                    if ( last->nodes )
-                    {
-                        m_pools.free( last->nodes, Size );
-                    }
-                    
-                    m_nodes.free( *last );
-                    last = prev;
+                    return node->data().value;
                 }
+                 
+                throw Error( "value not found" );    
             }
-            
-            void remove( Item& item )
-            {
-                m_items.remove( *item.list );
-                item.hash = 0;                
-            }
-            
-            void nodes( Node& node )
-            {
-                bool reuse = false;
-                node.nodes = m_pools.get( Size, &reuse );
-                
-                if ( !reuse )
-                {
-                    std::memset( node.nodes, 0, Size * sizeof ( Node* ) );
-                }
-            }
-            
-            Node& node( Node*& ref, const Hash& hash, const Key& key )
-            {
-                auto& node = m_nodes.get( ref );
-                item( node.item, hash, key );
-                node.prev = m_last;
-                m_last = &node;
-                return node;
-            }
-
-            Node& set( const Hash& hash, const Key& key, Node& parent )
-            {   
-                auto& item = parent.item;
-                
-                if ( ! ( ul ) item.hash )
-                {
-                    this->item( item, hash, key );
-                    return parent;
-                }
-                
-                if ( !parent.nodes )
-                {
-                    nodes( parent );
-                }
-                
-                auto& node = parent[ hash ];
-
-                node = &this->node( node, hash, key );
-                
-                return *node;
-            }
-
-        private:
-            Node* m_node;
-            Node* m_null;
-            Pile< Node > m_nodes;
-            si::mem::Bytes< Node* > m_pools;
-            Items m_items;
-            Node* m_last;
-            ui m_id;
         };
 
         template< class Value > class Set : public Map< Value, Value >

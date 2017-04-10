@@ -19,7 +19,14 @@
 #include <limits.h>
 #include <time.h>
 
+typedef unsigned short us;
+typedef unsigned int ui;
+typedef unsigned long ul;
+typedef unsigned char uchar;
+
+
 #include "sys.h"
+#include "box.h"
 
 
 
@@ -32,10 +39,6 @@
 #define MIN( a, b ) ( a < b ) ? ( a ) : ( b )
 #define lengthof( a ) sizeof( a ) / sizeof( a[ 0 ] )
 
-typedef unsigned short us;
-typedef unsigned int ui;
-typedef unsigned long ul;
-typedef unsigned char uchar;
 
 namespace tau
 {

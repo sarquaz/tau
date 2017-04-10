@@ -300,6 +300,25 @@ namespace tau
         }
     };
     
+    namespace box
+    {
+        namespace h
+        {
+        
+            //
+            //  Data
+            //   
+            template <> struct hash< data::Data >
+            {
+                ul operator()( const data::Data& data ) const
+                {
+                    return data.hash();
+                }
+            };
+        }
+    }
+       
+    
 }
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef _TAU_MEM_H
-#define _TAU_MEM_H
+#ifndef _TAU_MEM_H_
+#define _TAU_MEM_H_
 
 #include "box.h"
 
@@ -7,11 +7,6 @@ namespace tau
 {
     namespace si
     {
-        namespace map
-        {
-
-            
-        }
         namespace mem
         {
             struct Node

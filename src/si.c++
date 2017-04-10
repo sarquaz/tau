@@ -327,51 +327,37 @@ namespace tau
     {
         ul Hash::operator()() const
         {
-            ul hash = 179426173;
+            ul hash = 100253314709;
+            ul last = 179426173;
+            ul store = hash ^ m_size;
             auto pos = 0;
-
-            auto step = sizeof( hash );
-
-            if ( m_size <= step )
-            {
-                step = m_size / 2;
-            }
-
-            ul last = 1;
-            ul* next = NULL;
-
+            ul* next;
+            
+            auto step = sizeof( next );
+            
+            ul number = hash ^ m_size;
+            
             for ( ;; )
             {
+                
                 auto length = 0;
-                ul number = step ^ m_size;
+                auto rem = m_size - pos;
 
-                if ( pos + step <= m_size )
+                if ( rem >= sizeof( store ) )
                 {
-                     next = ( ul* ) ( m_what + pos ); 
+                    next =  ( ul* ) ( m_what + pos ); 
+
                 }
                 else
                 {
-                    for ( ;; )
+                    next = &store;
+                    for ( auto i = 0; i < rem; i++ )
                     {
-                        auto index = pos + step - length;
-                        
-                        if ( index >= m_size )
-                        {
-                            index = index - m_size;
-                        }
-        
-                        ( ( char* ) &number )[ step - length ] = m_what[ index ];
 
-                        length ++;
-                        if ( length >= step )
-                        {
-                            break;
-                        }
+                        ( ( uchar* ) next )[ i ] = m_what[ pos + i ];
                     }
-
-                    next = &number;
+                    
                 }
-
                 
                 hash ^= ( *next * last );
                 last *=  m_what[ pos ];
