@@ -3,7 +3,6 @@
 
 #include "../../src/trace.h"
 
-
 namespace tau
 {
     namespace box
@@ -160,6 +159,7 @@ namespace tau
                 template < class, class > friend class List;
                 
             public:
+                
                 _Node( const Data& data, List< Data, Allocator >* list = NULL )
                     : m_data( data ), m_next( 0 ), m_prev( 0 ), m_list( list ), m_custom( NULL )
                 {

@@ -1,5 +1,5 @@
-#ifndef _TAU_MAIN_H
-#define _TAU_MAIN_H
+#ifndef _TAU_MAIN_H_
+#define _TAU_MAIN_H_
 
 namespace tau
 {
@@ -105,7 +105,6 @@ namespace tau
     private:
         li::Mass< Thread* > m_threads; 
         si::os::Lock m_lock;
-        
     };
     
 }
