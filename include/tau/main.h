@@ -103,7 +103,7 @@ namespace tau
         Thread* thread();
     
     private:
-        li::Mass< Thread* > m_threads; 
+        li::Array< Thread* > m_threads; 
         si::os::Lock m_lock;
     };
     

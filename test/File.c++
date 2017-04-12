@@ -6,7 +6,7 @@ class TestFile: public Test
 {
 public:
     TestFile()    
-    : m_name( si::Data::get() )
+    : m_name( data::Data::get() )
     {
         setInterval( Time( 10 ) );
         Test::handler( File::Read, ( Test::Handler ) &TestFile::onRead );
@@ -77,10 +77,10 @@ private:
 
         auto& data = *new Data( );
 
-        data.first.add( si::Data::get( 100 ) );
+        data.first.add( data::Data::get( 100 ) );
         file.out( ).add( data.first );
         
-        data.second.add( si::Data::get( 100 ) );
+        data.second.add( data::Data::get( 100 ) );
         file.out( ).add( data.second );
 
         Test::assign( file, data );
@@ -103,7 +103,7 @@ private:
     }
     
 private:
-    si::Data m_name;
+    data::Data m_name;
 };
 
 int main()

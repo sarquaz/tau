@@ -2,6 +2,7 @@
 #define _TAU_LI_H_
 
 #include "../../src/trace.h"
+#include "newmem.h"
 
 namespace tau
 {
@@ -10,10 +11,10 @@ namespace tau
          /**
           * Array wrapper
          **/
-        template < class Data, ui Size = 16 > class Mass
+        template < class Data, ui Size = 16 > class Array
         {
         public:
-            Mass( )
+            Array( )
                 : m_data( m_default ), m_size( Size ), m_length( 0 )
             {
             }
@@ -85,7 +86,7 @@ namespace tau
                     //
                     //  allocate space
                     //
-                    auto data = m_bytes.get( size );
+                    auto data = newmem::instance().get( size * sizeof( Data ) );
                     //
                     //  copy data
                     //
@@ -95,10 +96,10 @@ namespace tau
                     //
                     if ( m_data != m_default )
                     {
-                        m_bytes.free( m_data, m_size );    
+                        newmem::instance().free( m_data );    
                     }
                     m_size = size;
-                    m_data = data;
+                    m_data = ( Data* ) data;
                 }
             }
 
@@ -112,7 +113,6 @@ namespace tau
             Data* m_data;
             ui m_size;
             ui m_length;
-            si::mem::Bytes< Data > m_bytes;
         };
         
 
@@ -158,18 +158,18 @@ namespace tau
                 throw Error();
             }
 
-            template < class Logic > Mass< Data > filter( Logic logic ) const
+            template < class Logic > List< Data > filter( Logic logic ) const
             {
-                Mass< Data > mass;
+                List< Data > list;
                 all( [ & ]( const Value& value )
                 {
                     if ( logic( value ) )
                     {
-                        mass.add( value );
+                        list.append( value );
                     }
                 } );
 
-                return mass;
+                return list;
             }
 
             bool empty( ) const

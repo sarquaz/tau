@@ -9,7 +9,7 @@ class TestProcess: public Test
 {
 public:
     TestProcess()
-    : m_test( si::Data::get( 10 ) )
+    : m_test( data::Data::get( 10 ) )
     {
         setInterval( Time( 500 ) );
     }
@@ -93,7 +93,7 @@ public:
     {
        ENTER();
         auto& data = *new Data();
-        data.out.add( si::Data::get() );
+        data.out.add( data::Data::get() );
         
         auto& process = Test::process( "test=`cat`; echo $test" );
         
@@ -137,7 +137,7 @@ public:
     };
     
 private:
-    si::Data m_test;
+    data::Data m_test;
 };
 
 int main()

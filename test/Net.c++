@@ -40,7 +40,7 @@ private:
         ENTER();
         auto& net = dynamic_cast< Net& >( grain );
         
-        si::Data string = net.in();        
+        data::Data string = net.in();        
         
         if ( net.remote() )
         {

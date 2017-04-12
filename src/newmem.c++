@@ -98,6 +98,18 @@ namespace tau
             
         };
         
+        __thread Mem* t_instance = NULL;
+        
+        Mem& instance()
+        {
+            if ( !t_instance )
+            {
+                t_instance = new Mem();
+            }
+            
+            return *t_instance;
+        }
+        
         void* Mem::get( ui size )
         {
             ENTER();

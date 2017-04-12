@@ -62,7 +62,7 @@ namespace tau
         
         static void out( const char* format, ... )
         {
-            si::Data data;
+            data::Data data;
             PRINT( data, format );
             data.add( "\n" );
             si::out( data );
@@ -93,7 +93,7 @@ namespace tau
                 
             }
             
-            void set( const si::Data& name, Set& set )
+            void set( const data::Data& name, Set& set )
             {
                 sets[ name.hash() ].add( &set );
             }
@@ -121,9 +121,9 @@ namespace tau
             return *s_state;
         }
         
-        si::Data string( )
+        data::Data string( )
         {
-            auto string = si::Data::get();
+            auto string = data::Data::get();
             state().strings[ string ] = string;
             
             return string;
@@ -145,17 +145,17 @@ namespace tau
             m_interval = interval;
         }
         
-        Set& start( const Set::Options& options, const si::Data& name )
+        Set& start( const Set::Options& options, const data::Data& name )
         {
             ENTER( );
             
             auto& set = Set::get( name );
             set.females().add( *this );
             
-            si::Data s;
-            options.all( [ & ] ( const si::Data& key, const si::Data& value ) 
+            data::Data s;
+            options.all( [ & ] ( const data::Data& key, const data::Data& value ) 
             {
-                s.add( si::Data()( "%s: %s\t", key.c(), value.c() ) );
+                s.add( data::Data()( "%s: %s\t", key.c(), value.c() ) );
             } );
             
             TRACE( "options: %s", s.c() );
@@ -190,12 +190,12 @@ namespace tau
             
             if ( type == si::Link::Local )
             {   
-                options[ "host" ] = si::Data()( "/tmp/%s", ( const char* ) si::Data::get() );
+                options[ "host" ] = data::Data()( "/tmp/%s", ( const char* ) data::Data::get() );
             }
             else
             {
                 options[ "host" ] = "localhost";
-                options[ "port" ] = si::Data()( "%u", si::random( 10000 ) + 9000 );
+                options[ "port" ] = data::Data()( "%u", si::random( 10000 ) + 9000 );
             }
             
             return dynamic_cast< Net& >( start( options, "net" ) );
@@ -211,12 +211,12 @@ namespace tau
             return dynamic_cast< Net& >( start( options, "net" ) );
         }
         
-        Bot& process( const si::Data& command )
+        Bot& process( const data::Data& command )
         {
             return dynamic_cast< Bot& >( start(  { { "command", command } } , "process" ) );
         }
         
-//        File& file( const si::Data& name )
+//        File& file( const data::Data& name )
 //        {
 //            ENTER();
 //            return dynamic_cast< File& >( start(  { { "name", name } } , "file" ) );
@@ -232,12 +232,12 @@ namespace tau
             }
         }
         
-        void set( const si::Data& name, bool value = true )
+        void set( const data::Data& name, bool value = true )
         {
             m_checks[ name.hash() ].value = value;
         }
         
-        void check( const si::Data& name )
+        void check( const data::Data& name )
         {
             out( "checking %s", name.c() );
             

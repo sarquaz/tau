@@ -46,7 +46,7 @@ private:
         ENTER();        
 
         auto data = new Data();
-        data->till().add( si::Data::get( 100 ) );
+        data->till().add( data::Data::get( 100 ) );
         auto& server = Test::server();
         Test::assign( server, *data );
         

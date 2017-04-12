@@ -22,9 +22,12 @@ namespace tau
         class Mem
         {
         public:
+            static Mem& instance();
+            
             Mem()
                 : m_total( 1024 * 1024 * 10 ), m_used( 0 )
             {
+                ENTER();
             }
             
             void* get( ui size );
@@ -49,7 +52,10 @@ namespace tau
             box::map::Map< List, 0x100 > m_map;
             ul m_total;
             ul m_used;
+            
         };
+        
+        Mem& instance();
     }
 }
 
