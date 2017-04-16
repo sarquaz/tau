@@ -150,8 +150,6 @@ namespace tau
             return hash;
         }
         
-        __thread si::mem::Char* t_mem = NULL;  
-        
         struct Chunk
         {
             enum
@@ -178,21 +176,11 @@ namespace tau
             }
         };
         
-        si::mem::Char& chars()
-        {
-            if ( !t_mem )
-            {
-                t_mem = new si::mem::Char( Chunk::Size );
-            }
-            
-            return *t_mem;
-        }
-        
         void Data::Piece::clear( )
         {
             if ( m_data )
             {
-                chars().free( m_data, m_size / Chunk::Size );
+                mem::mem().free( m_data );
                 m_size = 0;
             }
         }
@@ -206,7 +194,7 @@ namespace tau
             auto size = chunks * Chunk::Size;
                         
             m_size += chunks * Chunk::Size;
-            m_data = chars().get( m_size );
+            m_data = ( char* ) mem::mem().get( m_size );
             
             if ( old.m_data )
             {

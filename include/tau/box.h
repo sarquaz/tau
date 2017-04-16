@@ -1,8 +1,6 @@
 #ifndef _TAU_BOX_H_
 #define _TAU_BOX_H_
 
-#include "../../src/trace.h"
-
 namespace tau
 {
     namespace box
@@ -21,7 +19,7 @@ namespace tau
     
             static void deallocate( void* data )
             {
-                return std::free( data );
+                std::free( data );
             }
         };
         
@@ -161,7 +159,7 @@ namespace tau
             public:
                 
                 _Node( const Data& data, List< Data, Allocator >* list = NULL )
-                    : m_data( data ), m_next( 0 ), m_prev( 0 ), m_list( list ), m_custom( NULL )
+                    : m_data( data ), m_next( 0 ), m_prev( 0 ), m_list( list )
                 {
                 }
             
@@ -234,6 +232,7 @@ namespace tau
                     {
                         m_next->m_prev = m_prev;
                     }
+                    
                     //
                     //  let list know
                     //
@@ -245,23 +244,11 @@ namespace tau
                     box::detype< _Node, Allocator >( this );
                 }
             
-                void* custom() const
-                {
-                    return m_custom;
-                }
-            
-                void* custom( void* custom )
-                {
-                    m_custom = custom;
-                    return m_custom;
-                }
-            
             private:
                 Data m_data;
                 _Node* m_next;
                 _Node* m_prev;
                 List< Data, Allocator >* m_list;
-                void* m_custom;
             };
             
             template < class Data, class Allocator = box::Allocator > class List
@@ -323,7 +310,7 @@ namespace tau
                     ( const_cast< List* >( this ) )->nodes( [ & ]( Node* node ){ all( node->data() ); }, direction );
                 }
             
-                template < class Nodes > void nodes( Nodes nodes, Direction direction = Head ) 
+                template < class Nodes > void nodes( Nodes nodes, Direction direction = Head ) const
                 {
                     auto node = direction == Head ? m_head : m_tail;
                     
@@ -428,12 +415,12 @@ namespace tau
                             {
                                 if ( m_tail == node )
                                 {
-                                    m_tail = NULL;
+                                    m_tail = node->prev();
                                 }
                             
                                 if ( m_head == node )
                                 {
-                                    m_head = NULL;
+                                    m_head = node->next();
                                 }
                             
                                 m_length --;

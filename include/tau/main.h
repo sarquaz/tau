@@ -38,17 +38,26 @@ namespace tau
         }
     };
     
+    enum Action
+    {
+        Init,
+        Begin,
+        Complete
+    };
+    
     class Result;
     
     class Listener
     {
     public:
-        virtual void result( Result* ) = 0;
+        virtual void result( Action, Result* ) = 0;
     };
     
     class Result
     {
     public:
+        
+        
         virtual ~Result ()
         {
             
@@ -60,7 +69,7 @@ namespace tau
         }
         
     protected:
-        void dispatch( Result* ) const;
+        void dispatch( Action, Result* ) const;
         
     private:
         li::List< Listener* > m_listeners;
@@ -77,16 +86,33 @@ namespace tau
         class Thread: public si::os::Thread, public Result
         {
         public:
-           virtual ~Thread ()
+            Thread()
+                : si::os::Thread(), m_data( NULL )
+            {
+                
+            }
+            
+            virtual ~Thread ()
             {
             
+            }
+            
+            void* data() const
+            {
+                return m_data;
+            }
+            
+            void* data( void* data )
+            {
+                m_data = data;
+                return data;
             }
         
         private:
             virtual void run();
     
         private:
-            
+            void* m_data;
         };
         
         Main()

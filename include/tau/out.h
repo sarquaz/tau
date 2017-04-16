@@ -24,7 +24,7 @@ namespace tau
         {
 #ifdef __MACH__
                 uint64_t tid;
-                pthread_threadid_np( NULL, &tid );
+                ::pthread_threadid_np( NULL, &tid );
                 return tid;
 #else
                 return ::pthread_self();    

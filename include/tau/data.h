@@ -2,6 +2,7 @@
 #define _TAU_DATA_H
 
 #include "std.h"
+#include "box.h"
 
 namespace tau
 {
@@ -300,7 +301,23 @@ namespace tau
         }
     };
     
-       
+    namespace box
+    {
+        namespace h
+        {
+        
+            //
+            //  Data
+            //   
+            template <> struct hash< data::Data >
+            {
+                ul operator()( const data::Data& data ) const
+                {
+                    return data.hash();
+                }
+            };
+        }
+    }   
     
 }
 

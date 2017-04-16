@@ -261,67 +261,6 @@ namespace tau
         //         return hash;
         //     }
         // }
-        
-    namespace si
-    {
-        namespace mem
-        {
-            namespace nodes
-            {
-                __thread Node* t_node = NULL;
-
-                Node& node()
-                {
-                    if ( !t_node )
-                    {
-                        t_node = new Node( );
-                    }
-
-                    return *t_node;
-                }
-
-                Node& get( )
-                {
-                    auto& node = nodes::node();
-                    t_node = node.next;
-                    node.clear();
-
-                    return node;
-                }
-
-                void free( Node& node )
-                {
-                    node.next = t_node;
-                    t_node = &node;
-                }
-            }
-
-            Node& Node::get( void* data )
-            {
-                auto& node = nodes::get();
-                                
-                node.data = data;
-                return node;
-            }
-
-            void Node::free( )
-            {
-                nodes::free( *this );
-            }
-            
-            __thread Sizes* t_sizes = NULL;
-            
-            Sizes& sizes()
-            {
-                if ( !t_sizes )
-                {
-                    t_sizes = new Sizes();
-                }
-                
-                return *t_sizes;
-            }
-        }
-    }
     
     namespace box
     {

@@ -2,7 +2,7 @@
 #define _TAU_LI_H_
 
 #include "../../src/trace.h"
-#include "newmem.h"
+#include "mem.h"
 
 namespace tau
 {
@@ -17,6 +17,11 @@ namespace tau
             Array( )
                 : m_data( m_default ), m_size( Size ), m_length( 0 )
             {
+            }
+            
+            ~Array()
+            {
+                free();
             }
             
             /**
@@ -72,6 +77,15 @@ namespace tau
             }
 
         private:
+            void free()
+            {
+                ENTER();
+            
+                if ( m_data != m_default )
+                {
+                    mem::mem().free( m_data );    
+                }
+            }
             void check( )
             {                
                 //
@@ -86,19 +100,17 @@ namespace tau
                     //
                     //  allocate space
                     //
-                    auto data = newmem::instance().get( size * sizeof( Data ) );
+                    auto data = mem::mem().get( size * sizeof( Data ) );
                     //
                     //  copy data
                     //
                     std::memcpy( data, m_data, m_size * sizeof( Data )  );
+                
+                    m_size = size;
                     //
                     //  free old space if needed
                     //
-                    if ( m_data != m_default )
-                    {
-                        newmem::instance().free( m_data );    
-                    }
-                    m_size = size;
+                    free();
                     m_data = ( Data* ) data;
                 }
             }
@@ -115,20 +127,32 @@ namespace tau
             ui m_length;
         };
         
+        struct Allocator
+        {
+            static void* allocate( ui size )
+            {
+                return mem::mem().get( size );
+            }
+    
+            static void deallocate( void* data )
+            {
+                mem::mem().free( data );
+            }
+        };
 
         /**
          * List class (std::list replacement)
         **/
-        template < class Value > class List: public box::list::List< Value >
+        template < class Value > class List: public box::list::List< Value, Allocator >
         {
         public:
             List( )
-                : box::list::List< Value >()
+                : box::list::List< Value, Allocator >()
             {
             }
 
             List( std::initializer_list< Value > list )
-                : box::list::List< Value >()
+                : box::list::List< Value, Allocator >()
             {
                 for ( auto i = list.begin( ); i != list.end( ); i++ )
                 {
@@ -137,7 +161,7 @@ namespace tau
             }
 
             List( const List& list )
-                : box::list::List< Value >( list )
+                : box::list::List< Value, Allocator >( list )
             {
             }
 
@@ -176,13 +200,6 @@ namespace tau
             {
                 return !( this->length() );
             }
-            
-            void clear()
-            {
-                ENTER();
-                
-                box::list::List< Value >::clear();
-        }
         };
         
         
@@ -201,14 +218,14 @@ namespace tau
             }
         };
         
-        /**retu
+        /**
          * Map class (std::map replacement)
         **/
-        template < class Key, class Value, ui Size = 64 > class Map: public box::map::Map< Data< Key, Value >, Size > 
+        template < class Key, class Value, ui Size = 64 > class Map: public box::map::Map< Data< Key, Value >, Size, Allocator > 
         {
         public:
             Map()
-                : box::map::Map< Data< Key, Value >, Size > ()
+                : box::map::Map< Data< Key, Value >, Size, Allocator > ()
             {
             }
             virtual ~Map()
@@ -222,7 +239,7 @@ namespace tau
                 ENTER();
                 
                 ul hash = box::h::hash< Key >()( key );    
-                auto& data = box::map::Map< Data< Key, Value >, Size >::operator[]( hash );
+                auto& data = box::map::Map< Data< Key, Value >, Size, Allocator >::operator[]( hash );
                 data.key = key;
                 return data.value;
             }
@@ -244,7 +261,7 @@ namespace tau
             {
                 ENTER();
                 
-                return box::map::Map< Data< Key, Value >, Size >::remove( box::h::hash< Key >()( key ) );
+                return box::map::Map< Data< Key, Value >, Size, Allocator >::remove( box::h::hash< Key >()( key ) );
             }
         };
 

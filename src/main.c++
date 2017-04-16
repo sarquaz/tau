@@ -24,6 +24,11 @@ namespace tau
     void Main::Thread::run()
     {
         ENTER();
+        
+        Result::dispatch( Begin, this );
+        
+        Result::dispatch( Complete, this );
+        
     }
     
     void start( )
@@ -46,6 +51,8 @@ namespace tau
         SENTER();
         
         main.stop();
+        mem::disable();
+        
     }
     
     void listen( Listener* listener )
@@ -53,11 +60,11 @@ namespace tau
         main.listener( listener );
     }
     
-    void Result::dispatch( Result* what ) const
+    void Result::dispatch( Action action, Result* what ) const
     {
         ENTER();
         
-        m_listeners.all( [ & ] ( Listener* listener ) { listener->result( what ); } );
+        m_listeners.all( [ & ] ( Listener* listener ) { listener->result( action, what ); } );
     }
     
     void Main::start( us threads )
@@ -74,7 +81,7 @@ namespace tau
             //
             //  send it to listener
             //
-            Result::dispatch( thread );
+            Result::dispatch( Init, thread );
             
             //
             //  start the thread

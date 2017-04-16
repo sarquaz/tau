@@ -20,22 +20,7 @@ namespace tau
         {
             trace( Info, "Leaving" );
         }
-        
-        namespace d
-        {
-            __thread data::Data* t_data = NULL;
-            
-            data::Data& data( ) 
-            {
-                if ( !t_data )
-                {
-                    t_data = new data::Data();
-                }
                 
-                return *t_data;
-            }
-        }
-        
         Trace::Trace( const char* scope, void* _instance  )
             : m_instance( _instance ), m_handler( NULL ) 
         {
@@ -68,7 +53,7 @@ namespace tau
         
         void Trace::operator()( Level level, const char *format, ... )
         {
-            auto& data = d::data();
+            data::Data data;
             auto file = out::Stream::Out;
             
             handle( level, data );
