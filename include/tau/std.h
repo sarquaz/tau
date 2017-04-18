@@ -7,6 +7,8 @@
 #include <initializer_list>
 #include <random>
 #include <typeinfo>
+#include <functional>
+
 
 #include <cstring>
 #include <cstdlib>
@@ -27,12 +29,10 @@ typedef unsigned char uchar;
 
 #include "sys.h"
 
-
-
-
 #ifdef __MACH__
     #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     #pragma clang diagnostic ignored "-Wformat"
+    #pragma clang diagnostic ignored "-Wswitch"
 #endif
 
 #define MAX( a, b ) ( a > b ) ? ( a ) : ( b )
@@ -59,48 +59,58 @@ namespace tau
     
     struct Time
     {
+        enum Type
+        {
+            Now = -2,
+            Infinite = -1
+        };
+        
         struct timeval time;
          
         long long value;
         
         Time( long millis = 0, long micros = 0 )
+            : value( 0 )
         {
-            if ( !millis && !micros )
-            {
-                ::gettimeofday( &time, NULL );
-                return;
-            }
+            std::memset( &time, 0, sizeof( time ) );
             
-            if ( millis == Infinite )
+            switch ( millis )
             {
-                value = millis;
-                return;
+                case Now:
+                    ::gettimeofday( &time, NULL );
+                    value = time.tv_sec * 1000000 + time.tv_usec;
+                    return;
+                    
+                    
+                case Infinite:
+                    value = millis;
+                    return;
             }
+                        
+            
+            
+            value = millis;
 
-            value = millis * 1000;
-            
-            time.tv_sec = value;
+            time.tv_sec = value / 1000;
+            value *= 1000;
             value += micros;
             time.tv_usec = micros;
         }
 
-        Time( const Time& time )
-        {
-            *this = time;
-        }
+        // Time( const Time& time )
+//         {
+//             *this = time;
+//         }
         void operator=( const Time& time )
         {
             value = time.value;
+            std::memcpy( &this->time, &time.time,  sizeof( time.time ) );
         }
         operator long long () const
         {
             return value;
         }
-        enum Type
-        {
-            Infinite = -1
-        };
-        
+
         bool infinite() const
         {
             return value == -1;
@@ -118,18 +128,23 @@ namespace tau
         
         ul s() const
         {
-            return time.tv_sec;
+            return value / 1000000;
         }
         
         ul ms() const
         {
-            return time.tv_usec;
+            return value / 1000;
+        }
+        
+        ul us() const
+        {
+            return value;
         }
     };
     
     inline Time time()
     {
-        Time time;
+        Time time( Time::Now );
         return time;
     }    
 }

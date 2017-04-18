@@ -4,6 +4,7 @@
 
 namespace tau
 {
+
     struct Grain
     {
         virtual ~Grain( )
@@ -110,10 +111,10 @@ namespace tau
         }
     };
     */
-    class Rock: public ie::Tok
+    class Reel
     {
     public:
-        virtual ~Rock()
+        virtual ~Reel()
         {
         }
         
@@ -121,15 +122,13 @@ namespace tau
         void deref( );
         
     protected:
-        Rock( )
+        Reel( )
+            : m_ref( 1 )
         {
-            init();
         }
         
-        virtual void init()
-        {
-            m_ref = 1;
-        }
+    private:
+        virtual void destroy() = 0;    
         
     private:
         ui m_ref;

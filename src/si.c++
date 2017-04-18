@@ -3,7 +3,7 @@
 
 namespace tau
 {
-    void Rock::ref( )
+    void Reel::ref( )
     {
         if ( !m_ref )
         {
@@ -16,7 +16,7 @@ namespace tau
         TRACE( "%d", m_ref );
     }
 
-    void Rock::deref( )
+    void Reel::deref( )
     {
         if ( !m_ref )
         {

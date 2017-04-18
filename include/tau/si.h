@@ -2,14 +2,11 @@
 #define _TAU_SI_H
 
 #include "types.h"
-#include "si/th.h"
-#include "si/os.h"
 
 namespace tau
 {
     namespace si
     {
-//        void out( const Data& data, Stream stream  );
         
         struct check
         {
@@ -457,6 +454,9 @@ namespace tau
 
 }
 
+#include "si/th.h"
+#include "si/os.h"
+#include "si/ev.h"
 
 
 #endif

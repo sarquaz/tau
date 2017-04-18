@@ -1,5 +1,5 @@
-#ifndef _TAU_OS_H
-#define _TAU_OS_H
+#ifndef _TAU_SI_OS_H_
+#define _TAU_SI_OS_H_
 
 namespace tau
 {

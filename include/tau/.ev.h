@@ -83,7 +83,7 @@ namespace tau
                 
             protected:
                 void assign( si::Handle fd, Type type );
-                void assign( const Time& );
+z                void assign( const Time& );
                            
                 virtual void init()
                 {
