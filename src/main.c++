@@ -3,7 +3,8 @@
 
 namespace tau
 {
-    static Main main;
+    static Main s_main;
+    __thread si::os::Thread* t_thread = NULL;
     
     Data Strings::def( const Data& key, const Data& value ) const
     {
@@ -20,83 +21,21 @@ namespace tau
         
         return ret;
     }
-    
-    void Main::Thread::run()
+                    
+    Main& Main::instance()
     {
-        ENTER();
-        
-        Result::dispatch( Begin, this );
-        
-        Result::dispatch( Complete, this );
-        
+        return s_main;
     }
     
-    void start( )
+    si::os::Thread& Main::thread()
     {
-        start( {} );
-    }
-    
-    void start( const Strings& options )
-    {
-
-        auto threads = options.number( "threads" );
-        threads = threads ? threads : 1;
-        STRACE( "need to start %d threads", threads );        
+        assert( t_thread );
         
-        main.start( threads );
+        return *t_thread;
     }
-    
-    void stop()
-    {
-        SENTER();
         
-        main.stop();
-        mem::disable();
-        
-    }
-    
-    void listen( Listener* listener )
+    void Main::started( si::os::Thread* thread )
     {
-        main.listener( listener );
+        t_thread = thread;
     }
-    
-    void Result::dispatch( Action action, Result* what ) const
-    {
-        ENTER();
-        
-        m_listeners.all( [ & ] ( Listener* listener ) { listener->result( action, what ); } );
-    }
-    
-    void Main::start( us threads )
-    {
-        ENTER();
-        
-        for ( auto i = 0; i < threads; i++ )
-        {
-            //
-            //  create new thread
-            //
-            auto thread = new Thread();
-            
-            //
-            //  send it to listener
-            //
-            Result::dispatch( Init, thread );
-            
-            //
-            //  start the thread
-            //
-            thread->start();
-            
-            m_lock.with( [ & ] ( ) { m_threads.add( thread ); } );
-        }                
-    }
-    
-    void Main::stop( )
-    {
-        m_threads.all( [ & ] ( Thread* thread ) { thread->join(); } );
-    }
-    
-    
-    
 }

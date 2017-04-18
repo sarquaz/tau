@@ -1,9 +1,9 @@
 #include "tau.h"
 
 using namespace tau;
+using namespace si;
 
 #include "../../src/trace.h"
-#include "newmem.h"
 #include <map>
 
 template < class T > struct Test
@@ -61,19 +61,19 @@ template < class T > struct Test
     }
 };
 
-class First: public tau::Listener
-{
-    public:
-        First()
-        {
-        
-        }
-    
-        virtual void result( Result* what )
-        {
-            TRACE( "0x%x", what );
-        }
-};
+// class First
+// {
+//     public:
+//         First()
+//         {
+//
+//         }
+//
+//         virtual void result(  )
+//         {
+//             TRACE( "0x%x", what );
+//         }
+// };
 
 
 
@@ -116,58 +116,26 @@ int main( )
         // test.start();
         // test.join();
         
-        First first;    
+    //    First first;    
     
     
-        li::Map< int, int > map;
-    
-    auto count = 3;
-    
-//    void* voids[ 100 ];
-    
-
-    
-    for( ui i = 0; i < count; ++i )
-    {
-  //      auto s = Data::get( 10 );
+  //       li::Map< int, int > map;
+//
+//     auto count = 3;
+//
+// //    void* voids[ 100 ];
+//
+//     {
+//         li::List< int >  ints;
+//
+//         for( auto i = 0; i < 2; ++i )
+//         {
+//             ints.append( i );
+//         }
+//     }
         
-//        ul hash = si::h::hash< ui >()( i );
         
-                
-
-                            map[ i ] = i;
-    }
-
-       STRACE( "%d", map.length() );
-         //
-  //       //map.all( [  ]( ul hash, int d ) { STRACE( "id: %d, d: %d", hash, d ); } );
-  //
-  //       for( ui i = 0; i < count; ++i )
-  //       {
-  //
-  //
-  //           ul hash = si::h::hash< ui >()( i );
-  //
-  //           STRACE( "hash: %u, d: %d", hash, i );
-  //
-  //           assert( map[ hash ] == i );
-  //
-  //
-  //
-  //
-  //       }
-  // //    
-//        STRACE( "%d", map[ 3 ] );
-    
-        // tau::listen( &first );
- //         tau::start( { { "threads", "2" } } );
- //         //
- //         //
- //         //
- //         //
- //          tau::stop();
        
-       li::Array< int > ints;
 
        
        // map.remove( 2 );
@@ -187,20 +155,31 @@ int main( )
 //
 //        // li::List< First* > firsts;
 // //
-       for( auto i = 0; i < 20; ++i )
-       {
-           ints.add( i );
-       }
+    
 // //
 // //        firsts.all( [ & ]( First* f ){ mem.detype< First >( f ); } );
 //
 //        test = mem.type< First >();
 //        mem.detype< First >( test );
+    
+//        mem::disable();
+        // auto event = ev::Loop::Event::get( Time( 1000 ) );
+        // ev::Loop loop;
+        // loop.add( *event );
+        // loop.run( [ & ]( ev::Loop::Event& event )
+        //     {
+        //         STRACE( "event 0x%x", &event );
+        //         //event.deref();
+        //         loop.stop();
+        //     } );
+        
+        
+                
+        
        
-           
-       
-       
-       
+        tau::start( { {"threads", "20" } }, [ & ] ( ) { 
+            STRACE( "thread %u 0x%x started", tau::thread().id(), &tau::thread() ); 
+        } );
        
 
   //      test.map.keys( [ & ] ( int key ) {  printf("key %d\n", key ); } );

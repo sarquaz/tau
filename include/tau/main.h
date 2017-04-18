@@ -1,6 +1,8 @@
 #ifndef _TAU_MAIN_H_
 #define _TAU_MAIN_H_
 
+#include "../../src/trace.h"
+
 namespace tau
 {
     /**
@@ -18,7 +20,7 @@ namespace tau
         {
             operator =( strings );
         }
-        Strings( std::initializer_list< std::pair< const Data, Data > > list )
+        Strings( const std::initializer_list< std::pair< const Data, Data > >& list )
             : li::Set< Data >()
         {
             for ( auto i = list.begin(); i != list.end(); i++ )
@@ -38,63 +40,19 @@ namespace tau
         }
     };
     
-    enum Action
-    {
-        Init,
-        Begin,
-        Complete
-    };
-    
-    class Result;
-    
-    class Listener
+    class Main
     {
     public:
-        virtual void result( Action, Result* ) = 0;
-    };
-    
-    class Result
-    {
-    public:
-        
-        
-        virtual ~Result ()
-        {
-            
-        }
-        
-        void listener( Listener* listener )
-        {
-            m_listeners.append( listener );
-        }
-        
-    protected:
-        void dispatch( Action, Result* ) const;
-        
-    private:
-        li::List< Listener* > m_listeners;
-    };
-      
-    void start( );
-    void start( const Strings& options );
-    void stop();
-    void listen( Listener* );
-    
-    class Main: public Result
-    {
-    public:
-        class Thread: public si::os::Thread, public Result
+        template < class Callback > class Thread: public si::os::Thread
         {
         public:
-            Thread()
-                : si::os::Thread(), m_data( NULL )
+            Thread( Callback callback )
+                :si::os::Thread(), m_data( NULL ), m_callback( callback )
             {
-                
             }
             
             virtual ~Thread ()
             {
-            
             }
             
             void* data() const
@@ -109,10 +67,17 @@ namespace tau
             }
         
         private:
-            virtual void run();
+            virtual void run()
+            {
+                ENTER();
+                Main::instance().started( this );
+               
+                Main::instance().lock().with( [ & ]( ){ m_callback(); } );
+            }
     
         private:
             void* m_data;
+            std::function< void() > m_callback;
         };
         
         Main()
@@ -121,18 +86,79 @@ namespace tau
         
         ~Main ()
         {
+            stop();
         }
         
-        void start( us threads );
-        void stop();
+        template < class Callback > void start( us threads, Callback callback )
+        {
+            ENTER();
         
-        Thread* thread();
+            for ( auto i = 0; i < threads; i++ )
+            {
+                //
+                //  create new thread
+                //
+                auto thread = new Thread< Callback >( callback );
+                
+                m_lock.with( [ & ] ( ) { m_threads.add( thread ); } );
+            
+                //
+                //  start the thread
+                //
+                thread->start();
+            }                
+            
+        }
+        void stop()
+        {
+            ENTER();
+            m_threads.all( [ & ] ( si::os::Thread* thread ) 
+             { 
+                thread->join();
+                delete thread;
+             } );
+        }
+        
+        static si::os::Thread& thread();
+        
+        void started( si::os::Thread* );
+
+        si::os::Lock& lock()
+        {
+            return m_lock;
+        }
+        
+        static Main& instance();
+         
     
     private:
-        li::Array< Thread* > m_threads; 
+        li::Array< si::os::Thread* > m_threads; 
         si::os::Lock m_lock;
     };
     
+    template < class Callback > inline void start( Callback callback )
+    {
+        start( {}, callback );
+    }
+    
+    template < class Callback > inline void start( const Strings& options, Callback callback )
+    {
+        auto threads = options.number( "threads" );
+        threads = threads ? threads : 1;
+        STRACE( "need to start %d threads", threads );        
+        
+        Main::instance().start( threads, callback );
+    }
+    
+    inline void stop()
+    {
+        Main::instance().stop();
+    }
+    
+    inline si::os::Thread& thread()
+    {
+        return Main::thread();
+    }
 }
 
 #endif

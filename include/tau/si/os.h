@@ -63,7 +63,7 @@ namespace tau
                 void join( ) const;
                 void start( );
             
-                static ul id( );
+                ul id( );
             private:
                 static void routine( void* data );
                 virtual void run( ) = 0;
