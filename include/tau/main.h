@@ -14,7 +14,6 @@ namespace tau
         };
     }
     
-    
     typedef li::Set< ui > Options;
     
     class Main
