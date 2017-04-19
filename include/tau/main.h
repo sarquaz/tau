@@ -5,40 +5,17 @@
 
 namespace tau
 {
-    /**
-     * Strings map class (equivalent to std::map< std::string, std::string >)
-    **/
-    class Strings: public li::Set< Data >
+    namespace options
     {
-    public:
-        Strings()
-            : li::Set< Data >()
+        enum 
         {
-        }
-        Strings( const Strings& strings )
-            : li::Set< Data >()
-        {
-            operator =( strings );
-        }
-        Strings( const std::initializer_list< std::pair< const Data, Data > >& list )
-            : li::Set< Data >()
-        {
-            for ( auto i = list.begin(); i != list.end(); i++ )
-            {
-                ( *this )[ i->first ] = i->second;
-            }
-        }
-        
-        virtual ~Strings()
-        {
-        }
-        
-        Data def( const Data& key, const Data& value ) const;
-        int number( const Data& name ) const
-        {
-            return ::atoi( def( name, "0" ) );
-        }
-    };
+            Threads,
+            Repeat
+        };
+    }
+    
+    
+    typedef li::Set< ui > Options;
     
     class Main
     {
@@ -141,10 +118,9 @@ namespace tau
         start( {}, callback );
     }
     
-    template < class Callback > inline void start( const Strings& options, Callback callback )
+    template < class Callback > inline void start( const Options& options, Callback callback )
     {
-        auto threads = options.number( "threads" );
-        threads = threads ? threads : 1;
+        auto threads = options.def( options::Threads, 1 );
         STRACE( "need to start %d threads", threads );        
         
         Main::instance().start( threads, callback );
@@ -161,4 +137,4 @@ namespace tau
     }
 }
 
-#endif
+#endif  

@@ -279,6 +279,15 @@ namespace tau
                 operator =( set );
             }
             
+            Set( const std::initializer_list< std::pair< const Value, Value > >& list )
+                : Map< Value, Value >()
+            {
+                for ( auto i = list.begin(); i != list.end(); i++ )
+                {
+                    ( *this )[ i->first ] = i->second;
+                }
+            }
+            
             
             virtual ~Set()
             {
@@ -289,8 +298,25 @@ namespace tau
             {
                 ( *this )[ value ] = value;
             }       
+            
+            Value def( const Value& key, const Value& value ) const
+            {
+                Value ret;
+        
+                try
+                {
+                    ret = this->get( key );
+                }
+                catch ( ... )
+                {
+                    ret = value;
+                }
+        
+                return ret;
+            }
+            
         };
-
+        
         template< class Type > struct cycle
         {
             std::initializer_list< Type > list;
