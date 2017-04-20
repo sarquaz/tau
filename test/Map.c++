@@ -82,7 +82,7 @@ int main( )
 
     // {
   //       Test< int > test( 30 );
-  //       test( [ ] ( ) { return si::random( INT_MAX ); }, [ & ] ( const Test< int >::Pair & pair )
+  //       test( [ ] ( ) { return random( INT_MAX ); }, [ & ] ( const Test< int >::Pair & pair )
   //       {
   //           test.map.remove( pair.key );
   //
@@ -100,7 +100,7 @@ int main( )
   //  
 //    {
 //        Test< int > test( 30 );
-  //      test( [ ] ( ) { return si::random( INT_MAX ); }, [ & ] ( const Test< int >::Pair & pair ) { } );
+  //      test( [ ] ( ) { return random( INT_MAX ); }, [ & ] ( const Test< int >::Pair & pair ) { } );
         
 
         // Some test;
@@ -177,14 +177,25 @@ int main( )
                 
         
        
-        tau::start( { {"threads", "20" } }, [ & ] ( ) { 
-            STRACE( "thread %u 0x%x started", tau::thread().id(), &tau::thread() ); 
+        tau::start( [ & ] ( action::Action action )
+        { 
+            STRACE( "action %s", action == tau::action::Start ? "start" : "stop" );
+            if ( action == action::Start )
+            {
+                STRACE( "thread %u 0x%x started", tau::thread().id(), &tau::thread() ); 
+                
+                tau::event(  [ ] ( const ev::Request* req ) 
+                    {
+                        STRACE( "req 0x%x", req    );
+                    }, { { options::Repeat, true }, {options::Msec, 300} } ); 
+            }
+            
         } );
        
 
   //      test.map.keys( [ & ] ( int key ) {  printf("key %d\n", key ); } );
         
-    //     test( [ ] ( ) { return si::random( INT_MAX ); }, [ & ] ( const Test< int >::Pair & pair ) { assert( test.map.size() == test.count + 1 ); } );
+    //     test( [ ] ( ) { return random( INT_MAX ); }, [ & ] ( const Test< int >::Pair & pair ) { assert( test.map.size() == test.count + 1 ); } );
 //         test.list.all( [ & ] ( const Test< int >::Pair& pair )
 //             {
 //
@@ -197,7 +208,7 @@ int main( )
         
     // {
   //       Test< int > test( 30 );
-  //       test( [ ] ( ) { return si::random( INT_MAX ); }, [ & ] ( const Test< int >::Pair & pair ) { } );
+  //       test( [ ] ( ) { return random( INT_MAX ); }, [ & ] ( const Test< int >::Pair & pair ) { } );
   //       test.map.clear();
   //       assert( !test.map.size() );
   //       test.list.all( [ & ] ( const Test< int >::Pair& pair ) {  assert( !test.map.remove( pair.key ) ); } );

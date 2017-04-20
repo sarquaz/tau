@@ -102,10 +102,10 @@ private:
         ENTER();
     }
     
-    virtual void check()
+    virtual void si::check()
     {
         ENTER();
-        Test::check( "data" );
+        Test::si::check( "data" );
     }
     
 private:

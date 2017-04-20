@@ -110,13 +110,13 @@ public:
         timer.deref();
     }
     
-    virtual void check( )
+    virtual void si::check( )
     {
         ENTER();
-        Test::check( "data" );
-        Test::check( "string" );
-        Test::check( "error" );
-        Test::check( "exit" );
+        Test::si::check( "data" );
+        Test::si::check( "string" );
+        Test::si::check( "error" );
+        Test::si::check( "exit" );
     }
 
     struct Data: Test::Data

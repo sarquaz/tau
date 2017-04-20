@@ -99,7 +99,7 @@ struct Epoll
 //            
 //            map[ "a" ] = "b";
 //            
-//         //   list.add ( si::random( 1000000 ) );
+//         //   list.add ( random( 1000000 ) );
 //        }
     }
     
@@ -145,7 +145,7 @@ int main()
     
     
     
-//    si::File file( test );
+//    File file( test );
 //    file.open( "test1" );
 //    
     

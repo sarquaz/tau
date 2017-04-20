@@ -52,7 +52,7 @@ private:
         out( "line %d", line().id() );
     }
     
-    virtual void check()
+    virtual void si::check()
     {
         ENTER();
         assert( m_timer );

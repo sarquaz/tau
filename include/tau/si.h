@@ -4,37 +4,37 @@
 #include "types.h"
 
 namespace tau
-{
+{        
     namespace si
-    {
-        
-        struct check
         {
-            ui skip;
-            long result;
-
-            check( long _result, ui _skip = EWOULDBLOCK )
-            : skip( _skip ), result( _result )
+            void* swap( void** target, void* value );
+            ui inc( ui* target );
+            ui dec( ui* target );
+            
+            struct check
             {
-            }
+                ui skip;
+                long result;
 
-            ul operator()( const char* format, ... )
-            {
-                if ( errno == skip || result != -1 )
+                check( long _result, ui _skip = EWOULDBLOCK )
+                : skip( _skip ), result( _result )
                 {
-                    return result;
                 }
 
-                Error error;
-                EPRINT( error.message, format );
-                error.message( ", errno %d", errno );
-                throw error;
-            }
-        };
-        
-             
-    }
-        
+                ul operator()( const char* format, ... )
+                {
+                    if ( errno == skip || result != -1 )
+                    {
+                        return result;
+                    }
+
+                    Error error;
+                    EPRINT( error.message, format );
+                    error.message( ", errno %d", errno );
+                    throw error;
+                }
+            };
+        }
         
         // class File
         // {

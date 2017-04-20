@@ -387,7 +387,7 @@ namespace tau
             }
             
         protected:            
-            void open( si::Link::Accept* accept = NULL );
+            void open( Link::Accept* accept = NULL );
             
         private:
             
@@ -423,7 +423,7 @@ namespace tau
             Net* m_parent;
             tau::Event* m_write;
             Time m_timeout;
-            si::Link m_link;
+            Link m_link;
             bool m_server;
         };
 
@@ -477,7 +477,7 @@ namespace tau
             public:
                 enum Type
                 {
-                    In = si::File::In,
+                    In = File::In,
                     Out,
                     Err
                 };
@@ -496,7 +496,7 @@ namespace tau
                 {
                 }
                 
-                void assign( Bot& bot, const si::Process::Stream& stream );
+                void assign( Bot& bot, const Process::Stream& stream );
                 
                 
                 virtual void onRead( );
@@ -538,7 +538,7 @@ namespace tau
         private:
             Stream m_streams[ 3 ];
             int m_code;
-            si::Process m_process;
+            Process m_process;
             Event* m_timer;
         };
         

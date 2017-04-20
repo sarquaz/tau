@@ -10,7 +10,18 @@ namespace tau
         enum 
         {
             Threads,
-            Repeat
+            Repeat,
+            Msec,
+            Usec
+        };
+    }
+    
+    namespace action
+    {
+        enum Action
+        {
+            Start,
+            Stop
         };
     }
     
@@ -19,11 +30,12 @@ namespace tau
     class Main
     {
     public:
-        template < class Callback > class Thread: public si::os::Thread
+        
+        template < class Callback > class Thread: public os::Thread
         {
         public:
             Thread( Callback callback )
-                :si::os::Thread(), m_data( NULL ), m_callback( callback )
+                : os::Thread(), m_data( NULL ), m_callback( callback )
             {
             }
             
@@ -41,19 +53,38 @@ namespace tau
                 m_data = data;
                 return data;
             }
+            
+            virtual void stop()
+            {
+                m_loop.stop();
+            }
+            
+            const ev::Loop& loop() const
+            {
+                return m_loop;
+            }
         
         private:
             virtual void run()
             {
                 ENTER();
-                Main::instance().started( this );
+                Main::instance().started( this, &m_loop );
                
-                Main::instance().lock().with( [ & ]( ){ m_callback(); } );
+                Main::instance().lock().with( [ & ]( ){ m_callback( action::Start ); } );
+                
+                m_loop.run( [ & ] ( ev::Loop::Event& event ) 
+                    {
+                        assert( event.request );
+                        event.callback();
+                     } );
+                
+                Main::instance().lock().with( [ & ]( ){ m_callback( action::Stop ); } );
             }
     
         private:
             void* m_data;
-            std::function< void() > m_callback;
+            std::function< void( action::Action ) > m_callback;
+            ev::Loop m_loop;
         };
         
         Main()
@@ -88,18 +119,22 @@ namespace tau
         void stop()
         {
             ENTER();
-            m_threads.all( [ & ] ( si::os::Thread* thread ) 
-             { 
+            
+        
+            m_threads.all( [ & ] ( os::Thread* thread ) 
+             {
+                thread->stop(); 
                 thread->join();
                 delete thread;
              } );
         }
         
-        static si::os::Thread& thread();
+        static os::Thread& thread();
+        static ev::Loop& loop();
         
-        void started( si::os::Thread* );
+        void started( os::Thread*, ev::Loop* );
 
-        si::os::Lock& lock()
+        os::Lock& lock()
         {
             return m_lock;
         }
@@ -108,14 +143,9 @@ namespace tau
          
     
     private:
-        li::Array< si::os::Thread* > m_threads; 
-        si::os::Lock m_lock;
+        li::Array< os::Thread* > m_threads; 
+        os::Lock m_lock;
     };
-    
-    template < class Callback > inline void start( Callback callback )
-    {
-        start( {}, callback );
-    }
     
     template < class Callback > inline void start( const Options& options, Callback callback )
     {
@@ -125,15 +155,79 @@ namespace tau
         Main::instance().start( threads, callback );
     }
     
+    template < class Callback > inline void start( Callback callback )
+    {
+        start( {}, callback );
+    }
+    
     inline void stop()
     {
         Main::instance().stop();
     }
     
-    inline si::os::Thread& thread()
+    inline os::Thread& thread()
     {
         return Main::thread();
     }
+    
+    inline ev::Loop& loop()
+    {
+        return Main::loop();
+    }
+    
+    
+    
+    class Event: public io::Event
+    {
+    public:        
+        Event( const Options& options )
+            : io::Event(), m_time( options.def( options::Msec, 0 ), options.def( options::Usec, 0 ) )
+        {
+            ENTER();    
+            m_repeat = options.def( options::Repeat, ( ui ) false );
+        }
+        
+        virtual ~Event()
+        {
+            ENTER();
+        }
+        
+        virtual ev::Loop::Event& event()
+        {
+            auto& event = io::Event::event();
+            event.time = m_time;
+            return event; 
+        }
+        
+        virtual void callback()
+        {
+            ENTER();
+            
+            if ( !m_repeat )
+            {
+                deref();
+            }
+        }
+        
+        virtual void destroy()
+        {
+            this->~Event();
+            mem::mem().free( this );
+        }
+        
+        
+    private:
+        bool m_repeat;
+        Time m_time;
+    };
+    
+    template < class Callback > void event( Callback callback, const Options& options = {} )
+    {
+        auto event = mem::mem().type< Event >( options );
+        
+        event->request( callback );
+    } 
+    
 }
 
 #endif  

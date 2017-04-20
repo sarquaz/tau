@@ -34,8 +34,8 @@ private:
         
         Test::set( "read" );
         
-        si::out( read );
-        si::out( "\n" );        
+        out( read );
+        out( "\n" );        
     }
     
     virtual void onWrite( Grain& grain )
@@ -89,16 +89,16 @@ private:
     }
     
     
-    virtual void check( )
+    virtual void si::check( )
     {
         ENTER();
-        Test::check( "write" );
+        Test::si::check( "write" );
     }
     
     virtual void cleanup()
     {
         ENTER();
-        si::File::remove( m_name );
+        File::remove( m_name );
         Test::cleanup();
     }
     

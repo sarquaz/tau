@@ -72,7 +72,6 @@ namespace tau
         Time( long millis = 0, long micros = 0 )
             : value( 0 )
         {
-            std::memset( &time, 0, sizeof( time ) );
             
             switch ( millis )
             {
@@ -87,15 +86,12 @@ namespace tau
                     return;
             }
                         
-            
-            
             value = millis;
-
-            time.tv_sec = value / 1000;
             value *= 1000;
             value += micros;
-            time.tv_usec = micros;
         }
+        
+        
 
         // Time( const Time& time )
 //         {
@@ -116,14 +112,16 @@ namespace tau
             return value == -1;
         }
         
-        operator const struct timespec* () const
+        operator const struct timeval* () 
         {
-            return ( struct timespec* ) &time;
+            time.tv_sec = value / 1000000;
+            time.tv_usec = value - time.tv_sec * 1000000 ;
+            return &time;
         }
         
-        operator struct timeval* ()  
+        operator const struct timespec* () const
         {
-            return &time;
+            return ( struct timespec* ) ( const struct timeval* ) ( *const_cast< Time* >( this ) );
         }
         
         ul s() const

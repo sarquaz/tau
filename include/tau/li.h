@@ -86,6 +86,7 @@ namespace tau
                     mem::mem().free( m_data );    
                 }
             }
+            
             void check( )
             {                
                 //

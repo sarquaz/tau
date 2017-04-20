@@ -2,17 +2,6 @@
 #define _TAU_TAU_H_
 
 #include "std.h"
-
-namespace tau
-{
-    // namespace si
-    // {
-    //     void* swap( void** target, void* value );
-    //     ui inc( ui* target );
-    //     ui dec( ui* target );
-    // }
-}
-
 #include "out.h"
 #include "mem.h"
 
@@ -24,6 +13,8 @@ namespace tau
 
 #include "si.h"
 #include "li.h"
+
+#include "io.h"
 #include "main.h"
 
 

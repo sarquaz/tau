@@ -30,7 +30,7 @@ namespace tau
             s_instance = this;
 
             m_manager = &Liner::instance( *this, threads );
-            si::Signals::assign( new Signals() );
+            Signals::assign( new Signals() );
         }
         
         ui start()
@@ -65,7 +65,7 @@ namespace tau
             data::Data data;
             PRINT( data, format );
             data.add( "\n" );
-            si::out( data );
+            out( data );
         }
         
         ui tries() const
@@ -174,28 +174,28 @@ namespace tau
             return set;
         }
                 
-        Net& server( si::Link::Type type = si::Link::Tcp )
+        Net& server( Link::Type type = Link::Tcp )
         {
             ENTER();
             TRACE( "creating server of type %d", type );
             
             Set::Options options;
             
-            auto stype = si::Link::stype( type );
+            auto stype = Link::stype( type );
             
             
             options[ "type" ] = stype;
             options[ "mode" ] = "server";
             
             
-            if ( type == si::Link::Local )
+            if ( type == Link::Local )
             {   
                 options[ "host" ] = data::Data()( "/tmp/%s", ( const char* ) data::Data::get() );
             }
             else
             {
                 options[ "host" ] = "localhost";
-                options[ "port" ] = data::Data()( "%u", si::random( 10000 ) + 9000 );
+                options[ "port" ] = data::Data()( "%u", random( 10000 ) + 9000 );
             }
             
             return dynamic_cast< Net& >( start( options, "net" ) );
@@ -237,7 +237,7 @@ namespace tau
             m_checks[ name.hash() ].value = value;
         }
         
-        void check( const data::Data& name )
+        void si::check( const data::Data& name )
         {
             out( "checking %s", name.c() );
             
@@ -270,22 +270,22 @@ namespace tau
         
             
     private:
-        class Signals: public si::Signals
+        class Signals: public Signals
         {
         private:
-            virtual void onAbort( si::Signals::What what )
+            virtual void onAbort( Signals::What what )
             {
-                if ( what != si::Signals::Error )
+                if ( what != Signals::Error )
                 {
                     Test::get().cleanup();
                 }
              
-                if ( what != si::Signals::Exit )
+                if ( what != Signals::Exit )
                 {
                     out( "exiting with error" );
                 }
                 
-                ::exit( what == si::Signals::Exit ? 0 : 1 );
+                ::exit( what == Signals::Exit ? 0 : 1 );
             }
             
             virtual void onTerminate()
@@ -298,7 +298,7 @@ namespace tau
         {
         }
         
-        virtual void  check()
+        virtual void  si::check()
         {
             
         }
@@ -322,7 +322,7 @@ namespace tau
                 return;
             }
             
-            check();
+            si::check();
             
             if ( !tau::line().id() )
             {

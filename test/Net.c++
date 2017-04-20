@@ -8,7 +8,7 @@ TEST();
 class TestNet: public Test
 {
 public:
-    TestNet( si::Link::Type type )
+    TestNet( Link::Type type )
     : Test( 3 ), m_count( 5 ), m_type( type )
     {
         setInterval( Time( 1000 ) );
@@ -80,9 +80,9 @@ private:
         timer.deref();
     }
     
-    virtual void check()
+    virtual void si::check()
     {
-        Test::check( "read" );
+        Test::si::check( "read" );
     }
     
     void start( )
@@ -118,12 +118,12 @@ private:
 private:
     ui m_count;
     ui m_tries;
-    si::Link::Type m_type;
+    Link::Type m_type;
 };
 
 int main()
 {
-    li::cycle< si::Link::Type >( { si::Link::Local, si::Link::Udp, si::Link::Tcp } )( []( si::Link::Type type )
+    li::cycle< Link::Type >( { Link::Local, Link::Udp, Link::Tcp } )( []( Link::Type type )
     {
         ( TestNet( type ) ) (); 
         

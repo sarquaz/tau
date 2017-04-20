@@ -48,14 +48,14 @@ namespace tau
     private:
         ui m_count;
         li::List< tau::Line* > m_lines;
-        si::Lock m_lock;   
+        Lock m_lock;   
         ui m_stopped;
-        si::Semaphore m_semaphore;
+        Semaphore m_semaphore;
         static Liner* s_instance;
     };
 
     
-    class Line : public si::Thread, public in::Male, public ev::Loop::Client
+    class Line : public Thread, public in::Male, public ev::Loop::Client
     {    
         friend class Liner;
         
@@ -76,7 +76,7 @@ namespace tau
         }
         intptr_t threadId() const
         {
-            return si::Thread::id();
+            return Thread::id();
         }
         
     protected:
