@@ -1,6 +1,5 @@
-#ifndef TAU_TYPES_H
-#define TAU_TYPES_H
-
+#ifndef TAU_TYPES_H_
+#define TAU_TYPES_H_
 
 namespace tau
 {
@@ -128,7 +127,7 @@ namespace tau
         }
         
     private:
-        virtual void destroy() = 0;    
+        virtual void destroy() = 0;
         
     private:
         ui m_ref;

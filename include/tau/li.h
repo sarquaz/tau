@@ -147,6 +147,12 @@ namespace tau
         template < class Value > class List: public box::list::List< Value, Allocator >
         {
         public:
+            enum Direction
+            {
+                Head = box::list::Head,
+                Tail = box::list::Tail
+            };
+            
             List( )
                 : box::list::List< Value, Allocator >()
             {
@@ -170,9 +176,9 @@ namespace tau
             {
             }
 
-            Value pop()
+            Value pop( Direction direction = Tail)
             {
-                auto node = this->tail( );
+                auto node = direction == Tail ? this->tail( ) : this->head();
                 if ( node )
                 {
                     auto data = node->data();

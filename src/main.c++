@@ -4,7 +4,7 @@
 namespace tau
 {
     static Main s_main;
-    __thread os::Thread* t_thread = NULL;
+    __thread Main::Thread* t_thread = NULL;
     __thread ev::Loop* t_loop = NULL;
 
     Main& Main::instance()
@@ -12,7 +12,7 @@ namespace tau
         return s_main;
     }
     
-    os::Thread& Main::thread()
+    Main::Thread& Main::thread()
     {
         assert( t_thread );
         
@@ -26,7 +26,7 @@ namespace tau
         return *t_loop;
     }
         
-    void Main::started( os::Thread* thread, ev::Loop* loop )
+    void Main::started( Main::Thread* thread, ev::Loop* loop )
     {
         t_thread = thread;
         t_loop = loop;

@@ -65,8 +65,6 @@ namespace tau
             Infinite = -1
         };
         
-        struct timeval time;
-         
         long long value;
         
         Time( long millis = 0, long micros = 0 )
@@ -76,6 +74,7 @@ namespace tau
             switch ( millis )
             {
                 case Now:
+                    struct timeval time;
                     ::gettimeofday( &time, NULL );
                     value = time.tv_sec * 1000000 + time.tv_usec;
                     return;
@@ -100,7 +99,6 @@ namespace tau
         void operator=( const Time& time )
         {
             value = time.value;
-            std::memcpy( &this->time, &time.time,  sizeof( time.time ) );
         }
         operator long long () const
         {
@@ -112,16 +110,12 @@ namespace tau
             return value == -1;
         }
         
-        operator const struct timeval* () 
+        operator struct timeval () const
         {
+            struct timeval time;
             time.tv_sec = value / 1000000;
-            time.tv_usec = value - time.tv_sec * 1000000 ;
-            return &time;
-        }
-        
-        operator const struct timespec* () const
-        {
-            return ( struct timespec* ) ( const struct timeval* ) ( *const_cast< Time* >( this ) );
+            time.tv_usec = value - time.tv_sec  * 1000000 ;
+            return time;
         }
         
         ul s() const

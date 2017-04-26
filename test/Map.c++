@@ -75,6 +75,28 @@ template < class T > struct Test
 //         }
 // };
 
+class Task: public th::Pool::Task
+{
+public:
+    Task()
+        : th::Pool::Task()
+    {
+        
+    }
+    
+    virtual ~Task()
+    {
+        ENTER();
+    }
+    
+    virtual void operator()( )
+    {
+        ENTER();
+        
+        request().data().add( Data::get() );
+    }
+    
+};
 
 
 int main( )
@@ -177,19 +199,25 @@ int main( )
                 
         
        
-        tau::start( [ & ] ( action::Action action )
+        tau::start( [ ] ( action::Action action )
         { 
             STRACE( "action %s", action == tau::action::Start ? "start" : "stop" );
+            
             if ( action == action::Start )
             {
                 STRACE( "thread %u 0x%x started", tau::thread().id(), &tau::thread() ); 
                 
-                tau::event(  [ ] ( const ev::Request* req ) 
-                    {
-                        STRACE( "req 0x%x", req    );
-                    }, { { options::Repeat, true }, {options::Msec, 300} } ); 
+                Task* task = mem::mem().type< Task >();    
+                
+                task->request().assign( [ & ]( ev::Request& request ) { 
+                    STRACE( "callback", "" );
+                    STRACE( "%s", request.data().c() );
+                    STRACE( "0x%x", task );
+                    request.parent().deref();
+                });
+                
+                tau::thread().pool().add( *task );
             }
-            
         } );
        
 
@@ -217,5 +245,3 @@ int main( )
     
 
 }
-
-

@@ -5,42 +5,25 @@
 
 namespace tau
 {
-    namespace options
-    {
-        enum 
-        {
-            Threads,
-            Repeat,
-            Msec,
-            Usec
-        };
-    }
-    
-    namespace action
-    {
-        enum Action
-        {
-            Start,
-            Stop
-        };
-    }
-    
-    typedef li::Set< ui > Options;
     
     class Main
     {
     public:
-        
-        template < class Callback > class Thread: public os::Thread
+        class Thread: public os::Thread
         {
         public:
-            Thread( Callback callback )
-                : os::Thread(), m_data( NULL ), m_callback( callback )
+            Thread( )
+                : os::Thread(), m_data( NULL ), m_callback( NULL )
             {
+                ENTER();
             }
             
             virtual ~Thread ()
             {
+                if ( m_callback )
+                {
+                    m_callback->destroy();
+                }
             }
             
             void* data() const
@@ -54,7 +37,7 @@ namespace tau
                 return data;
             }
             
-            virtual void stop()
+            void stop()
             {
                 m_loop.stop();
             }
@@ -63,14 +46,26 @@ namespace tau
             {
                 return m_loop;
             }
+            
+            th::Pool& pool()
+            {
+                return m_pool;
+            }
+            
+            template < class Callback > void assign( Callback callback )
+            {
+                m_callback = mem::mem().type< si::Callback < Callback, action::Action > >( callback );
+            }
         
         private:
             virtual void run()
             {
                 ENTER();
+                
                 Main::instance().started( this, &m_loop );
                
-                Main::instance().lock().with( [ & ]( ){ m_callback( action::Start ); } );
+                assert( m_callback );   
+                Main::instance().lock().with( [ & ]( ){ ( *m_callback ) ( action::Start ); } );
                 
                 m_loop.run( [ & ] ( ev::Loop::Event& event ) 
                     {
@@ -78,13 +73,15 @@ namespace tau
                         event.callback();
                      } );
                 
-                Main::instance().lock().with( [ & ]( ){ m_callback( action::Stop ); } );
+                Main::instance().lock().with( [ & ]( ){ ( *m_callback )( action::Stop ); } );
             }
     
         private:
             void* m_data;
-            std::function< void( action::Action ) > m_callback;
+            si::Call< action::Action >* m_callback; 
             ev::Loop m_loop;
+            th::Pool m_pool;
+            
         };
         
         Main()
@@ -105,7 +102,8 @@ namespace tau
                 //
                 //  create new thread
                 //
-                auto thread = new Thread< Callback >( callback );
+                auto thread = new Thread();
+                thread->assign( callback );
                 
                 m_lock.with( [ & ] ( ) { m_threads.add( thread ); } );
             
@@ -115,13 +113,19 @@ namespace tau
                 thread->start();
             }                
             
+            m_threads.all( [ & ] ( Thread* thread ) 
+             {
+                 
+                thread->join();
+             } );
         }
+        
         void stop()
         {
             ENTER();
             
         
-            m_threads.all( [ & ] ( os::Thread* thread ) 
+            m_threads.all( [ & ] ( Thread* thread ) 
              {
                 thread->stop(); 
                 thread->join();
@@ -129,10 +133,10 @@ namespace tau
              } );
         }
         
-        static os::Thread& thread();
+        static Thread& thread();
         static ev::Loop& loop();
         
-        void started( os::Thread*, ev::Loop* );
+        void started( Thread*, ev::Loop* );
 
         os::Lock& lock()
         {
@@ -143,7 +147,7 @@ namespace tau
          
     
     private:
-        li::Array< os::Thread* > m_threads; 
+        li::Array< Thread* > m_threads; 
         os::Lock m_lock;
     };
     
@@ -162,10 +166,12 @@ namespace tau
     
     inline void stop()
     {
+        SENTER();
+        
         Main::instance().stop();
     }
     
-    inline os::Thread& thread()
+    inline Main::Thread& thread()
     {
         return Main::thread();
     }
@@ -174,8 +180,6 @@ namespace tau
     {
         return Main::loop();
     }
-    
-    
     
     class Event: public io::Event
     {
@@ -192,11 +196,9 @@ namespace tau
             ENTER();
         }
         
-        virtual ev::Loop::Event& event()
+        virtual void configure( ev::Loop::Event& event )
         {
-            auto& event = io::Event::event();
-            event.time = m_time;
-            return event; 
+            event.time = m_time;  
         }
         
         virtual void callback()
@@ -211,6 +213,7 @@ namespace tau
         
         virtual void destroy()
         {
+            ENTER();
             this->~Event();
             mem::mem().free( this );
         }
@@ -221,12 +224,13 @@ namespace tau
         Time m_time;
     };
     
-    template < class Callback > void event( Callback callback, const Options& options = {} )
+    template < class Callback > void event( Callback callback, const Options& options = {}, ev::Request* request = NULL )
     {
         auto event = mem::mem().type< Event >( options );
         
-        event->request( callback );
+        event->request( callback, request );
     } 
+    
     
 }
 

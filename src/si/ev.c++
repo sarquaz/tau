@@ -50,6 +50,8 @@ namespace tau
 #else
             m_handle = ::epoll_create1( 0 );
 #endif
+            std::memset( m_events, 0, sizeof( m_events ) );
+            
         }
         
         Loop::~Loop()
@@ -60,7 +62,7 @@ namespace tau
         }
         
 
-        void Loop::act( Action action, Event& event ) const
+        void Loop::act( Action action, Event& event ) 
         {
             ENTER();
             auto act = 0;
@@ -80,7 +82,7 @@ namespace tau
             long time = 0;
             if ( action == Add )
             {
-                TRACE( "time value: %u sec %u usec %u", event.time.value, event.time.time.tv_sec, event.time.time.tv_usec );
+                TRACE( "time value: %u sec %u usec %u", event.time.value, event.time.s(), event.time.us() );
                     
                 if ( event.type == Event::Default )
                 {
@@ -92,7 +94,12 @@ namespace tau
                     flags = NOTE_SECONDS;
                     time = INT_MAX;
                 }
-            
+                else if ( event.type == Event::Once )
+                {
+                    TRACE( "oneshot event", "" );
+                    act |= EV_ONESHOT;
+                }
+                
                 TRACE( "setting time value %d", time );
             }
         
@@ -108,6 +115,18 @@ namespace tau
             si::check( ::epoll_ctl( m_queue, act, event.fd, &set ) )( "epoll_ctl" );
 #endif
         }
+        
+        void Loop::add( Request& request ) 
+        {
+            auto& event = request.event();
+            event.loop = this;
+            act( Add, event );
+        }
+        void Loop::remove( Request& request ) 
+        {
+            act( Remove, request.event() );
+        }
+        
     
 
     }

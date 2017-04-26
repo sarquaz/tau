@@ -1,5 +1,5 @@
 CXX = g++
-CPPFLAGS =  -I../include/tau  -g -DLOG -std=c++0x 
+CPPFLAGS =  -I../include/tau  -g -DLOG -std=c++11
 LDFLAGS = -L../bin -ltau 
 
 SOURCES = $(wildcard *.c++)

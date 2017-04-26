@@ -23,6 +23,7 @@ namespace tau
                     Default,
                     Read,
                     Write,
+                    Once,
                     Stop
                 };
                     
@@ -30,16 +31,16 @@ namespace tau
                 Type type;
                 Time time;
                 Loop* loop;
-                Reel* parent;
                 Request* request;
             
-                Event( Type _type, Handle _fd = 0, Reel* _parent = NULL )
-                    : time( Time::Infinite ), fd( _fd ), type( _type ), loop( NULL ), parent( _parent ), request( NULL )
+                Event( Type _type, Handle _fd = 0 )
+                    : time( Time::Infinite ), fd( _fd ), type( _type ), loop( NULL ), request( NULL )
                 {
+                    
                 }
                 
-                Event( const Time& _time = Time(), Type _type = Default, Reel* _parent = NULL )
-                    : fd( 0 ), type( _type ), time( _time ), loop( NULL ), parent( _parent ), request( NULL )
+                Event( const Time& _time = Time(), Type _type = Default )
+                    : fd( 0 ), type( _type ), time( _time ), loop( NULL ), request( NULL )
                 {
                 }
                 
@@ -48,13 +49,18 @@ namespace tau
                     operator = ( event );
                 }
                 
-                virtual ~Event()
+                ~Event()
                 {
                    ENTER();
                    
                    if ( loop )
                    {
-                       loop->remove( *this );
+                       assert( request );
+                       if ( type != Once )
+                       {
+                           loop->remove( *request );
+                       }
+                       
                    }
                 }
             
@@ -62,7 +68,7 @@ namespace tau
                 {
                     fd = event.fd;
                     type = event.type;
-                    parent = event.parent;
+                    request = event.request;
                     loop = event.loop;
                     time = event.time;
                 }
@@ -71,7 +77,8 @@ namespace tau
                 
                 virtual void destroy()
                 {
-                    mem::mem().detype< Event >( this );            
+                    this->~Event();
+                    mem::mem().free( this );            
                 }
                 
                 template < class ... Args > static Event* get ( Args&&... args )
@@ -103,9 +110,13 @@ namespace tau
                         TRACE( "event ident %d", e.ident );
                         
                         auto event = static_cast< Event* > ( e.udata );
-                        event->fd = e.ident;
+                        if ( !event->fd )
+                        {
+                            event->fd = e.ident;    
+                        }
+                        
 
-                        TRACE( "event 0x%x", event );
+                        TRACE( "event 0x%x type %d", event, event->type );
                         
                         if ( event->type == Event::Stop )
                         {
@@ -121,24 +132,19 @@ namespace tau
     #endif
                     }
                 }
-                
-            }
-            void stop( ) const
-            {
-                add( *Event::get( Time( ), Event::Stop ) );
             }
             
-            void add( Event& event ) const
+            void stop( ) 
             {
-                event.loop = const_cast < Loop* > ( this );
-                act( Add, event );
+                ENTER();
+                
+                act( Add, *Event::get( Time( ), Event::Stop ) );
             }
-            void remove( Event& event ) const
-            {
-                act( Remove, event );
-            }
-        
-        
+            
+            void add( Request& ); 
+
+            void remove( Request& );
+
         private:
             enum Action
             {
@@ -152,7 +158,7 @@ namespace tau
             typedef struct epoll_event Hevent;
 #endif
 
-            void act( Action action, Event& event ) const;
+            void act( Action action, Event& event );
             static Event::Type type( int );
 
         private:
@@ -163,19 +169,49 @@ namespace tau
         class Request: public Reel
         {
         public:
-            Request( Loop::Event& event )
-                : m_error( NULL ), m_event( event )
+            class Parent: public Reel
             {
+            public:
+                virtual ~Parent()
+                {
+                    
+                }
+                
+                virtual void configure( Loop::Event& )
+                {
+                    
+                }
+                
+            protected:
+                Parent()
+                {
+                    
+                }
+                
+                
+            };
+            
+            Request( Parent& parent )
+                : m_error( NULL ), m_parent( parent ), m_event( *( Loop::Event::get() ) ), m_callback( NULL )
+            {
+                
+                m_event.request = this;
+                m_parent.configure( m_event );
             }
             virtual ~Request()
             {
                 ENTER();
                 m_event.deref();
+                
+                if ( m_callback )
+                {
+                    m_callback->destroy();
+                }
             }
             
             virtual void callback() 
             {
-                m_callback( this );
+                ( *m_callback )( *this );
             }
             
             const Data& data() const
@@ -188,28 +224,6 @@ namespace tau
                 return m_error;
             }
             
-            Loop::Event& event()
-            {
-                return m_event;
-            }
-            
-            Loop::Event::Type type() const
-            {
-                return m_event.type; 
-            }
-            
-            template < class Callback > void assign( Callback callback )
-            {
-                m_callback = callback;
-            }
-            
-            virtual void destroy()
-            {
-                this->~Request();
-                mem::mem().free( this );
-            }
-            
-        protected:
             Data& data()
             {
                 return m_data;
@@ -221,11 +235,38 @@ namespace tau
                 return m_error;
             }
             
+            Loop::Event& event()
+            {
+                return m_event;
+            }
+            
+            Parent& parent()
+            {
+                return m_parent;
+            }
+
+            Loop::Event::Type type() const
+            {
+                return m_event.type; 
+            }
+            
+            template < class Callback > void assign( Callback callback )
+            {
+                m_callback = mem::mem().type< si::Callback< Callback, Request& > >( callback );
+            }
+            
+            virtual void destroy()
+            {
+                this->~Request();
+                mem::mem().free( this );
+            }
+            
         private:
             Data m_data;
             Error* m_error;
-            std::function< void( Request* ) > m_callback;
+            si::Call< Request& >* m_callback;
             Loop::Event& m_event;
+            Parent& m_parent;
         };
         
     }

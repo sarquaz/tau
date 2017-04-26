@@ -1,51 +1,15 @@
 #ifndef _TAU_IO_H_
 #define _TAU_IO_H_
 
+#include "../../src/trace.h"
+
 namespace tau
 {
     extern ev::Loop& loop();
         
     namespace io
     {
-        // class Event;
-        //
-        // class Request: public ev::Request
-        // {
-        //     friend class Event;
-        //
-        // public:
-        //     Request( ev::Request::Type type = ev::Request::Default )
-        //         : ev::Request( type ), m_callback( callback ), m_event( NULL )
-        //     {
-        //
-        //     }
-        //
-        //     virtual ~Request()
-        //     {
-        //
-        //     }
-        //
-        //     virtual void callback()
-        //     {
-        //         m_callback( this );
-        //     }
-        //
-        //     virtual void destroy()
-        //     {
-        //         this->~Request();
-        //         mem::mem().free( this );
-        //     }
-        //
-        // private:
-        //
-        //
-        //
-        // private:
-        //     std::function< void( ev::Request* ) > m_callback;
-        //     Event* m_event;
-        // };
-        //
-        class Event: public Reel
+        class Event: public ev::Request::Parent
         {
             public:
                 Event()
@@ -60,40 +24,31 @@ namespace tau
 
                 virtual void destroy()
                 {
+                    ENTER();
                     this->~Event();
                     mem::mem().free( this );
                 }
                 
-                virtual ev::Loop::Event& event()
-                {
-                    return *( ev::Loop::Event::get() );
-                }
-
                 template < class Callback > void request( Callback callback, ev::Request* request = NULL )
                 {   
-                    ev::Loop::Event* event;
-                    
                     if ( !request )
                     {
-                        event = &( this->event() );
-                        request = mem::mem().type< ev::Request >( *event );
-                    }
-                    else
-                    {
-                        event = &( request->event() );
+                        request = mem::mem().type< ev::Request >( *this );
                     }
                     
-                    request->assign( [ & ] ( ev::Request* request ) 
+                    request->assign( [ & ] ( ev::Request& request ) 
                         { 
+                            TRACE( "event callback", "" );
+                            
+                            ref();
                             callback( request );
                             this->callback();                
+                            deref();
                         } );
-
-                    event->request = request;
-                    event->parent = this;
+                        
                     m_requests.append( request );
 
-                    tau::loop().add( *event );
+                    loop().add( *request );
                 }
 
                 virtual void callback() = 0;
@@ -101,7 +56,6 @@ namespace tau
             private:
                 li::List< ev::Request* > m_requests;
         };
-        //  
     }
 }
 

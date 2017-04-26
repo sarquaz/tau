@@ -1,4 +1,5 @@
 #include "tau.h"
+#include "../trace.h"
 
 namespace tau
 {
@@ -28,6 +29,7 @@ namespace tau
         }
         
         Condition::Condition()
+            : m_count( 0 )
         {
             si::check( 
                 ::pthread_cond_init( &m_cond, NULL )  
@@ -47,6 +49,10 @@ namespace tau
         
         void Condition::wait( const Time* time )
         {
+            ENTER();
+            
+            si::inc( &m_count );
+            
             //
             //  lock the mutex
             //  
@@ -56,16 +62,33 @@ namespace tau
             //
             if ( time )
             {
-                ::pthread_cond_timedwait( &m_cond, &m_mutex, *time );
+                struct timespec t;
+                t.tv_sec = time->s();
+                t.tv_nsec = ( time->us() - t.tv_sec * 1000000 ) * 1000;
+                
+                TRACE( "secs: %u", t.tv_sec );
+                auto ret = ::pthread_cond_timedwait( &m_cond, &m_mutex, &t );
+                TRACE( "return %d", ret );
             }
             else
             {
                 ::pthread_cond_wait( &m_cond, &m_mutex );
             }
+            
         }
         
         void Condition::signal()
         {
+            ENTER();
+            
+            if ( !m_count )
+            {
+                throw Error();
+            }
+            
+            TRACE( "count %d", m_count );    
+            
+            si::dec( &m_count );
             //
             //  signal
             //
@@ -81,6 +104,8 @@ namespace tau
             si::check( 
                     ::pthread_create( &m_handle, NULL, ( void *( * )( void* ) ) routine, ( void* ) this ) 
                     ) ( "thread create" );
+            
+            m_started = true;
         }
     
         void Thread::join() const

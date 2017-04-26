@@ -39,10 +39,15 @@ namespace tau
         
             void wait( const Time* time = NULL );
             void signal();
+            ui count() const
+            {
+                return m_count;
+            }
                         
         private:
             Cond m_cond;
             Mutex m_mutex;
+            ui m_count;
         };
     
         class Thread
@@ -51,6 +56,7 @@ namespace tau
         
         public:
             Thread( )
+                : m_started( false )
             {
             }
 
@@ -62,7 +68,11 @@ namespace tau
             void start( );
         
             ul id( );
-            virtual void stop() = 0;
+            
+            bool started() const
+            {
+                return m_started;
+            }
             
         private:
             static void routine( void* data );
@@ -70,6 +80,7 @@ namespace tau
     
         private:
             Handle m_handle;
+            bool m_started;
         };
     
 

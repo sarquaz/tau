@@ -6,35 +6,101 @@
 namespace tau
 {        
     namespace si
+    {
+        void* swap( void** target, void* value );
+        ui inc( ui* target );
+        ui dec( ui* target );
+        
+        
+        template < class ...Args > class Call
         {
-            void* swap( void** target, void* value );
-            ui inc( ui* target );
-            ui dec( ui* target );
-            
-            struct check
+        public:
+        
+            virtual ~Call()
             {
-                ui skip;
-                long result;
-
-                check( long _result, ui _skip = EWOULDBLOCK )
-                : skip( _skip ), result( _result )
+            }
+        
+            virtual void operator()( Args&& ... args ) const = 0;
+            virtual void destroy() = 0;
+            
+        protected:
+            Call()
+            {
+                
+            }
+        
+        };
+    
+        template < class Callable, class ...Args > class Callback: public Call< Args...  >
+        {
+        public:
+            Callback( Callable callable )
+                : Call< Args...  >()
+            {
+                m_store = mem::mem().get( align( sizeof( Callable ) ) ); 
+                std::memcpy( m_store, ( void* ) &callable, sizeof( Callable ) );
+            }
+        
+            virtual ~Callback()
+            {
+                mem::mem().free( m_store );
+            }
+        
+            virtual void operator()( Args&& ... args ) const
+            {
+                ( *( static_cast< Callable* >( m_store ) ) )( std::forward< Args >( args ) ...  );
+            }
+        
+            virtual void destroy()
+            {
+                this->~Callback();
+                mem::mem().free( this );
+            }
+        
+        
+        private:
+            ui align( ui size ) const
+            {
+                auto rem = size % sizeof( void* );
+                if ( rem )
                 {
+                    size += sizeof( void* ) - rem;
+                }
+            
+                return size;
+            }
+        private:
+            void* m_store;
+        };
+    
+        
+        
+        struct check
+        {
+            ui skip;
+            long result;
+
+            check( long _result, ui _skip = EWOULDBLOCK )
+            : skip( _skip ), result( _result )
+            {
+            }
+
+            ul operator()( const char* format, ... )
+            {
+                if ( errno == skip || result != -1 )
+                {
+                    return result;
                 }
 
-                ul operator()( const char* format, ... )
-                {
-                    if ( errno == skip || result != -1 )
-                    {
-                        return result;
-                    }
-
-                    Error error;
-                    EPRINT( error.message, format );
-                    error.message( ", errno %d", errno );
-                    throw error;
-                }
-            };
-        }
+                Error error;
+                EPRINT( error.message, format );
+                error.message( ", errno %d", errno );
+                TRACE( "error %d", errno );
+                
+                throw error;
+            }
+        };
+    }
         
         // class File
         // {
@@ -454,9 +520,10 @@ namespace tau
 
 }
 
-#include "si/th.h"
 #include "si/os.h"
 #include "si/ev.h"
+#include "si/th.h"
+
 
 
 #endif
