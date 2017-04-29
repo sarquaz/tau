@@ -101,10 +101,21 @@ namespace tau
                 }
                 
                 TRACE( "setting time value %d", time );
+                event.fd = r::random( 100000 );
             }
+            
+            
         
             EV_SET( &handle, event.fd, event.filter( ), act, flags, time, &event );
-            si::check( ::kevent( m_handle, &handle, 1, NULL, 0, NULL ) )( "kevent" );
+            try
+            {
+                si::check( ::kevent( m_handle, &handle, 1, NULL, 0, NULL ) )( "kevent" );    
+            }
+            catch ( const Error& error )
+            {
+                TRACE( "error %s", error.message.c() );
+            }
+            
         
 #else
             Eevent set;

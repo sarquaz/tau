@@ -23,7 +23,7 @@ namespace tau
                     assert( event.request );
                     
                     auto& task = reinterpret_cast< Task& >( event.request->parent() );
-                    task();
+                    task(); 
 
                     task.loop().add( task.request() );
                  } );
@@ -36,7 +36,7 @@ namespace tau
             m_threads.all( [] ( Thread* thread ) 
                 {
                      thread->stop();
-                     thread->join();
+//                     thread->join();
                 } );
         }
         

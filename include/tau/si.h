@@ -95,7 +95,7 @@ namespace tau
                 Error error;
                 EPRINT( error.message, format );
                 error.message( ", errno %d", errno );
-                TRACE( "error %d", errno );
+                
                 
                 throw error;
             }

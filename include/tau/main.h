@@ -39,7 +39,9 @@ namespace tau
             
             void stop()
             {
+                ENTER();
                 m_loop.stop();
+                m_pool.stop();
             }
             
             const ev::Loop& loop() const
@@ -90,7 +92,15 @@ namespace tau
         
         ~Main ()
         {
-            stop();
+            ENTER()
+//            stop();
+                
+                m_threads.all( [ & ] ( Thread* thread ) 
+                 {
+//                    thread->stop(); 
+            //        thread->join();
+                    delete thread;
+                 } );
         }
         
         template < class Callback > void start( us threads, Callback callback )
@@ -113,9 +123,9 @@ namespace tau
                 thread->start();
             }                
             
-            m_threads.all( [ & ] ( Thread* thread ) 
+            m_threads.all( [ & ] ( Thread* thread )
              {
-                 
+
                 thread->join();
              } );
         }
@@ -128,9 +138,9 @@ namespace tau
             m_threads.all( [ & ] ( Thread* thread ) 
              {
                 thread->stop(); 
-                thread->join();
-                delete thread;
-             } );
+        //        thread->join();
+//                delete thread    ;
+            } );
         }
         
         static Thread& thread();

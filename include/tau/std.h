@@ -63,7 +63,7 @@ namespace tau
         {
             Now = -2,
             Infinite = -1
-        };
+    };
         
         long long value;
         

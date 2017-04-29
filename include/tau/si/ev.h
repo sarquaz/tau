@@ -95,14 +95,29 @@ namespace tau
         
             template < class Callback > void run( Callback callback )
             {
+                ENTER();
+                
                 for ( ;; )
                 {
                     TRACE( "running event loop", "" );
+                    ui changes = 0;
+                    
+                    try
+                    {
+                        
+                    
     #ifdef __MACH__
-                    auto changes = si::check( ::kevent( m_handle, NULL, 0, m_events, lengthof( m_events ), NULL ) )( "kevent" );
+                    changes = si::check( ::kevent( m_handle, NULL, 0, m_events, lengthof( m_events ), NULL ) )( "kevent" );
     #else
-                    auto changes = si::check( ::epoll_wait( m_queue, m_events, lengthof( m_events ), -1 ) )( "epoll");
+                    changes = si::check( ::epoll_wait( m_queue, m_events, lengthof( m_events ), -1 ) )( "epoll");
     #endif
+                    }
+                    catch ( const Error& error )
+                    {
+                        TRACE( "error %s", error.message.c() );
+                        return;
+                    }
+                    
                     for ( auto i = 0; i < changes; i++ )
                     {
     #ifdef __MACH__
@@ -120,6 +135,7 @@ namespace tau
                         
                         if ( event->type == Event::Stop )
                         {
+                            TRACE( "need to stop", "" );
                             event->deref();
                             return;
                         }

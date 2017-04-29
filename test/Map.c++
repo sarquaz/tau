@@ -207,18 +207,21 @@ int main( )
             {
                 STRACE( "thread %u 0x%x started", tau::thread().id(), &tau::thread() ); 
                 
-                Task* task = mem::mem().type< Task >();    
-                
-                task->request().assign( [ & ]( ev::Request& request ) { 
+                Task* task = mem::mem().type< Task >();
+
+                task->request().assign( [ & ]( ev::Request& request ) {
                     STRACE( "callback", "" );
                     STRACE( "%s", request.data().c() );
                     STRACE( "0x%x", task );
                     request.parent().deref();
+                    tau::stop();    
                 });
-                
-                tau::thread().pool().add( *task );
+
+               tau::thread().pool().add( *task );
             }
         } );
+        
+        
        
 
   //      test.map.keys( [ & ] ( int key ) {  printf("key %d\n", key ); } );
