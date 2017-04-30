@@ -97,8 +97,6 @@ namespace tau
                 
                 m_threads.all( [ & ] ( Thread* thread ) 
                  {
-//                    thread->stop(); 
-            //        thread->join();
                     delete thread;
                  } );
         }
@@ -138,8 +136,6 @@ namespace tau
             m_threads.all( [ & ] ( Thread* thread ) 
              {
                 thread->stop(); 
-        //        thread->join();
-//                delete thread    ;
             } );
         }
         
@@ -199,6 +195,8 @@ namespace tau
         {
             ENTER();    
             m_repeat = options.def( options::Repeat, ( ui ) false );
+            
+            
         }
         
         virtual ~Event()
@@ -209,6 +207,11 @@ namespace tau
         virtual void configure( ev::Loop::Event& event )
         {
             event.time = m_time;  
+            if ( m_repeat && m_time.value > 0 )
+            {
+                TRACE( "timer event", "" );
+                event.type = ev::Loop::Event::Timer;        
+            }
         }
         
         virtual void callback()

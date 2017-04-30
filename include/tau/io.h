@@ -25,8 +25,7 @@ namespace tau
                 virtual void destroy()
                 {
                     ENTER();
-                    this->~Event();
-                    mem::mem().free( this );
+                    mem::mem().detype< Event >( this );
                 }
                 
                 template < class Callback > void request( Callback callback, ev::Request* request = NULL )

@@ -263,6 +263,12 @@ namespace tau
                  
                 throw Error( "value not found" );    
             }
+             
+            bool exists( const Key& key ) const
+            {
+                auto hash = box::h::hash< Key >()( key );
+                return ( const_cast< Map* >( this ) )->find( hash ) ? true : false;    
+            }    
             
             bool remove( const Key& key )
             {

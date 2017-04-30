@@ -3,11 +3,10 @@
 namespace tau
 {
     namespace ev 
-    {
-        void Loop::Event::callback() 
+    {   
+        void Loop::Event::callback()
         {
             assert( request );
-            
             request->callback();
         }
         
@@ -76,6 +75,8 @@ namespace tau
             TRACE( "%s event 0x%x with fd %d filter %d", action == Add ? "adding" : "removing", &event, event.fd, event.filter() );
         
             Hevent handle;
+            
+            m_setup( event );
         
 #ifdef __MACH__
             auto flags = 0;
@@ -84,7 +85,7 @@ namespace tau
             {
                 TRACE( "time value: %u sec %u usec %u", event.time.value, event.time.s(), event.time.us() );
                     
-                if ( event.type == Event::Default )
+                if ( event.type == Event::Default || event.type == Event::Timer )
                 {
                     flags = NOTE_USECONDS;
                     time = event.time.us();
@@ -101,11 +102,8 @@ namespace tau
                 }
                 
                 TRACE( "setting time value %d", time );
-                event.fd = r::random( 100000 );
             }
             
-            
-        
             EV_SET( &handle, event.fd, event.filter( ), act, flags, time, &event );
             try
             {
@@ -138,8 +136,25 @@ namespace tau
             act( Remove, request.event() );
         }
         
-    
-
+        void Loop::Setup::operator()( Event& event )
+        {
+            ENTER();
+#ifdef __MACH__
+            auto fd = r::random( INT_MAX );
+            if ( !m_fds.exists( fd ) )
+            {
+                m_fds.set( fd );
+                event.fd = fd;
+                TRACE( "assigning fd %d", fd );
+            }
+            else
+            {
+                ( *this )( event );
+            }
+#else
+            
+#endif
+        }
     }
 
 }

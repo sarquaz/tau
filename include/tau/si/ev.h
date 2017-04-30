@@ -7,52 +7,52 @@ namespace tau
 {
     namespace ev
     { 
-        
         class Request;
         
         class Loop
         {
-        public:         
-
+        public:                     
+            
             struct Event: Reel
             {
                 typedef int Handle;
-                
+            
                 enum Type
                 {
                     Default,
+                    Timer,
                     Read,
                     Write,
                     Once,
                     Stop
                 };
-                    
+                
                 Handle fd;
                 Type type;
                 Time time;
                 Loop* loop;
                 Request* request;
-            
+        
                 Event( Type _type, Handle _fd = 0 )
                     : time( Time::Infinite ), fd( _fd ), type( _type ), loop( NULL ), request( NULL )
                 {
-                    
-                }
                 
+                }
+            
                 Event( const Time& _time = Time(), Type _type = Default )
                     : fd( 0 ), type( _type ), time( _time ), loop( NULL ), request( NULL )
                 {
                 }
-                
+            
                 Event( const Event& event )
                 {
                     operator = ( event );
                 }
-                
+            
                 ~Event()
                 {
                    ENTER();
-                   
+               
                    if ( loop )
                    {
                        assert( request );
@@ -60,10 +60,10 @@ namespace tau
                        {
                            loop->remove( *request );
                        }
-                       
+                   
                    }
                 }
-            
+        
                 void operator = ( const Event& event )
                 {
                     fd = event.fd;
@@ -72,22 +72,22 @@ namespace tau
                     loop = event.loop;
                     time = event.time;
                 }
-            
+        
                 int filter() const;
-                
+            
                 virtual void destroy()
                 {
-                    this->~Event();
-                    mem::mem().free( this );            
+                    mem::mem().detype< Event >( this );            
                 }
-                
+            
                 template < class ... Args > static Event* get ( Args&&... args )
                 {
                     return mem::mem().type< Event >( std::forward< Args >( args ) ... );
                 }
-                
+            
                 void callback();
             };
+            
             
             Loop( );
             ~Loop();      
@@ -107,9 +107,9 @@ namespace tau
                         
                     
     #ifdef __MACH__
-                    changes = si::check( ::kevent( m_handle, NULL, 0, m_events, lengthof( m_events ), NULL ) )( "kevent" );
+                        changes = si::check( ::kevent( m_handle, NULL, 0, m_events, lengthof( m_events ), NULL ) )( "kevent" );
     #else
-                    changes = si::check( ::epoll_wait( m_queue, m_events, lengthof( m_events ), -1 ) )( "epoll");
+                        changes = si::check( ::epoll_wait( m_queue, m_events, lengthof( m_events ), -1 ) )( "epoll");
     #endif
                     }
                     catch ( const Error& error )
@@ -125,12 +125,7 @@ namespace tau
                         TRACE( "event ident %d", e.ident );
                         
                         auto event = static_cast< Event* > ( e.udata );
-                        if ( !event->fd )
-                        {
-                            event->fd = e.ident;    
-                        }
-                        
-
+        
                         TRACE( "event 0x%x type %d", event, event->type );
                         
                         if ( event->type == Event::Stop )
@@ -158,7 +153,6 @@ namespace tau
             }
             
             void add( Request& ); 
-
             void remove( Request& );
 
         private:
@@ -166,6 +160,26 @@ namespace tau
             {
                 Add,
                 Remove
+            };
+            
+            class Setup
+            {
+            public:
+                Setup()
+                {
+                    
+                }
+                ~Setup()
+                {
+                    
+                }
+                
+                void operator()( Event& );
+                
+            private:
+#ifdef __MACH__
+        li::Set< Event::Handle > m_fds;        
+#endif
             };
 
 #ifdef __MACH__
@@ -175,12 +189,16 @@ namespace tau
 #endif
 
             void act( Action action, Event& event );
-            static Event::Type type( int );
+            
+            
 
         private:
             Event::Handle m_handle;
             Hevent m_events[ 128 ];
+            Setup m_setup;
         };
+        
+        
         
         class Request: public Reel
         {
