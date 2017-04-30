@@ -8,9 +8,9 @@ namespace tau
         Lock::Lock( )
         {
             pthread_mutexattr_t attributes;
-            pthread_mutexattr_init( &attributes );
-            pthread_mutexattr_settype( &attributes, PTHREAD_MUTEX_ERRORCHECK );
-            pthread_mutex_init( &m_lock, &attributes );
+            ::pthread_mutexattr_init( &attributes );
+            ::pthread_mutexattr_settype( &attributes, PTHREAD_MUTEX_ERRORCHECK );
+            ::pthread_mutex_init( &m_lock, &attributes );
         }
 
         Lock::~Lock( )
