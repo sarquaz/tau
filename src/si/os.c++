@@ -135,5 +135,179 @@ namespace tau
         {
             return out::id();
         }
+
+        Process::Process( )
+        : m_pid( 0 )
+        {
+            auto type = 0;
+            streams( [ & ] ( Stream& s )
+            {
+                s = Stream( type );
+                type ++;
+            } );
+        }
+        
+        void Process::start( const Data& command )
+        {
+            if ( m_pid )
+            {
+                return;
+            }
+            
+            ENTER();
+            
+            m_command =  command;
+            TRACE( "%s", command.c() );
+            
+            //
+            //  establish pipes
+            //
+            streams( [ ] ( Stream& s ) { s.open(); } );
+            //
+            //  fork
+            //
+            auto pid = si::check( ::fork( ) )( "fork" );
+            bool child = pid == 0;
+            
+            streams( [ & ] ( Stream& s ) { s.init( child ); } );
+            
+            if ( child )
+            {
+                ::execlp( "bash", "bash", "-c", command.c(), ( char* ) NULL );
+                ::exit( -1 );
+            }
+            else
+            {
+                m_pid = pid;
+            }
+        } 
+        
+        void Process::stop()
+        {
+            if ( !m_pid )
+            {
+                return;
+            }
+            
+            streams( [ ] ( Stream& s ) { s.close( ); } );
+            signal( SIGKILL );
+            m_pid = 0;
+        }
+        
+        void Process::signal( int signal ) const
+        {
+            if ( m_pid )
+            {
+                TRACE( "sending signal %d to pid %d", signal, pid() );
+                ::kill( m_pid, signal );
+            }
+        }
+        
+        int Process::code()
+        {
+            int code = 0;
+            int result = ::waitpid( pid( ), &code, WNOHANG );
+            
+            if ( result != m_pid )
+            {
+                throw Error();
+            }
+            
+            TRACE( "%d", result );
+            
+            return code;
+        }
+
+        void Process::Stream::open( )
+        {
+            si::check( ::pipe( fds ) )( "pipe" );
+        }
+
+        void Process::Stream::close( )
+        {
+            if ( fd )
+            {
+                ::close( readFd( ) );
+                ::close( writeFd( ) );
+                fd = 0;
+            }
+        }
+
+        void Process::Stream::init( bool child )
+        {
+            switch ( type )
+            {
+                case out::In:
+                    fd = writeFd( child );
+                    break;
+
+                case out::Out:
+                case out::Err:
+                    fd = readFd( child );
+                    break;
+            }
+
+            if ( type == out::In )
+            {
+                ::close( readFd( child ) );
+            }
+            if ( child )
+            {
+                ::dup2( fd, type );
+                if ( type == out::In )
+                {
+                    ::close( fd );
+                }
+            }
+        }
+        
+        Module::Module( const Data& path, const Data& entry )
+        : m_handle( NULL ), m_entry( NULL )
+        {
+            Data name( path );
+            
+#ifdef __MACH__
+            Data directory = fs::cwd();
+            
+            if ( path.find( "/" ) != -1 )
+            {
+                auto split = fs::split( path );
+                fs::chdir( split.first );
+                name = split.second;
+            }
+#endif
+            m_handle = ::dlopen( name, RTLD_LAZY );
+            
+            if ( !m_handle )
+            {
+                throw Error( ::dlerror() );
+            }
+            
+            if ( entry.length() )
+            {
+                m_entry = symbol( entry );
+                if ( !m_entry )
+                {
+                    throw Error( ::dlerror( ) );
+                }
+            }
+            
+#ifdef __MACH__
+            fs::chdir( directory );
+#endif
+        }
+        
+        Module::~Module(  )
+        {
+            if ( m_handle )
+            {
+                ::dlclose( m_handle );
+            }
+        }
+        
+        void* Module::symbol( const Data& name ) const
+        {
+            return ::dlsym( m_handle, name );
+        }
     }
 }

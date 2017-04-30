@@ -5,6 +5,8 @@ namespace tau
 {
     namespace os
     {
+        typedef int Handle;
+        
         class Lock
         {
         public:
@@ -82,11 +84,7 @@ namespace tau
             Handle m_handle;
             bool m_started;
         };
-    
-
-
-        /*
-
+        
         class Process
         {
         public:
@@ -166,7 +164,8 @@ namespace tau
             Stream m_streams[ 3 ];
             Data m_command;
         };
-
+        
+        
         class Module
         {
         public:
@@ -183,6 +182,8 @@ namespace tau
             void* m_handle;
             void* m_entry;
         };
+        
+        /*`
 
         class Signals
         {
