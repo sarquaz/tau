@@ -18,6 +18,7 @@
 #include <sys/un.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <fcntl.h>
 
 #ifdef __MACH__
     #include <sys/filio.h>

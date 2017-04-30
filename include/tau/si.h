@@ -520,6 +520,7 @@ namespace tau
 
 }
 
+#include "si/fs.h"
 #include "si/os.h"
 #include "si/ev.h"
 #include "si/th.h"
