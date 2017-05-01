@@ -7,6 +7,8 @@ namespace tau
 {
     namespace ev
     { 
+        typedef int Handle;
+        
         class Request;
         
         class Loop
@@ -15,8 +17,6 @@ namespace tau
             
             struct Event: Reel
             {
-                typedef int Handle;
-            
                 enum Type
                 {
                     Default,
@@ -178,7 +178,7 @@ namespace tau
                 
             private:
 #ifdef __MACH__
-        li::Set< Event::Handle > m_fds;        
+        li::Set< Handle > m_fds;        
 #endif
             };
 
@@ -193,7 +193,7 @@ namespace tau
             
 
         private:
-            Event::Handle m_handle;
+            Handle m_handle;
             Hevent m_events[ 128 ];
             Setup m_setup;
         };

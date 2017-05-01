@@ -158,6 +158,21 @@ namespace tau
                     logic( m_streams[ i ] );
                 }
             }
+            
+            Stream& stream( ui type )
+            {
+                for ( auto i = 0; i < lengthof( m_streams ); i++ )
+                {
+                    auto& stream = m_streams[ i ];
+                    
+                    if ( stream.type == type )
+                    {
+                        return stream;
+                    }
+                }   
+                
+                throw Error();
+            }
 
         private:
             ui m_pid;

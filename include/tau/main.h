@@ -195,8 +195,6 @@ namespace tau
         {
             ENTER();    
             m_repeat = options.def( options::Repeat, ( ui ) false );
-            
-            
         }
         
         virtual ~Event()
@@ -214,7 +212,7 @@ namespace tau
             }
         }
         
-        virtual void callback()
+        virtual void after()
         {
             ENTER();
             

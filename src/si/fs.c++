@@ -129,7 +129,9 @@ namespace tau
         {
             ENTER( );
             seek( offset );
-            return si::check( ::read( fd( ), data, data.length( ) ) )( "read" );
+            auto length = available();
+            data.space( length );
+            return si::check( ::read( fd( ), data, length ) )( "read" );
         }
         
         void File::assign( Handle fd, bool nb  )

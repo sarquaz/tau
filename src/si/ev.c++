@@ -76,7 +76,11 @@ namespace tau
         
             Hevent handle;
             
-            m_setup( event );
+            if ( !event.fd )
+            {
+                m_setup( event );    
+            }
+            
         
 #ifdef __MACH__
             auto flags = 0;
