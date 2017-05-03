@@ -5,7 +5,6 @@ namespace tau
 {
     static Main s_main;
     __thread Main::Thread* t_thread = NULL;
-    __thread ev::Loop* t_loop = NULL;
 
     Main& Main::instance()
     {
@@ -18,18 +17,10 @@ namespace tau
         
         return *t_thread;
     }
-    
-    ev::Loop& Main::loop()
-    {
-        assert( t_loop );
-        
-        return *t_loop;
-    }
-        
-    void Main::started( Main::Thread* thread, ev::Loop* loop )
+            
+    void Main::started( Main::Thread* thread )
     {
         t_thread = thread;
-        t_loop = loop;
     }
     
     void Reel::ref( )

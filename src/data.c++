@@ -64,6 +64,8 @@ namespace tau
                     length = std::strlen( data );
                 }
                 
+                
+                
                 space( offset() + length + 1 );
                
                 std::memcpy( target( ), data, length );
@@ -165,14 +167,14 @@ namespace tau
 
             static ui chunks( ui length )
             {
-                auto size = length / Size;
+                auto count = length / Size;
 
-                if ( size * Size < length )
+                if ( count * Size < length )
                 {
-                    size += 1;
+                    count += 1;
                 }
 
-                return size;
+                return count;
             }
         };
         
@@ -182,6 +184,7 @@ namespace tau
             {
                 mem::mem().free( m_data );
                 m_size = 0;
+                m_data = NULL;
             }
         }
          
@@ -190,12 +193,10 @@ namespace tau
             Piece old = *this;
             
             auto chunks = Chunk::chunks( m_size + length );
-
-            auto size = chunks * Chunk::Size;
                         
             m_size += chunks * Chunk::Size;
             m_data = ( char* ) mem::mem().get( m_size );
-            
+                        
             if ( old.m_data )
             {
                 std::memcpy( m_data, old.m_data, old.m_size );

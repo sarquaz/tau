@@ -9,14 +9,17 @@ namespace tau
         
         typedef struct stat Stat;
         
-        enum Type
+        namespace type
         {
-            File,
-            Dir,
-            Fifo,
-            Link,
-            Socket
-        };
+            enum Type
+            {
+                File,
+                Dir,
+                Fifo,
+                Link,
+                Socket
+            };
+        }
         
         struct Time
         {
@@ -51,7 +54,7 @@ namespace tau
                 return Time( stat.st_atime, stat.st_mtime, stat.st_ctime );
             }
             
-            Type type() const;
+            type::Type type() const;
             
         };
         
@@ -64,7 +67,7 @@ namespace tau
         
         
         class File
-        {
+        { 
         public:            
             static void remove( const Data& name )
             {
@@ -96,7 +99,17 @@ namespace tau
             unsigned int available( ) const;
             
             virtual unsigned long write( const Data& data, ul offset = 0 ) const;            
-            virtual unsigned long read( Data& data, ul offset = 0 ) const;
+            virtual unsigned long read( Data& data, ul length = 0, ul offset = 0 ) const;
+            
+            File( const File& file )
+            {
+                operator =( file );
+            }
+            
+            const Data& path() const
+            {
+                return m_path;
+            }
             
         protected:
             File( Handle fd = 0 )
@@ -112,6 +125,7 @@ namespace tau
             
         private:
             Handle m_fd;
+            Data m_path;
         };
         
         class Link: public File
@@ -212,7 +226,7 @@ namespace tau
             void listen( );
 
             virtual ul write( const Data& data, ul offset = 0 ) const;
-            virtual ul read( Data& data, ul offset = 0 ) const;
+            virtual ul read( Data& data, ul length = 0, ul offset = 0 ) const;
 
             const Address& address() const
             {

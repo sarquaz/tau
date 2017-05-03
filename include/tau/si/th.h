@@ -26,26 +26,13 @@ namespace tau
                     }
                     
                     virtual void operator()() = 0;
-                    
-                    template < class Callback > void assign( Callback callback )
-                    {
-                       // m_callback = mem::mem().type< si::Callback< Callback > >( callback );
-                        
-                        request().assign( callback );
-                    }
-                    
-                    void callback()
-                    {
-                        request().callback();
-                    }
-                    
-                    virtual void destroy()
+                                        
+                    virtual void callback()
                     {
                         ENTER();
-                        this->~Task();
-                        mem::mem().free( this );
+                        deref();
                     }
-                    
+                                        
                     ev::Request& request()
                     {
                         if ( !m_request )
@@ -69,17 +56,12 @@ namespace tau
                     
                 protected:
                     Task()
-                        : m_request( NULL ), m_loop( NULL ), m_callback( NULL )
+                        : m_request( NULL ), m_loop( NULL )
                     {
                         ENTER();
                     }
                     
                 private:
-                    void execute()
-                    {
-                        
-                    }                
-                    
                     ev::Loop& loop( ev::Loop& loop )
                     {
                         m_loop = &loop;
@@ -87,7 +69,6 @@ namespace tau
                     }        
                     
                 private:
-                    si::Call<>* m_callback;
                     ev::Request* m_request;
                     ev::Loop* m_loop;
                     
@@ -135,14 +116,6 @@ namespace tau
                 void add( Task& task )
                 {
                     ENTER();
-                    
-                    
-                    TRACE( "setting task callback", "" );
-                    //
-                    //  set callback
-                    //
-                    ///task.request().assign( callback );
-                    
                     
                     //
                     //  dispatch to thread

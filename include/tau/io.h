@@ -6,6 +6,8 @@
 namespace tau
 {
     extern ev::Loop& loop();
+    extern th::Pool& pool();
+    
         
     namespace io
     {
@@ -13,6 +15,7 @@ namespace tau
         {
             public:
                 Event()
+                    : m_reel( NULL )
                 {
 
                 }
@@ -61,82 +64,34 @@ namespace tau
                     
                 }
                 
+                Reel* reel() const
+                {
+                    return m_reel;
+                }
+            
+                Reel* reel( Reel* reel ) 
+                {
+                    m_reel = reel;
+                    return m_reel;
+                } 
+                
 
             private:
                 li::List< ev::Request* > m_requests;
+                Reel* m_reel;
         };
         
         class Process: public Reel
         {
         public:
-            Process( const Data& command )
-                : m_command( command )
-            {
-                
-            }
-            
-            virtual ~Process()
-            {
-                m_streams.all( []( Stream* stream ){ stream->deref(); } );
-            }
-            
-            const os::Process& process() const
-            {
-                return m_process;
-            }
-            
-            template < class Callback > void read( Callback callback )
-            {
-                event( callback, out::Out );
-            }
-            
-            template < class Callback > void write( Callback callback, const Data& data )
-            {
-                event( callback, out::In, &data );
-            }
-            
-            template < class Callback > void error( Callback callback )
-            {
-                event( callback, out::Err );
-            }
-            
-            virtual void destroy()
-            {
-                mem::mem().detype< Process >( this );            
-            }
-            
-        private:
-            
-            
-            
-            template < class Callback > void event( Callback callback, out::Stream type, const Data* data = NULL )
-            {
-                if ( !m_process.pid() )
-                {
-                    m_process.start( m_command );            
-                }
-                
-                auto& stream  = m_process.stream( type );
-                auto event = mem::mem().type< Stream >( type, type == out::In ? stream.writeFd() : stream.readFd() );
-                
-                ev::Request* request = NULL;
-                if ( data )
-                {
-                    request = mem::mem().type< ev::Request >( *event );
-                    request->data() = *data;
-                }
-                
-                event->request( callback, request );
-                m_streams.append( event );
-            }
-            
             class Stream: public Event, public fs::File 
             {
+                friend class Process;
+                
             public:
-                Stream( out::Stream type, ev::Handle fd )
-                    : m_type( type )
+                Stream( out::Stream type, ev::Handle fd, Process& process )
+                    : m_type( type ), m_process( process ), fs::File( fd )
                 {
-                    fs::File::assign( fd );
                 }
                 
                 virtual ~Stream()
@@ -171,21 +126,257 @@ namespace tau
                     mem::mem().detype< Stream >( this );            
                 }
                 
-                
+                const Process& process() const
+                {
+                    return m_process;
+                }
+                                
             private:
                 out::Stream m_type;
+                Process& m_process;
             };
+            
+            Process( const Data& command )
+                : m_command( command )
+            {
+            }
+            
+            virtual ~Process()
+            {
+                ENTER();
+                m_streams.all( []( Stream* stream ){ stream->deref(); } );
+            }
+            
+            const os::Process& process() const
+            {
+                return m_process;
+            }
+            
+            template < class Callback > void read( Callback callback )
+            {
+                event( callback, out::Out );
+            }
+            
+            template < class Callback > void write( Callback callback, const Data& data )
+            {
+                event( callback, out::In, &data );
+            }
+            
+            template < class Callback > void error( Callback callback )
+            {
+                event( callback, out::Err );
+            }
+            
+            virtual void destroy()
+            {
+                mem::mem().detype< Process >( this );            
+            }
+            
+            
+            
+        private:
+            
+            template < class Callback > void event( Callback callback, out::Stream type, const Data* data = NULL )
+            {
+                if ( !m_process.pid() )
+                {
+                    m_process.start( m_command );            
+                }
+                
+                auto& stream  = m_process.stream( type );
+                auto event = mem::mem().type< Stream >( type, type == out::In ? stream.writeFd() : stream.readFd(), *this );
+                
+                ev::Request* request = NULL;
+                if ( data )
+                {
+                    request = mem::mem().type< ev::Request >( *event );
+                    request->data() = *data;
+                }
+                
+                event->request( callback, request );
+                m_streams.append( event );
+            }
+            
+            
             
         private:
             os::Process m_process;
             Data m_command;
             li::List< Stream* > m_streams;
+            Reel* m_reel;
         };
         
         inline Process& process( const Data& command )
         {
             auto process = mem::mem().type< Process >( command );         
             return *process;
+        }
+        
+        class File: public Event
+        {
+        public:
+            
+            class Task: public th::Pool::Task
+            {
+            public:
+                virtual ~Task()
+                {
+                    m_file.deref();
+                }
+                
+                File& file()
+                {
+                    return m_file;
+                }
+                
+            protected:
+                Task( File& file, ul offset )
+                    : m_file( file ), m_offset( offset )
+                {
+                    file.ref();    
+                }
+                    
+                
+                
+                ul offset() const
+                {
+                    return m_offset;
+                }
+                
+            private:
+                File& m_file;
+                ul m_offset;
+            };
+            
+            class Read: public Task
+            {
+                public:
+                    Read( File& file, ul length, ul offset )
+                        : Task( file, offset ), m_length( length )
+                    {
+                    }
+                    
+                    virtual ~Read()
+                    {
+                        ENTER();
+                    }
+                    
+                    virtual void operator()( )
+                    {
+                        ENTER();
+                        
+                        try
+                        {
+                            if ( !m_length )
+                            {
+                                auto info = fs::info( file().f().path() );
+                                m_length = info.size();    
+                            }
+                            
+                            file().f().read( request().data(), m_length, offset() );
+                        }
+                        catch ( Error* e )
+                        {
+                            request().error( e );
+                        }
+                    }
+                    
+                    virtual void destroy()
+                    {
+                        mem::mem().detype< Read >( this );            
+                    }
+                    
+                    
+                    
+                private:
+                    ul m_length;
+     
+            };
+            
+            class Write: public Task
+            {
+                public:
+                    Write( File& file, const Data& data, ul offset )
+                        : Task( file, offset ), m_data( data )
+                    {
+                    }
+                    
+                    virtual ~Write()
+                    {
+                        ENTER();
+                    }
+                    
+                    virtual void operator()( )
+                    {
+                        ENTER();
+                        
+                        try
+                        {
+                            file().f().write( m_data, offset() );
+                        }
+                        catch ( Error* e )
+                        {
+                            request().error( e );
+                        }
+                    }
+                    
+                    virtual void destroy()
+                    {
+                        mem::mem().detype< Write >( this );            
+                    }
+                    
+                private:
+                    Data m_data;
+            };
+            
+            
+            File( const Data& path )
+                : m_file( fs::File::open( path ) )
+            {
+                
+            }
+            
+            virtual ~File()
+            {
+                ENTER();
+            }
+            
+            template < class Callback > void read( Callback callback, ul length = 0, ul offset = 0 )
+            {
+                auto task = mem::mem().type< Read >( *this, length, offset );
+                task->request().assign( callback );
+                task->reel( this->reel() );
+                pool().add( *task );
+            }
+            
+            template < class Callback > void write( Callback callback, const Data& data, ul offset = 0 )
+            {
+                auto task = mem::mem().type< Write >( *this, data, offset );
+                task->request().assign( callback );
+                task->reel( this->reel() );
+                pool().add( *task );
+            }
+            
+            virtual void destroy()
+            {
+                mem::mem().detype< File >( this );            
+            }
+            
+            const fs::File& f() const 
+            {
+                return m_file;
+            }
+            
+            
+            
+        private:
+            fs::File m_file;
+        };
+        
+        inline File& file( const Data& path )
+        {
+            auto file = mem::mem().type< File >( path );
+            return *file;
         }
     }
 }

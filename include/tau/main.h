@@ -44,7 +44,7 @@ namespace tau
                 m_pool.stop();
             }
             
-            const ev::Loop& loop() const
+            ev::Loop& loop() 
             {
                 return m_loop;
             }
@@ -64,7 +64,7 @@ namespace tau
             {
                 ENTER();
                 
-                Main::instance().started( this, &m_loop );
+                Main::instance().started( this );
                
                 assert( m_callback );   
                 Main::instance().lock().with( [ & ]( ){ ( *m_callback ) ( action::Start ); } );
@@ -92,13 +92,12 @@ namespace tau
         
         ~Main ()
         {
-            ENTER()
-//            stop();
-                
-                m_threads.all( [ & ] ( Thread* thread ) 
-                 {
-                    delete thread;
-                 } );
+            ENTER();
+                                
+            m_threads.all( [ & ] ( Thread* thread ) 
+             {
+                delete thread;
+             } );
         }
         
         template < class Callback > void start( us threads, Callback callback )
@@ -140,9 +139,8 @@ namespace tau
         }
         
         static Thread& thread();
-        static ev::Loop& loop();
         
-        void started( Thread*, ev::Loop* );
+        void started( Thread* );
 
         os::Lock& lock()
         {
@@ -184,7 +182,12 @@ namespace tau
     
     inline ev::Loop& loop()
     {
-        return Main::loop();
+        return thread().loop();
+    }
+    
+    inline th::Pool& pool()
+    {
+        return thread().pool();
     }
     
     class Event: public io::Event
@@ -235,11 +238,12 @@ namespace tau
         Time m_time;
     };
     
-    template < class Callback > void event( Callback callback, const Options& options = {}, ev::Request* request = NULL )
+    template < class Callback > Event& event( Callback callback, const Options& options = {}, ev::Request* request = NULL )
     {
         auto event = mem::mem().type< Event >( options );
         
         event->request( callback, request );
+        return *event;
     } 
     
     

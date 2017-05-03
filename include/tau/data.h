@@ -54,7 +54,7 @@ namespace tau
             ui length( ui length )
             {
                 m_window.length = length;
-                return 0;
+                return length;
             }
             bool empty( ) const
             {
@@ -160,19 +160,21 @@ namespace tau
                 this->length( length ? length : std::strlen( data ) );
             }
             
+            char* data( )
+            {
+                return m_data;
+            }
+            
         private:
             void setup( const char* data = NULL, ui length = 0 );
             const char* data( ) const
             {
                 return m_external ? m_external : m_data;
             }
-            char* data( )
-            {
-                return m_data;
-            }
+            
             char* target( )
             {
-                return *this + length( );
+                return ( ( char* ) *this ) + length( );
             }
             
             class Piece

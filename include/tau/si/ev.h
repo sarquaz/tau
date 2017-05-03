@@ -216,13 +216,31 @@ namespace tau
                     
                 }
                 
-            protected:
-                Parent()
+                virtual void callback()
                 {
                     
                 }
                 
+                Reel* reel() const
+                {
+                    return m_reel;
+                }
+            
+                Reel* reel( Reel* reel ) 
+                {
+                    m_reel = reel;
+                    return m_reel;
+                }
                 
+            protected:
+                Parent()
+                    : m_reel( NULL )
+                {
+                    
+                }
+                
+            private:
+                Reel* m_reel;
             };
             
             Request( Parent& parent )
@@ -246,6 +264,8 @@ namespace tau
             virtual void callback() 
             {
                 ( *m_callback )( *this );
+                m_parent.callback();
+                
             }
             
             const Data& data() const

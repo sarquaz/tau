@@ -56,21 +56,21 @@ namespace tau
             return info;
         }
         
-        Type Info::type() const
+        type::Type Info::type() const
         {
             ENTER();
             
             switch( stat.st_mode & S_IFMT )
             {
                 case S_IFDIR:
-                    return Dir;
+                    return type::Dir;
                     
                 case S_IFREG:
-                    return File;
+                    return type::File;
                     
             }
             
-            return File;
+            return type::File;
         }
         
         bool exists( const Data& name )
@@ -94,7 +94,10 @@ namespace tau
         {
             int flags = 0;
             int mode = 0;
-
+            
+            
+            STRACE( "opening %s", name.c() );
+            
             if ( !exists( name ) )
             {
                 flags |= O_CREAT;
@@ -107,9 +110,13 @@ namespace tau
 
             flags |= O_RDWR;
 
-            return File( si::check(
+
+            File file( si::check(
                     ::open( name, flags, mode )
-                    )( "file open, name %s, flags %d, mode %d", name.c(), flags, mode ) ); 
+                    )( "file open, name %s, flags %d, mode %d", name.c(), flags, mode ) );
+
+            file.m_path = name;
+            return file;
         }
         
         unsigned int File::available( ) const
@@ -122,17 +129,33 @@ namespace tau
         
         unsigned long File::write( const Data& data, ul offset ) const
         {
-            seek( offset );
+            if ( offset )
+            {
+                seek( offset );
+            }
+            
             return si::check( ::write( fd( ), data, data.length( ) ) )( "write" );
         }
-        unsigned long File::read( Data& data, ul offset ) const
+        unsigned long File::read( Data& data, ul length, ul offset ) const
         {
             ENTER( );
-            seek( offset );
-            auto length = available();
+            
+            if ( offset )
+            {
+                seek( offset );
+            }
+            
+            if ( !length ) 
+            {
+                length = available();
+            }
+
             data.space( length );
-            return si::check( ::read( fd( ), data, length ) )( "read" );
-        }
+            auto read = si::check( ::read( fd( ), data, length ) )( "read" );
+
+            data.length( read );
+            return read;
+        }   
         
         void File::assign( Handle fd, bool nb  )
         {
@@ -151,7 +174,7 @@ namespace tau
         void File::close( )
         {
             ENTER();
-            
+        
             if ( fd( ) )
             {
                 ::close( fd( ) );
@@ -161,10 +184,7 @@ namespace tau
         
         void File::seek( ul offset ) const
         {
-            if ( offset )
-            {
-                si::check( ::lseek( fd( ), offset, SEEK_SET ) )( "seek" );
-            }
+            si::check( ::lseek( fd( ), offset, SEEK_SET ) )( "seek" );
         }
         
         Link::Type Link::type( const Data& key )
@@ -435,25 +455,28 @@ namespace tau
             return si::check( result )( "send " );
         }
         
-        unsigned long Link::read( Data& data, ul offset ) const
+        unsigned long Link::read( Data& data, ul length, ul offset ) const
         {
             if ( local() )
             {
-                return File::read( data, offset );
+                return File::read( data, length, offset );
             }
 
             long result;           
+            
+            length = File::available();
+            data.space( length );
  
             if ( udp() )
             {
                 Address peer;
-                result = ::recvfrom( fd(), data, data.length( ), 0, peer, &peer.length );
+                result = ::recvfrom( fd(), data, length, 0, peer, &peer.length );
                 peer.parse( );
                 ( const_cast< Link* >( this ) )->address() = peer;
             }
             else
             {
-                result = ::recv( fd(), data, data.length( ), 0 );
+                result = ::recv( fd(), data, length, 0 );
             }
 
             return result;

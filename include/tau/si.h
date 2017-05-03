@@ -87,14 +87,17 @@ namespace tau
 
             ul operator()( const char* format, ... )
             {
+
                 if ( errno == skip || result != -1 )
                 {
                     return result;
                 }
+                
+                TRACE( "error %d", errno );
 
-                Error error;
-                EPRINT( error.message, format );
-                error.message( ", errno %d", errno );
+                auto error = mem::mem().type< Error >();
+                EPRINT( error->message, format );
+                error->message( ", errno %d", errno );
                 
                 
                 throw error;
@@ -105,8 +108,8 @@ namespace tau
 
 }
 
-#include "si/fs.h"
 #include "si/os.h"
+#include "si/fs.h"
 #include "si/ev.h"
 #include "si/th.h"
 
