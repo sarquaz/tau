@@ -13,16 +13,21 @@ namespace tau
         {
         public:
             Thread( )
-                : os::Thread(), m_data( NULL ), m_callback( NULL )
+                : os::Thread(), m_data( NULL ), m_start( NULL ), m_stop( NULL )
             {
                 ENTER();
             }
             
             virtual ~Thread ()
             {
-                if ( m_callback )
+                if ( m_start )
                 {
-                    m_callback->destroy();
+                    m_start->destroy();
+                }
+                
+                if ( m_stop )
+                {
+                    m_stop->destroy();
                 }
             }
             
@@ -54,9 +59,10 @@ namespace tau
                 return m_pool;
             }
             
-            template < class Callback > void assign( Callback callback )
+            template < class Callback > void assign( action::Action action, Callback callback )
             {
-                m_callback = mem::mem().type< si::Callback < Callback, action::Action > >( callback );
+                si::Call< >*& m_callback = action == action::Start ? m_start : m_stop;
+                m_callback = mem::mem().type< si::Callback < Callback > >( callback );
             }
         
         private:
@@ -66,8 +72,8 @@ namespace tau
                 
                 Main::instance().started( this );
                
-                assert( m_callback );   
-                Main::instance().lock().with( [ & ]( ){ ( *m_callback ) ( action::Start ); } );
+                assert( m_start );   
+                ( *m_start ) ( ); 
                 
                 m_loop.run( [ & ] ( ev::Loop::Event& event ) 
                     {
@@ -75,12 +81,15 @@ namespace tau
                         event.callback();
                      } );
                 
-                Main::instance().lock().with( [ & ]( ){ ( *m_callback )( action::Stop ); } );
+                     assert( m_stop );   
+                     ( *m_stop ) ( );
             }
     
         private:
             void* m_data;
-            si::Call< action::Action >* m_callback; 
+            si::Call< >* m_start; 
+            si::Call< >* m_stop; 
+            
             ev::Loop m_loop;
             th::Pool m_pool;
             
@@ -110,7 +119,7 @@ namespace tau
                 //  create new thread
                 //
                 auto thread = new Thread();
-                thread->assign( callback );
+                thread->assign( action::Start, callback );
                 
                 m_lock.with( [ & ] ( ) { m_threads.add( thread ); } );
             
@@ -122,19 +131,18 @@ namespace tau
             
             m_threads.all( [ & ] ( Thread* thread )
              {
-
                 thread->join();
              } );
         }
         
-        void stop()
+        template < class Callback > void stop( Callback callback )
         {
             ENTER();
             
-        
             m_threads.all( [ & ] ( Thread* thread ) 
              {
-                thread->stop(); 
+                 thread->assign( action::Stop, callback );
+                 thread->stop(); 
             } );
         }
         
@@ -168,11 +176,11 @@ namespace tau
         start( {}, callback );
     }
     
-    inline void stop()
+    template < class Callback > inline void stop( Callback callback )
     {
         SENTER();
         
-        Main::instance().stop();
+        Main::instance().stop( callback );
     }
     
     inline Main::Thread& thread()

@@ -341,20 +341,22 @@ namespace tau
                 ENTER();
             }
             
-            template < class Callback > void read( Callback callback, ul length = 0, ul offset = 0 )
+            template < class Callback > File& read( Callback callback, ul length = 0, ul offset = 0 )
             {
                 auto task = mem::mem().type< Read >( *this, length, offset );
                 task->request().assign( callback );
                 task->reel( this->reel() );
                 pool().add( *task );
+                return *this;
             }
             
-            template < class Callback > void write( Callback callback, const Data& data, ul offset = 0 )
+            template < class Callback > File& write( Callback callback, const Data& data, ul offset = 0 )
             {
                 auto task = mem::mem().type< Write >( *this, data, offset );
                 task->request().assign( callback );
                 task->reel( this->reel() );
                 pool().add( *task );
+                return *this;
             }
             
             virtual void destroy()
