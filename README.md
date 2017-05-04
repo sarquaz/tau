@@ -22,5 +22,7 @@ Following C++ code that starts a thread pool and reads file asynchronously is po
                      
 	                } ).deref();
 	        } );
+		
+		return 0;
 	}
 
