@@ -1,4 +1,4 @@
-#include "tau.h"
+            #include "tau.h"
 
 using namespace tau;
 using namespace si;
@@ -97,6 +97,27 @@ public:
     }
     
 };
+
+class Second: public Reel
+{
+public:
+    Second()
+    {
+        ENTER();
+    }
+        
+    void test()
+    {
+        ENTER();
+        
+    }
+    
+    virtual void destroy()
+    {
+        mem::mem().detype< Second >( this );            
+    }
+};
+    
 
 
 int main( )
@@ -199,26 +220,16 @@ int main( )
                 
         
        
-        tau::start( [ ] ( action::Action action )
+        tau::start( [ ] ( )
         { 
-            STRACE( "action %s", action == tau::action::Start ? "start" : "stop" );
-            
-            if ( action == action::Start )
-            {
-                STRACE( "thread %u 0x%x started", tau::thread().id(), &tau::thread() ); 
-                
-                Task* task = mem::mem().type< Task >();
-
-                task->request().assign( [ & ]( ev::Request& request ) {
-                    STRACE( "callback", "" );
-                    STRACE( "%s", request.data().c() );
-                    STRACE( "0x%x", task );
-                    request.parent().deref();
-                    tau::stop();    
-                });
-
-               tau::thread().pool().add( *task );
-            }
+            io::file( "Makefile" ).read( [ & ]( ev::Request& request )
+                {
+                     request.data().add( '\0' );
+                     printf( "%s", request.data().c() );
+                 
+                     tau::stop( [](){ printf("stopped\n"); } );
+                     
+                } ).deref();
         } );
         
         
