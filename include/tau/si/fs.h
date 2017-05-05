@@ -197,7 +197,7 @@ namespace tau
                     return &info;
                 }
 
-                Address operator()( const Data& );
+                Address* operator()( const Data& );
             };
 
             virtual ~Link()

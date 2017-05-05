@@ -244,7 +244,7 @@ namespace tau
             };
             
             Request( Parent& parent )
-                : m_error( NULL ), m_parent( parent ), m_event( *( Loop::Event::get() ) ), m_callback( NULL )
+                : m_error( NULL ), m_parent( parent ), m_event( *( Loop::Event::get() ) ), m_callback( NULL ), m_custom( NULL )
             {
                 
                 m_event.request = this;
@@ -304,6 +304,17 @@ namespace tau
                 return m_event.type; 
             }
             
+            void* custom() const
+            {
+                return m_custom;
+            }
+            
+            void* custom( void* custom )
+            {
+                m_custom = custom;
+                return custom;
+            }
+            
             template < class Callback > void assign( Callback callback )
             {
                 m_callback = mem::mem().type< si::Callback< Callback, Request& > >( callback );
@@ -315,12 +326,14 @@ namespace tau
                 mem::mem().free( this );
             }
             
+            
         private:
             Data m_data;
             Error* m_error;
             si::Call< Request& >* m_callback;
             Loop::Event& m_event;
             Parent& m_parent;
+            void* m_custom;
         };
         
     }

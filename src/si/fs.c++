@@ -226,19 +226,19 @@ namespace tau
             info.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
         }
         
-        Link::Address Link::Lookup::operator()( const Data& name )
+        Link::Address* Link::Lookup::operator()( const Data& name )
         {
             Info* info;
             auto result = ::getaddrinfo( name, NULL, *this, &info );
             if ( !result )
             {
-                 Address address( info );
+                 auto address = mem::mem().type< Address >( info );
                  ::freeaddrinfo( info );
                  return address;
             }
             else
             {
-                throw Error( ::gai_strerror( result ) );
+                throw mem::mem().type< Error >( ::gai_strerror( result ) ); 
             }
         }
         

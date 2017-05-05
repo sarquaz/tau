@@ -22,7 +22,10 @@ namespace tau
             Threads,
             Repeat,
             Msec,
-            Usec
+            Usec,
+            Server,
+            Port,
+            Type
         };
     }
     

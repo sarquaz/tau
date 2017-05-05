@@ -31,8 +31,10 @@ namespace tau
                     mem::mem().detype< Event >( this );
                 }
                 
-                template < class Callback > void request( Callback callback, ev::Request* request = NULL )
+                template < class Callback > Event& request( Callback callback, ev::Request* request = NULL )
                 {   
+                    ref();
+                    
                     if ( !request )
                     {
                         request = mem::mem().type< ev::Request >( *this );
@@ -42,7 +44,7 @@ namespace tau
                         { 
                             TRACE( "event callback", "" );
                             
-                            ref();
+                            
                             before( request );
                             callback( request );
                             after();
@@ -52,6 +54,7 @@ namespace tau
                     m_requests.append( request );
 
                     loop().add( *request );
+                    return *this;
                 }
 
                 virtual void before( ev::Request&  )
@@ -380,7 +383,338 @@ namespace tau
             auto file = mem::mem().type< File >( path );
             return *file;
         }
+        
+        class Net: public Reel
+        {
+        public:
+            Net( const Options& options, const Data& host = Data() )
+                : m_host( host.empty() ? "localhost" : host ), m_server( options.def( options::Server, false ) ), 
+                m_port( options.def( options::Port, 0 ) ), m_type( ( fs::Link::Type ) options.def( options::Type, fs::Link::Tcp ) )
+            {
+                ENTER();            
+            }
+            
+            virtual ~Net()
+            {
+                ENTER();
+            }    
+            
+            
+            fs::Link& link()
+            {
+                return m_link;
+            }
+            
+            ui port() const
+            {
+                return m_port;
+            }
+            
+            fs::Link::Type type() const
+            {
+                return m_type;
+            }
+            
+            virtual void destroy()
+            {
+                mem::mem().detype< Net >( this );
+            }
+            
+        private:
+            
+            struct Context: Reel
+            {
+                Context( Net& _net )
+                    : net( _net ), address( NULL ), _first( NULL ), _second( NULL )
+                {
+                    ENTER();
+                    net.ref();
+                }
+                
+                virtual ~Context()
+                {
+                    ENTER(); 
+                    net.deref();
+                    mem::mem().detype< fs::Link::Address >( address );
+                    
+                    if ( _first )
+                    {
+                        _first->destroy();
+                    }
+                    
+                    if ( _second )
+                    {
+                        _second->destroy();
+                    }
+                    
+                    
+                }
+                
+                virtual void destroy()
+                {
+                    mem::mem().detype< Context >( this );
+                }
+                
+                template < class Callback > void setfirst( Callback callback )
+                {
+                    _first  = mem::mem().type< si::Callback< Callback, ev::Request& > >( callback );
+                }
+                
+                si::Call< ev::Request& >& first()
+                {
+                    assert( _first );
+                    return *_first;
+                }
+                
+                
+                template < class Callback > void setsecond( Callback callback )
+                {
+                    _second  = mem::mem().type< si::Callback< Callback, ev::Request& > >( callback );
+                }
+                
+                si::Call< ev::Request& >& second()
+                {
+                    assert( _second );
+                    return *_second;
+                }
+            
+                si::Call< ev::Request& >* _first;
+                si::Call< ev::Request& >* _second;
+                
+                Data write;
+                fs::Link::Address* address;
+                Net& net;
+            };
+            
+            class Event: public io::Event
+            {
+            public:
+                
+                virtual ~Event()
+                {
+                    ENTER();
+                    m_context.deref();
+                }
+                
+            protected:
+                Event( Context& context )
+                    : m_context( context )
+                {
+                }
+                
+                Net& net()
+                {
+                    return m_context.net;
+                }
+                
+                Context& context()
+                {
+                    return m_context;
+                }
+                
+            private:
+                Context& m_context;
+            };
+            
+            class Read: public Event
+            {
+            public:
+                Read( Context& context )
+                    : Event( context )
+                {
+                    ENTER();
+                }
+                
+                virtual ~Read()
+                {
+                    ENTER();
+                }
+                
+                virtual void destroy()
+                {
+                    mem::mem().detype< Read >( this );
+                }
+                
+                virtual void before( ev::Request& request )
+                {
+                    try
+                    {
+                        net().link().read( request.data() );
+                    }
+                    catch ( Error* e )
+                    {
+                        request.error( e );
+                    }
+                    
+                }
+            };
+            
+            class Write: public Event
+            {
+            public:
+                Write( Context& context )
+                    : Event( context )
+                {
+                    ENTER();
+                }
+                
+                virtual ~Write()
+                {
+                    ENTER();
+                }
+                
+                virtual void destroy()
+                {
+                    mem::mem().detype< Write >( this );
+                }
+                
+                virtual void before( ev::Request& request )
+                {
+                    try
+                    {
+                        net().link().write( context().write );    
+                    }
+                    catch ( Error* e )
+                    {
+                        request.error( e );
+                    }
+                }
+            };
+            
+        
+            class Lookup: public th::Pool::Task
+            {
+            public:
+                Lookup( const Data& host )
+                    : m_host( host ), m_address( NULL )
+                {
+                    ENTER();
+                }
+                
+                virtual ~Lookup()
+                {
+                    ENTER();
+                }
+                
+                virtual void operator()()
+                {
+                    ENTER();
+                    
+                    try
+                    {
+                        auto context = reinterpret_cast< Context* >( this->reel() );
+                        context->address = fs::Link::Lookup()( m_host );    
+                    }
+                    catch ( Error* error )
+                    {
+                        request().error( error );
+                    }
+                }
+                
+                virtual void destroy()
+                {
+                    mem::mem().detype< Lookup >( this );
+                }
+                
+            private:
+                Data m_host;    
+                fs::Link::Address* m_address;
+            };
+            
+        public:
+            template < class Callback > Net& read( Callback callback )
+            {
+                ENTER();
+                auto context = mem::mem().type< Context >( *this );
+                return connect< Read >( callback, *context );
+            }
+            
+            template < class Callback > Net& write( Callback callback, const Data& what )
+            {
+                ENTER();
+                auto context = mem::mem().type< Context >( *this );
+                context->write = what;
+                return connect< Write >( callback, *context );
+            }
+            
+        private:
+            
+            template < class Callback > Lookup* lookup( Callback callback, Context& context )
+            {
+                ENTER();
+                
+                auto lookup = mem::mem().type< Lookup >( m_host );
+                lookup->reel( &context );
+                context.setfirst( callback );
+                
+                lookup->request().assign( [] ( ev::Request& request ) 
+                    {
+                        auto context = reinterpret_cast< Context* >( request.parent().reel() );
+                        context->first()( request );
+                    } );
+                    
+                pool().add( *lookup );
+                return lookup;
+            }
+            
+            template < class What, class Callback  > Net& connect( Callback callback, Context& context )
+            {
+                ENTER();
+                
+                if ( !m_link.fd() )
+                {
+                    context.setsecond( callback );
+                    
+                    lookup( []( ev::Request& request ) 
+                        {
+                            auto context = reinterpret_cast< Context* >( request.parent().reel() );
+                            
+                            if ( !request.error() )
+                            {
+                                context->address->port( context->net.port() );
+                                context->address->type = context->net.type(); 
+                                                                
+                                context->net.link().open( *( context->address ) );        
+                                
+                                auto what = mem::mem().type< What >( *context );
+                                what->reel( &context->net );
+                                what->request( []( ev::Request& request ) 
+                                    {
+                                        auto context = reinterpret_cast< Context* >( request.parent().reel() );
+                                        context->second()( request );
+                                    } ).deref();
+                            }
+                            else
+                            {
+                                context->second()( request );
+                            }
+                            
+                        }, context );
+                }
+                else
+                {
+                    auto what = mem::mem().type< What >( context );
+                    what->reel( &context.net );
+                    what->request( callback ).deref();
+                }
+                
+                return *this;
+            }
+            
+        private:
+            Data m_host; 
+            ui m_port;
+            bool m_server;
+            fs::Link::Type m_type;
+            fs::Link m_link;
+        };
+        
+        inline Net& net( const Options& options )
+        {
+            auto net = mem::mem().type< Net >( options );
+            return *net;
+        }
     }
 }
 
-#endif
+#endif  
