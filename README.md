@@ -5,7 +5,7 @@ tau is still under development
 Following C++ code that starts a thread pool and reads file asynchronously is possible with tau:
 
 
-	#include "tau"
+	#include "tau.h"
 	
 	using namespace tau;
 	
