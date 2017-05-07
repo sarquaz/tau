@@ -220,22 +220,23 @@ namespace tau
 
         void Process::Stream::open( )
         {
-            si::check( ::pipe( fds ) )( "pipe" );
+            si::check( ::pipe( m_fds ) )( "pipe" );
         }
 
         void Process::Stream::close( )
         {
-            if ( fd )
+            if ( fd() )
             {
                 ::close( readFd( ) );
                 ::close( writeFd( ) );
-                fd = 0;
+                fs::File::assign( 0, false );
             }
         }
 
         void Process::Stream::init( bool child )
         {
-            switch ( type )
+            auto fd = 0;
+            switch ( m_type )
             {
                 case out::In:
                     fd = writeFd( child );
@@ -247,18 +248,21 @@ namespace tau
                     break;
             }
 
-            if ( type == out::In )
+            if ( m_type == out::In )
             {
                 ::close( readFd( child ) );
             }
             if ( child )
             {
-                ::dup2( fd, type );
-                if ( type == out::In )
+                ::dup2( fd, m_type );
+                
+                if ( m_type == out::In )
                 {
                     ::close( fd );
                 }
             }
+            
+            fs::File::assign( fd, false );
         }
         
         Module::Module( const Data& path, const Data& entry )

@@ -217,19 +217,69 @@ int main( )
         //     } );
         
         
+        struct Result: io::Result
+        {
+            virtual void operator()( ui event, ev::Request& request )
+            {
+                ENTER();
+                TRACE( "event %u with %s", event, request.data().c() );
+                Data data = request.data();
+                TRACE( "%s", data.c() );
                 
-        
+                request.parent().deref();
+            }
+            
+            virtual void destroy()
+            {
+                mem::mem().detype< Result >( this );
+            }
+            
+            virtual ~Result()
+            {
+                ENTER();
+            }
+        };
+    
+    
+        auto result = mem::mem().type< Result >( );
        
-        tau::start( [ ] ( )
+        tau::start( [ & ] ( )
         { 
-            io::file( "Makefile" ).read( [ & ]( ev::Request& request )
-                {
-                     request.data().add( '\0' );
-                     printf( "%s", request.data().c() );
-                 
-                     tau::stop( [](){ printf("stopped\n"); } );
-                     
-                } ).deref();
+            io::process( *result, "echo 'test'" );
+            //io::timer( *result );
+            result->deref();
+                          //STRACE( "%d", a );
+            // io::file( "Makefile" ).read( [ & ]( ev::Request& request )
+//                 {
+//                      request.data().add( '\0' );s
+//                      printf( "%s", request.data().c() );
+//
+//                      tau::stop( [](){ printf("stopped\n"); } );
+//
+//                 } ).deref();
+            
+            // io::net( {{ options::Port, 6379 }} ).write( []( ev::Request& request, const io::Event& event )
+            //     {
+            //         auto& net = reinterpret_cast< const io::Net& >( event );
+            //
+            //         STRACE( "net 0x%x", &net );
+            //         // net->read( [] ( ev::Request& request )
+            //         //     {
+            //         //         printf( "read %s \n", request.data().c() );
+            //         //     } );
+            //
+            //     }, "info\n" ).deref();
+                          
+                          int a = 100;    
+                        
+    
+            
+            
+            // io::timer( [ & ] ( const ev::Request& request, const io::Event& event )
+            //     {
+            //                           STRACE( "%d", a );
+            //          STRACE( "callback with event 0x%x", &event );
+            //      }, { { options::Msec, 100 }, { options::Repeat, true } } );
         } );
         
         

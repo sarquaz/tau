@@ -111,14 +111,16 @@ namespace tau
                 return m_path;
             }
             
+            void assign( Handle fd, bool nb = true );
+            void nb() const;
+            
         protected:
             File( Handle fd = 0 )
             : m_fd( fd )
             {
             }
             
-            void assign( Handle fd, bool nb = true );
-            void nb() const;
+            
                         
         private:            
             void seek( ul offset ) const;
@@ -197,7 +199,7 @@ namespace tau
                     return &info;
                 }
 
-                Address* operator()( const Data& );
+                Address operator()( const Data& );
             };
 
             virtual ~Link()
@@ -248,13 +250,14 @@ namespace tau
             {
                 return type() == Tcp;
             }
+            
+            void bind( );
 
         private:
             Type type( ) const
             {
                 return m_address.type;
             }
-            void bind( );
 
         private:
             Address m_address;

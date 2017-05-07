@@ -1,7 +1,6 @@
 #ifndef _TAU_TH_H_
 #define _TAU_TH_H_
 
-
 namespace tau
 {
     namespace th
@@ -26,10 +25,11 @@ namespace tau
                     }
                     
                     virtual void operator()() = 0;
+                    virtual void complete( ev::Request& ) = 0;
                                         
-                    virtual void callback()
+                    virtual void callback( ev::Request& request )
                     {
-                        ENTER();
+                        complete( request );
                         deref();
                     }
                                         
@@ -43,20 +43,26 @@ namespace tau
                         return *m_request;
                     }
                     
+                    ev::Request& request( ev::Request* request )
+                    {
+                        m_request = request;
+                        return *m_request;
+                    }
+                                        
                     ev::Loop& loop( ) const
                     {
                         assert( m_loop );
                         return *m_loop;
                     }
                     
-                    virtual void configure( ev::Loop::Event& event )
+                    virtual void before( ev::Request& request )
                     {
-                        event.type = ev::Loop::Event::Once;
+                        request.event().type = ev::Loop::Event::Once;
                     }
                     
                 protected:
-                    Task()
-                        : m_request( NULL ), m_loop( NULL )
+                    Task( ev::Request::Parent* parent = NULL )
+                        : ev::Request::Parent( parent ), m_request( NULL ), m_loop( NULL )
                     {
                         ENTER();
                     }
@@ -145,11 +151,7 @@ namespace tau
                 li::List< Thread* > m_threads;
                 ui m_count;
         };
-            
-
     }
-    
-        
-    
 }
+
 #endif

@@ -97,39 +97,43 @@ namespace tau
             void start( const Data& );
             void stop( );
 
-            struct Stream
+            class Stream: public fs::File
             {
-                int fds[2];
-                ui type;
-                Handle fd;
-
+                friend class Process;
+            public:
+                virtual ~Stream()
+                {
+                    close();
+                }
+                
+                ui type() const
+                {
+                    return m_type;
+                }
+                
+            private:
                 Handle writeFd( bool child = false )
                 {
-                    return child ? fds[ 0 ] : fds[ 1 ];
+                    return child ? m_fds[ 0 ] : m_fds[ 1 ];
                 }
 
                 Handle readFd( bool child = false )
                 {
-                    return child ? fds[ 1 ] : fds[ 0 ];
+                    return child ? m_fds[ 1 ] : m_fds[ 0 ];
                 }
 
                 void init( bool child );
                 void open( );
                 void close( );
 
-                Stream( ui _type = 0 )
-                : type( _type ), fd( 0 )
+                Stream( ui type = 0 )
+                : m_type( type )
                 {
-                }
-                ~Stream( )
-                {
-                    close( );
                 }
 
-                void operator = ( const Stream& stream )
-                {
-                    type = stream.type;
-                }
+            private:
+                int m_fds[2];
+                ui m_type;
 
             };
 
@@ -164,8 +168,7 @@ namespace tau
                 for ( auto i = 0; i < lengthof( m_streams ); i++ )
                 {
                     auto& stream = m_streams[ i ];
-                    
-                    if ( stream.type == type )
+                    if ( stream.type() == type )
                     {
                         return stream;
                     }

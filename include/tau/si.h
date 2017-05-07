@@ -37,8 +37,11 @@ namespace tau
             Callback( Callable callable )
                 : Call< Args...  >()
             {
-                m_store = mem::mem().get( align( sizeof( Callable ) ) ); 
-                std::memcpy( m_store, ( void* ) &callable, sizeof( Callable ) );
+                ui size = sizeof( Callable );
+                
+                m_store = mem::mem().get( size ); 
+                //std::memset( m_store, 0, size );
+                std::memcpy( m_store, ( void* ) &callable, size );
             }
         
             virtual ~Callback()
@@ -66,6 +69,8 @@ namespace tau
                 {
                     size += sizeof( void* ) - rem;
                 }
+                
+                size *= 10;
             
                 return size;
             }
@@ -98,6 +103,7 @@ namespace tau
                 auto error = mem::mem().type< Error >();
                 EPRINT( error->message, format );
                 error->message( ", errno %d", errno );
+                TRACE( "%s", error->message.c() );
                 
                 
                 throw error;
@@ -108,8 +114,8 @@ namespace tau
 
 }
 
-#include "si/os.h"
 #include "si/fs.h"
+#include "si/os.h"
 #include "si/ev.h"
 #include "si/th.h"
 

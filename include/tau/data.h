@@ -134,7 +134,6 @@ namespace tau
             {
                 char data[ 0x200 ];
                 auto count = ::vsnprintf( data, sizeof( data ), format, args );
-                
                 add( data, count );
             }
 

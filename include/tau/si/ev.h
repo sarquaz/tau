@@ -58,7 +58,15 @@ namespace tau
                        assert( request );
                        if ( type != Once )
                        {
-                           loop->remove( *request );
+                           try
+                           {
+                               loop->remove( *request );           
+                           }
+                           catch ( Error* e )
+                           {
+                               mem::mem().detype< Error >( e );
+                           }
+                           
                        }
                    
                    }
@@ -211,12 +219,12 @@ namespace tau
                     
                 }
                 
-                virtual void configure( Loop::Event& )
+                virtual void before( Request& request )
                 {
                     
                 }
                 
-                virtual void callback()
+                virtual void callback( Request& request )
                 {
                     
                 }
@@ -232,39 +240,40 @@ namespace tau
                     return m_reel;
                 }
                 
+                Parent* parent() const
+                {
+                    return m_parent;
+                }
+                
             protected:
-                Parent()
-                    : m_reel( NULL )
+                Parent( Parent* parent = NULL )
+                    : m_reel( NULL ), m_parent( NULL )
                 {
                     
                 }
                 
             private:
                 Reel* m_reel;
+                Parent* m_parent;
             };
             
             Request( Parent& parent )
-                : m_error( NULL ), m_parent( parent ), m_event( *( Loop::Event::get() ) ), m_callback( NULL ), m_custom( NULL )
+                : m_error( NULL ), m_parent( parent ), m_event( *( Loop::Event::get() ) ), m_custom( NULL ), m_file( NULL )
             {
-                
                 m_event.request = this;
-                m_parent.configure( m_event );
+                m_parent.before( *this );
             }
             virtual ~Request()
             {
                 ENTER();
                 m_event.deref();
-                
-                if ( m_callback )
-                {
-                    m_callback->destroy();
-                }
             }
             
             virtual void callback() 
             {
-                ( *m_callback )( *this );
-                m_parent.callback();
+                ENTER();
+                
+                m_parent.callback( *this );
                 
             }
             
@@ -315,25 +324,23 @@ namespace tau
                 return custom;
             }
             
-            template < class Callback > void assign( Callback callback )
-            {
-                m_callback = mem::mem().type< si::Callback< Callback, Request& > >( callback );
-            }
-            
             virtual void destroy()
             {
-                this->~Request();
-                mem::mem().free( this );
+                mem::mem().detype< Request >( this );
             }
             
+            fs::File*& file() 
+            {
+                return m_file;
+            }
             
         private:
             Data m_data;
             Error* m_error;
-            si::Call< Request& >* m_callback;
             Loop::Event& m_event;
             Parent& m_parent;
             void* m_custom;
+            fs::File* m_file;
         };
         
     }

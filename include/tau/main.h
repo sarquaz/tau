@@ -78,7 +78,7 @@ namespace tau
                 m_loop.run( [ & ] ( ev::Loop::Event& event ) 
                     {
                         assert( event.request );
-                        event.callback();
+                        event.request->callback();
                      } );
                 
                      assert( m_stop );   
@@ -198,61 +198,7 @@ namespace tau
         return thread().pool();
     }
     
-    class Event: public io::Event
-    {
-    public:        
-        Event( const Options& options )
-            : io::Event(), m_time( options.def( options::Msec, 0 ), options.def( options::Usec, 0 ) )
-        {
-            ENTER();    
-            m_repeat = options.def( options::Repeat, ( ui ) false );
-        }
-        
-        virtual ~Event()
-        {
-            ENTER();
-        }
-        
-        virtual void configure( ev::Loop::Event& event )
-        {
-            event.time = m_time;  
-            if ( m_repeat && m_time.value > 0 )
-            {
-                TRACE( "timer event", "" );
-                event.type = ev::Loop::Event::Timer;        
-            }
-        }
-        
-        virtual void after()
-        {
-            ENTER();
-            
-            if ( !m_repeat )
-            {
-                deref();
-            }
-        }
-        
-        virtual void destroy()
-        {
-            ENTER();
-            this->~Event();
-            mem::mem().free( this );
-        }
-        
-        
-    private:
-        bool m_repeat;
-        Time m_time;
-    };
-    
-    template < class Callback > Event& event( Callback callback, const Options& options = {}, ev::Request* request = NULL )
-    {
-        auto event = mem::mem().type< Event >( options );
-        
-        event->request( callback, request );
-        return *event;
-    } 
+     
     
     
 }

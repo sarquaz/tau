@@ -152,7 +152,6 @@ namespace tau
 
             data.space( length );
             auto read = si::check( ::read( fd( ), data, length ) )( "read" );
-
             data.length( read );
             return read;
         }   
@@ -226,19 +225,19 @@ namespace tau
             info.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
         }
         
-        Link::Address* Link::Lookup::operator()( const Data& name )
+        Link::Address Link::Lookup::operator()( const Data& name )
         {
             Info* info;
             auto result = ::getaddrinfo( name, NULL, *this, &info );
             if ( !result )
             {
-                 auto address = mem::mem().type< Address >( info );
+                Address address( info );
                  ::freeaddrinfo( info );
                  return address;
             }
             else
             {
-                throw mem::mem().type< Error >( ::gai_strerror( result ) ); 
+                throw mem::mem().type< Error >( "lookup error: %s", ::gai_strerror( result ) ); 
             }
         }
         
@@ -371,21 +370,24 @@ namespace tau
         
         void Link::open( const Address& address )
         {
+            ENTER();
+            
             m_address = address;
 
+            TRACE( "%d", address.family );
             auto fd = si::check(
                     ::socket( address.family, address.type == Udp ? SOCK_DGRAM : SOCK_STREAM, 0 )
                     )( "socket" );
 
             int set = 1;
 #ifdef __MACH__
-            ::setsockopt( fd, SOL_SOCKET, SO_NOSIGPIPE, ( void * ) &set, sizeof(int ) );
+            ::setsockopt( fd, SOL_SOCKET, SO_NOSIGPIPE, ( void * ) &set, sizeof( set ) );
 #else
-            ::setsockopt( fd, SOL_SOCKET, MSG_NOSIGNAL, ( void * ) &set, sizeof(int ) );
+            ::setsockopt( fd, SOL_SOCKET, MSG_NOSIGNAL, ( void * ) &set, sizeof( set ) );
             ::setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, ( const char* ) &set, sizeof( set ) );
 #endif      
 
-            File::assign( fd );
+            File::assign( fd, false );
         }
         
         int Link::error()
@@ -416,7 +418,6 @@ namespace tau
         void Link::listen()
         {
             ENTER( );
-            bind();
 
             if ( udp() )
             {
@@ -451,6 +452,8 @@ namespace tau
             {
                 result = ::send( fd(), data, data.length( ), 0 );
             }
+            
+            TRACE( "wrote %u bytes", result );
 
             return si::check( result )( "send " );
         }
