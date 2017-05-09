@@ -92,13 +92,15 @@ namespace tau
 
             ul operator()( const char* format, ... )
             {
+                TRACE( "ret %d errno %d", result, errno );
+                
 
                 if ( errno == skip || result != -1 )
                 {
                     return result;
                 }
                 
-                TRACE( "error %d", errno );
+                
 
                 auto error = mem::mem().type< Error >();
                 EPRINT( error->message, format );

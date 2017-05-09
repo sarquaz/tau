@@ -15,7 +15,7 @@ namespace tau
             Err = STDERR_FILENO
         };
         
-        inline void out( const data::Data& data, Stream stream  )
+        inline void out( const data::Data& data, Stream stream = Out )
         {
             ::write( stream, data, data.length() );
         }

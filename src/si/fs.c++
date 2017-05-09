@@ -387,7 +387,7 @@ namespace tau
             ::setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, ( const char* ) &set, sizeof( set ) );
 #endif      
 
-            File::assign( fd, false );
+            File::assign( fd );
         }
         
         int Link::error()
@@ -419,10 +419,14 @@ namespace tau
         {
             ENTER( );
 
+            bind();
+            
             if ( udp() )
             {
                 return;
             }
+            
+            
 
             si::check( ::listen( fd(), SOMAXCONN ) )( "listen" );
         }

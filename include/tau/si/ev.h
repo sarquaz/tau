@@ -111,9 +111,7 @@ namespace tau
                     ui changes = 0;
                     
                     try
-                    {
-                        
-                    
+                    {                    
     #ifdef __MACH__
                         changes = si::check( ::kevent( m_handle, NULL, 0, m_events, lengthof( m_events ), NULL ) )( "kevent" );
     #else
@@ -213,10 +211,12 @@ namespace tau
         public:
             class Parent: public Reel
             {
+                friend class Request;
+                
             public:
                 virtual ~Parent()
                 {
-                    
+                    m_requests.values( [ ] ( Request* request ) { request->deref(); } );
                 }
                 
                 virtual void before( Request& request )
@@ -228,18 +228,7 @@ namespace tau
                 {
                     
                 }
-                
-                Reel* reel() const
-                {
-                    return m_reel;
-                }
-            
-                Reel* reel( Reel* reel ) 
-                {
-                    m_reel = reel;
-                    return m_reel;
-                }
-                
+                                
                 Parent* parent() const
                 {
                     return m_parent;
@@ -247,14 +236,25 @@ namespace tau
                 
             protected:
                 Parent( Parent* parent = NULL )
-                    : m_reel( NULL ), m_parent( NULL )
+                    : m_parent( parent )
                 {
                     
                 }
                 
+                void add( Request& request )
+                {
+                    ENTER();
+                    m_requests.set( &request );
+                }
+                
+                void remove( Request& request )
+                {
+                    m_requests.remove( &request );
+                }
+                
             private:
-                Reel* m_reel;
                 Parent* m_parent;
+                li::Set< Request* > m_requests;
             };
             
             Request( Parent& parent )
@@ -267,6 +267,7 @@ namespace tau
             {
                 ENTER();
                 m_event.deref();
+                m_parent.remove( *this );
             }
             
             virtual void callback() 
@@ -307,7 +308,7 @@ namespace tau
             {
                 return m_parent;
             }
-
+            
             Loop::Event::Type type() const
             {
                 return m_event.type; 

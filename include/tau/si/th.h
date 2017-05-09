@@ -29,6 +29,7 @@ namespace tau
                                         
                     virtual void callback( ev::Request& request )
                     {
+                        ENTER();
                         complete( request );
                         deref();
                     }

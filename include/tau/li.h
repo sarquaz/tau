@@ -276,6 +276,22 @@ namespace tau
                 
                 return box::map::Map< Data< Key, Value >, Size, Allocator >::remove( box::h::hash< Key >()( key ) );
             }
+            
+            template < class Callback > void keys( Callback callback )
+            {
+                this->all( [ & ] ( ul hash, Data< Key, Value >& data ) 
+                    {
+                        callback( data.key );
+                    });
+            }
+            
+            template < class Callback > void values( Callback callback )
+            {
+                this->all( [ & ] ( ul hash, Data< Key, Value >& data ) 
+                    {
+                        callback( data.value );
+                    });
+            }
         };
 
         template< class Value > class Set : public Map< Value, Value >

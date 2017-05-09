@@ -140,6 +140,18 @@ namespace tau
                     return box::Hash( ( uchar* ) &what, sizeof( long ) )();
                 }
             };
+            
+            //
+            //  pointer type
+            //
+            template < class What > struct hash < What* >
+            {
+                ul operator()( What* what ) const
+                {
+                    ul value = ( ul ) what;
+                    return box::Hash( ( uchar* ) &value, sizeof( ul ) )();
+                }
+            };
         }
         
         namespace list
