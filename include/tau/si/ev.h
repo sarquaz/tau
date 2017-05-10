@@ -216,7 +216,13 @@ namespace tau
             public:
                 virtual ~Parent()
                 {
-                    m_requests.values( [ ] ( Request* request ) { request->deref(); } );
+                    m_list.all( [ & ]( Request* request ) 
+                        {
+                            if ( m_set.remove( request ) )
+                            {
+                                request->deref();
+                            }
+                        } );
                 }
                 
                 virtual void before( Request& request )
@@ -241,20 +247,23 @@ namespace tau
                     
                 }
                 
+            private:
                 void add( Request& request )
                 {
                     ENTER();
-                    m_requests.set( &request );
+                    m_set.set( &request );
+                    m_list.append( &request );
                 }
                 
                 void remove( Request& request )
                 {
-                    m_requests.remove( &request );
+                    m_set.remove( &request );
                 }
                 
             private:
                 Parent* m_parent;
-                li::Set< Request* > m_requests;
+                li::Set< Request* > m_set;
+                li::List< Request* > m_list;
             };
             
             Request( Parent& parent )
@@ -262,6 +271,7 @@ namespace tau
             {
                 m_event.request = this;
                 m_parent.before( *this );
+                m_parent.add( *this );
             }
             virtual ~Request()
             {

@@ -243,6 +243,7 @@ namespace tau
         
         void Link::Address::parse()
         {
+            ENTER();
             auto peer = ( Peer* ) &a;
 
             family = peer->sa_family;
@@ -333,7 +334,7 @@ namespace tau
         Data Link::Address::tostring() const
         {
             Data data;
-            data( "%s://%s:%d", ( const char* ) stype( type ), ( const char* ) host, _port );
+            data( "%s://%s:%d", ( const char* ) stype( type ), host.c(), _port );
             return data;
         }
         
@@ -426,8 +427,6 @@ namespace tau
                 return;
             }
             
-            
-
             si::check( ::listen( fd(), SOMAXCONN ) )( "listen" );
         }
         

@@ -57,21 +57,10 @@ namespace tau
                         request = mem::mem().type< ev::Request >( *this );
                     }
                     
-                    ev::Request::Parent::add( *request );
                     loop().add( *request );
                 }
                 
-                virtual void callback( ev::Request& request )
-                {
-                    ENTER();
-
-                    ref();
-                    
-                    on( request );
-                    after( );
-                    deref();
-                }
-                    
+                virtual void callback( ev::Request& request );
 
                 virtual void on( ev::Request&  )
                 {
@@ -96,9 +85,9 @@ namespace tau
         class Timer: public Event
         {
         public:    
-            enum
+            enum 
             {
-                Fire        
+                Fire = __LINE__        
             };
                 
             Timer( Result& result, const Options& options )
@@ -143,6 +132,11 @@ namespace tau
             {
                 result()( Fire, request );
             }
+            
+            bool repeat() const
+            {
+                return m_repeat;
+            }
         
         
         private:
@@ -160,31 +154,18 @@ namespace tau
         class Process: public Event
         {
         public:
-            enum
+            enum 
             {
-                Read,
+                Read = __LINE__,
                 Write,
                 Error
             };
                         
-            Process( Result& result, const Data& command ) 
-                : Event( result ), m_command( command )
-            {
-                ENTER();
-                
-                m_process.start( m_command );            
-                m_process.streams([ & ] ( os::Process::Stream& s )
-                    {
-                        if ( s.type() != out::In )
-                        {
-                            event( s );
-                        }
-                    } );
-            }
+            Process( Result& result, const Data& command ); 
             
             virtual ~Process()
             {
-                ENTER();
+                    ENTER();
             }
             
             const os::Process& process() const
@@ -203,65 +184,12 @@ namespace tau
                 mem::mem().detype< Process >( this );            
             }
             
-            virtual void on( ev::Request& request )
-            {
-                ENTER();
+            virtual void on( ev::Request& request );
                 
-                auto& stream = reinterpret_cast< os::Process::Stream& > ( *request.file() );
-                auto event = Read;
-                
-                if ( request.event().type == ev::Loop::Event::Read )
-                {
-                    try
-                    {
-                        stream.read( request.data() );
-                    }
-                    catch ( tau::Error* e )
-                    {
-                        request.error( e );
-                    }
-                    
-                    if ( stream.type() == out::Err )
-                    {
-                        event = Error;
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        stream.write( request.data() );    
-                    }
-                    catch ( tau::Error* e )
-                    {
-                        request.error( e );
-                    }
-                    
-                    event = Write;
-                }
-                
-                result()( event, request );
-            }
             
         private:
-            void event( os::Process::Stream& stream, const Data* data = NULL )
-            {
-                
-                auto request = mem::mem().type< ev::Request >( *this );
-                request->event().type = ( stream.type() != out::In ) ? ev::Loop::Event::Read : ev::Loop::Event::Write;
-                request->event().fd = stream.fd();
-                request->file() = &stream;
-                
-                if ( data )
-                {   
-                    request->data() = *data;
-                }
-                
-                this->request( request );                
-            }
-            
-            
-            
+            void event( os::Process::Stream& stream, const Data* data = NULL );            
+
         private:
             os::Process m_process;
             Data m_command;
@@ -277,9 +205,9 @@ namespace tau
         {
         public:
             
-            enum
+            enum 
             {
-                Read,
+                Read = __LINE__,
                 Write
             };
             
@@ -305,42 +233,12 @@ namespace tau
                     file.ref();    
                 }
                     
-                virtual void operator()( )
-                {
-                    ENTER();
-                    
-                    try
-                    {
-                        if ( m_type == File::Read )
-                        {
-                            if ( !m_length )
-                            {
-                                auto info = fs::info( m_file.f().path() );
-                                m_length = info.size();    
-                            }
-                        
-                            m_file.f().read( request().data(), m_length, m_offset );    
-                        }
-                        else
-                        {
-                            m_file.f().write( request().data(), m_offset );    
-                        }
-                        
-                    }
-                    catch ( Error* e )
-                    {
-                        request().error( e );
-                    }
-                }
-                
-                
+                virtual void operator()( );
                 virtual void complete( ev::Request& request )
                 {
-                    ENTER();
-                    
                     m_file.result()( m_type, request );
                 }
-                
+
                 virtual void destroy()
                 {
                     mem::mem().detype< Task >( this );
@@ -398,119 +296,57 @@ namespace tau
             return *file;
         }
         
-        
         class Net: public Event 
         {
-            class Connect: public th::Pool::Task
+            class Lookup: public th::Pool::Task
             {
             public:
-                Connect( Net& net )
+                Lookup( Net& net )
                     : m_net( net )
                 {
                     ENTER();
-                    TRACE( "net 0x%x", &m_net );
                     
                     m_net.ref();
                 }
                 
-                virtual ~Connect()
+                virtual ~Lookup()
                 {
                     ENTER();
                     m_net.deref();
                 }
                 
-                virtual void operator()()
-                {
-                    ENTER();
-                    
-                    try
-                    {
-                        //
-                        //  lookup hostname
-                        //
-                        auto address = fs::Link::Lookup()( m_net.host() );
-                        //
-                        //  set port and type
-                        //  
-                        address.port( m_net.port() );
-                        address.type = m_net.type(); 
-                        //                             
-                        //  create socket
-                        //                                
-                        m_net.link().open( address );                            
-                    }
-                    catch ( tau::Error* error )
-                    {
-                        request().error( error );
-                    }
-                }
-                
+                virtual void operator()();
+
                 virtual void destroy()
                 {
-                    mem::mem().detype< Connect >( this );
+                    mem::mem().detype< Lookup >( this );
                 }
                 
-                virtual void complete( ev::Request& request )
-                {
-                    if ( !request.error() )
-                    {
-                        m_net.start();
-                    }
-                    else
-                    {
-                        m_net.error( request );
-                    }
-                }
-                
-                Net& net()
-                {
-                    return m_net;
-                }
-                
+                virtual void complete( ev::Request& );
+                                
             private:
                 Net& m_net;
             };
             
-            friend class Connect;
+            friend class Lookup;
             
         public:
             enum
             {
-                Error,
+                Error = __LINE__,
                 Accept,
+                Close,
                 Read,
                 Write
             };
             
-            Net( Result& result, const Options& options, const Data& host = Data() )
-                : Event( result ), m_host( host.empty() ? "localhost" : host ), m_server( options.def( options::Server, false ) ), 
-                m_port( options.def( options::Port, 0 ) ), m_type( ( fs::Link::Type ) options.def( options::Type, fs::Link::Tcp ) ), m_connected( false )
-            {
-                ENTER();         
-                TRACE( "host %s", host.c() );
-                    
-                //
-                //  connect
-                //         
-                auto connect = mem::mem().type< Connect >( *this );
-                pool().add( *connect );
-            }
-            
-            Net( Result& result, fs::Link::Accept& accept )
-                : Event( result ),  m_server( false ), m_port( accept.address.port() ), m_host( accept.address.host ), m_type( accept.address.type ), m_connected( true )
-            {
-                ENTER();
-                m_link.assign( accept.fd );
-                m_link.address() = accept.address;
-                
-                start();
-            }
+            Net( Result& result, const Options& options, const Data& host = Data() );
+            Net( Result& result, fs::Link::Accept& accept );
             
             virtual ~Net()
             {
                 ENTER();
             }    
-            
             
             fs::Link& link()
             {
@@ -544,86 +380,8 @@ namespace tau
             
         private:
             
-            void start()
-            {
-                ENTER();
-                
-                if ( !m_server ) 
-                {
-                    if ( !m_connected )
-                    {
-                        m_link.connect();    
-                    }
-                }
-                else
-                {
-                    m_link.listen();
-                }
-                
-                TRACE( "link error %d link fd %d", m_link.error(), m_link.fd() );
-                
-                TRACE( "creating request", "" );
-                
-                //
-                //  check for readability
-                //  
-                auto request = mem::mem().type< ev::Request >( *this );
-                request->event().type = ev::Loop::Event::Read;
-                request->event().fd = m_link.fd();
-                request->file() = &m_link;
-                
-                this->request( request );
-                
-                //
-                //  check for writeability
-                //
-                write();
-            }
-            
-            virtual void on( ev::Request& request )
-            {
-                ENTER();
-                TRACE( "server: %d, connected: %d event %s", m_server, m_connected, request.event().type == ev::Loop::Event::Read ? "read" : "write" );
-                
-                
-                if ( request.event().type == ev::Loop::Event::Read )
-                {
-                    if ( !m_server )
-                    {
-                        m_link.read( request.data() );
-                        result()( Read, request );
-                    }
-                    else
-                    {
-                        auto accept = m_link.accept();
-                        auto net = mem::mem().type< Net >( result(), accept );
-                        request.custom( &accept.address ); 
-                        result()( Accept, request );
-                    }
-                }
-                
-                if ( request.event().type == ev::Loop::Event::Write )
-                {
-                    if ( !m_connected )
-                    {
-                        m_connected = true;
-                        if ( !m_write.empty() )
-                        {
-                            write( m_write );
-                            m_write.clear();
-                        }
-                    }
-                    
-                    if ( !request.data().empty() )
-                    {
-                        m_link.write( request.data() );
-                        result()( Write, request );
-                    }
-                    
-                    request.deref();
-                    
-                }
-            }
+            void start();
+            virtual void on( ev::Request& );
             
             void error( ev::Request& request )
             {
@@ -632,30 +390,7 @@ namespace tau
             }            
             
         public:            
-            Net& write( const Data& what = Data() )
-            {
-                ENTER();
-                
-                if ( !m_connected && !what.empty() )
-                {
-                    m_write.add( what );
-                    return *this;
-                }
-
-                auto request = mem::mem().type< ev::Request >( *this );
-                
-                if ( !what.empty() )
-                {
-                    request->data() = what;
-                }
-            
-                
-                request->event().type = ev::Loop::Event::Write;
-                request->event().fd = m_link.fd();
-                
-                this->request( request );
-                return *this;
-            }
+            Net& write( const Data& what = Data() );
                         
         private:
             Data m_host; 
