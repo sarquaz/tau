@@ -9,17 +9,18 @@ namespace tau
     class Main
     {
     public:
-        class Thread: public os::Thread
+        class Thread: public io::Thread
         {
         public:
             Thread( )
-                : os::Thread(), m_data( NULL )
+                : io::Thread(), m_data( NULL )
             {
                 ENTER();
             }
             
             virtual ~Thread ()
             {
+                ENTER();
             }
             
             void* data() const
@@ -63,6 +64,12 @@ namespace tau
             }
         
         private:
+            
+            virtual void destroy()
+            {
+                delete this;
+            }
+            
             virtual void run()
             {
                 ENTER();
@@ -77,7 +84,7 @@ namespace tau
                         event.request->callback();
                      } );
                 
-                     m_stop( );
+                m_stop( );
             }
     
         private:
@@ -97,11 +104,6 @@ namespace tau
         ~Main ()
         {
             ENTER();
-                                
-            m_threads.all( [ & ] ( Thread* thread ) 
-             {
-                delete thread;
-             } );
         }
         
         template < class Callback > void start( us threads, Callback callback )
@@ -138,9 +140,10 @@ namespace tau
              {
                  thread->assign( action::Stop, callback );
                  thread->stop(); 
-                 thread->join();
-                 
+                 thread->deref();
             } );
+            
+            m_threads.clear();  
         }
         
         static Thread& thread();
@@ -163,8 +166,6 @@ namespace tau
     template < class Callback > inline void start( const Options& options, Callback callback )
     {
         auto threads = options.def( options::Threads, 1 );
-        STRACE( "need to start %d threads", threads );        
-        
         Main::instance().start( threads, callback );
     }
     
@@ -180,19 +181,21 @@ namespace tau
         Main::instance().stop( callback );
     }
     
-    inline Main::Thread& thread()
+    inline io::Thread& thread()
     {
         return Main::thread();
     }
     
     inline ev::Loop& loop()
     {
-        return thread().loop();
+        auto& thread = reinterpret_cast< Main::Thread& >( tau::thread() );
+        return thread.loop();
     }
     
     inline th::Pool& pool()
     {
-        return thread().pool();
+        auto& thread = reinterpret_cast< Main::Thread& >( tau::thread() );
+        return thread.pool();
     }
     
      

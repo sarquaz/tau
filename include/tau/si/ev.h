@@ -107,6 +107,12 @@ namespace tau
                 
                 for ( ;; )
                 {
+                    if ( m_stop )
+                    {
+                        TRACE( "need to stop", "" );
+                        return;
+                    }
+                    
                     TRACE( "running event loop", "" );
                     ui changes = 0;
                     
@@ -154,6 +160,7 @@ namespace tau
             void stop( ) 
             {
                 ENTER();
+                m_stop = true;
                 
                 act( Add, *Event::get( Time( ), Event::Stop ) );
             }
@@ -202,6 +209,7 @@ namespace tau
             Handle m_handle;
             Hevent m_events[ 128 ];
             Setup m_setup;
+            bool m_stop;
         };
         
         
@@ -266,19 +274,9 @@ namespace tau
                 li::List< Request* > m_list;
             };
             
-            Request( Parent& parent )
-                : m_error( NULL ), m_parent( parent ), m_event( *( Loop::Event::get() ) ), m_custom( NULL ), m_file( NULL )
-            {
-                m_event.request = this;
-                m_parent.before( *this );
-                m_parent.add( *this );
-            }
-            virtual ~Request()
-            {
-                ENTER();
-                m_event.deref();
-                m_parent.remove( *this );
-            }
+            Request( Parent& parent );
+            virtual ~Request();
+            
             
             virtual void callback() 
             {

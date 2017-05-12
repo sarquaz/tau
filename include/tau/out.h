@@ -32,7 +32,7 @@ namespace tau
             
         }
         
-        inline void backtrace( ui length, Stream stream )
+        inline void backtrace( ui length, Stream stream = Err )
         {
             void* array[ length ];
             auto size = ::backtrace( array, length );

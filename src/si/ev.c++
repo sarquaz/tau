@@ -42,6 +42,7 @@ namespace tau
         }
     
         Loop::Loop( )
+            : m_stop( false )
         {
             ENTER();
 #ifdef __MACH__
@@ -159,6 +160,25 @@ namespace tau
             
 #endif
         }
+        
+        Request::Request( Request::Parent& parent )
+            : m_error( NULL ), m_parent( parent ), m_event( *( Loop::Event::get() ) ), m_custom( NULL ), m_file( NULL )
+        {
+            ENTER();
+            m_event.request = this;
+            m_parent.before( *this );
+            m_parent.add( *this );
+            thread().ref();
+        }
+        
+        Request::~Request()
+        {
+            ENTER();
+            m_event.deref();
+            m_parent.remove( *this );
+            thread().deref();
+        }
+
     }
 
 }

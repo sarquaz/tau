@@ -7,7 +7,28 @@ namespace tau
 {
     extern ev::Loop& loop();
     extern th::Pool& pool();
+    
         
+    namespace io
+    { 
+        class Thread: public os::Thread, public Reel
+        {
+        protected:
+            Thread()
+                : os::Thread()
+            {
+                
+            }
+            
+            virtual ~Thread()
+            {
+                
+            }
+        };
+    }
+    
+    extern io::Thread& thread();
+    
     namespace io
     {
         class Result: public Reel
@@ -18,7 +39,7 @@ namespace tau
                 
             }
             
-            virtual void operator()( ui, ev::Request& ) = 0;
+            virtual void event( ui, ev::Request& ) = 0;
             
         protected:
             Result()
@@ -92,7 +113,13 @@ namespace tau
                 
             Timer( Result& result, const Options& options )
                 : Event( result ), m_time( options.def( options::Msec, 0 ), options.def( options::Usec, 0 ) ),
-                m_repeat( options.def( options::Repeat, false ) )
+                m_repeat( options.def( options::Repeat, false ) ), m_custom( NULL )
+            {
+                ENTER();    
+            }
+            
+            Timer( Result& result, const Time& time )
+                : Event( result ), m_time( time ), m_repeat( false ), m_custom( NULL )
             {
                 ENTER();    
             }
@@ -112,16 +139,6 @@ namespace tau
                 }
             }
         
-            virtual void after()
-            {
-                ENTER();
-            
-                if ( !m_repeat )
-                {
-                    deref();
-                }
-            }
-        
             virtual void destroy()
             {
                 ENTER();
@@ -130,23 +147,42 @@ namespace tau
             
             virtual void on( ev::Request& request )
             {
-                result()( Fire, request );
+                result().event( Fire, request );
             }
             
             bool repeat() const
             {
                 return m_repeat;
             }
+            
+            void* custom() const
+            {
+                return m_custom;
+            }
+            
+            void* custom( void* custom )
+            {
+                m_custom = custom;
+                return m_custom;
+            }
         
         
         private:
             Time m_time;
             bool m_repeat;
+            void* m_custom;
         };
     
         inline Timer& timer( Result& result, const Options& options = {} )
         {
             auto timer = mem::mem().type< Timer >( result, options );
+            timer->request();        
+            return *timer;
+        }
+        
+        inline Timer& timer( Result& result, const Time& time )
+        {
+            auto timer = mem::mem().type< Timer >( result, time );
             timer->request();        
             return *timer;
         }
@@ -236,7 +272,7 @@ namespace tau
                 virtual void operator()( );
                 virtual void complete( ev::Request& request )
                 {
-                    m_file.result()( m_type, request );
+                    m_file.result().event( m_type, request );
                 }
 
                 virtual void destroy()
@@ -386,7 +422,7 @@ namespace tau
             void error( ev::Request& request )
             {
                 ENTER();
-                result()( Error, request );    
+                result().event( Error, request );    
             }            
             
         public:            

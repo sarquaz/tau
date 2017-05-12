@@ -201,7 +201,7 @@ namespace tau
             void* m_entry;
         };
         
-        /*`
+        
 
         class Signals
         {
@@ -229,21 +229,26 @@ namespace tau
             Signals( );
 
         private:
-
-            virtual void onAbort( What ) = 0;
-            virtual void onTerminate( ) = 0;
-
+            virtual void aborted( What ) = 0;
+            virtual void terminated() = 0;
+            
             class Terminate : public Thread
             {
             public:
-
-                Terminate( )
+                Terminate()
                 {
-                    start( );
+                    start();
                 }
-
+                
+                virtual ~Terminate( )
+                {
+                }
+                
             private:
-                virtual void routine( );
+                virtual void run( )
+                {
+                    
+                }
 
             };
 
@@ -252,7 +257,7 @@ namespace tau
         private:
             static Signals* s_instance;
             static Terminate* s_terminate;
-        };*/
+        };
     }
 
 }

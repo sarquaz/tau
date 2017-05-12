@@ -111,7 +111,9 @@ namespace tau
         void Thread::join() const
         {
             void* ret = NULL;
-            ::pthread_join( m_handle, &ret );
+            int res = ::pthread_join( m_handle, &ret );
+            
+            
         }
     
         void Thread::routine( void* data )
@@ -312,6 +314,64 @@ namespace tau
         void* Module::symbol( const Data& name ) const
         {
             return ::dlsym( m_handle, name );
+        }
+        
+        Signals* Signals::s_instance = NULL;
+        Signals::Terminate* Signals::s_terminate = NULL;
+        
+        Signals::Signals( )
+        {
+            ::signal( SIGSEGV, signal );
+            ::signal( SIGINT, signal );
+            ::signal( SIGTERM,  signal );
+            ::signal( SIGABRT, signal );
+             
+            ::signal( SIGPIPE, SIG_IGN );
+        }
+        
+        void Signals::assign( Signals* signals )
+        {
+            s_instance = signals;
+        }
+        
+        void Signals::signal( int signal )
+        {
+            SENTER();
+            STRACE( "signal %d", signal );
+            
+            auto terminated = false;
+            
+            if ( signal == SIGINT )
+            {
+                signal = SIGTERM;
+            }
+            
+            switch ( signal )
+            {
+                case SIGSEGV:
+                case SIGABRT:
+                
+                    out::backtrace( 15 );
+                    break;
+                    
+                 
+                case SIGTERM:
+                        if ( !s_terminate )
+                        {
+                            s_terminate = new Terminate();
+                            s_terminate->join();
+                            instance().terminated();
+                            terminated = true;
+                        }
+                        
+                break;
+            }
+            
+            if ( !terminated )
+            {
+                instance().aborted( ( What ) signal );    
+            }
+            
         }
     }
 }

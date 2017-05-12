@@ -63,7 +63,7 @@ namespace tau
         {
             Now = -2,
             Infinite = -1
-    };
+        };
         
         long long value;
         
@@ -89,13 +89,11 @@ namespace tau
             value *= 1000;
             value += micros;
         }
-        
-        
 
-        // Time( const Time& time )
-//         {
-//             *this = time;
-//         }
+        Time( const Time& time )
+        {
+            *this = time;
+        }
         void operator=( const Time& time )
         {
             value = time.value;

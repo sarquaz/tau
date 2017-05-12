@@ -65,7 +65,7 @@ namespace tau
                 event = Write;
             }
             
-            result()( event, request );
+            result().event( event, request );
             if ( event == Write )
             {
                 request.deref();
@@ -208,7 +208,7 @@ namespace tau
             catch ( tau::Error* e )
             {
                 request->error( e );
-                result()( Error, *request );
+                result().event( Error, *request );
                 request->deref();
                 return;
             }
@@ -240,14 +240,14 @@ namespace tau
                         event = Close;
                     }
                     
-                    result()( event, request );
+                    result().event( event, request );
                 }
                 else
                 {
                     auto accept = m_link.accept();
                     auto net = mem::mem().type< Net >( result(), accept );
                     request.custom( &accept.address ); 
-                    result()( Accept, request );
+                    result().event( Accept, request );
                 }
                 
                 
@@ -275,7 +275,7 @@ namespace tau
                 if ( !request.data().empty() )
                 {
                     m_link.write( request.data() );
-                    result()( Write, request );
+                    result().event( Write, request );
                 }
                 
                 request.deref();
