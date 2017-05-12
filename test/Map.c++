@@ -1,4 +1,4 @@
-            #include "tau.h"
+#include "tau.h"
 
 using namespace tau;
 using namespace si;
@@ -222,11 +222,34 @@ int main( )
             virtual void operator()( ui event, ev::Request& request )
             {
                 ENTER();
-                TRACE( "event %u with %s", event, request.data().c() );
-                Data data = request.data();
-                TRACE( "%s", data.c() );
                 
-                request.parent().deref();
+//                Data data = request.data();
+                
+                TRACE( "result with event %d", event );
+                
+                if ( event == io::Net::Read )
+                {
+                        printf( "%s", request.data().c() );
+                }
+                
+                if ( event == io::Net::Accept )
+                {
+                    auto address = static_cast< fs::Link::Address* >( request.custom() );
+                    TRACE( "accepted connection from %s", address->tostring().c() );
+                    tau::stop( [ & ] ( ) { TRACE( "stopped", "" ); } );
+                }
+                
+                if ( event == io::Net::Error )
+                {
+                    TRACE( "error: %s", request.error()->message.c() );
+                    
+                }
+                
+               // 
+                
+                    
+                
+//                  request.parent().deref();
             }
             
             virtual void destroy()
@@ -241,13 +264,15 @@ int main( )
         };
     
     
-        auto result = mem::mem().type< Result >( );
+
        
         tau::start( [ & ] ( )
-        { 
-            io::process( *result, "echo 'test'" );
+        {
+            auto result = mem::mem().type< Result >();
+            //io::process( *result, "echo 'test'" );
             //io::timer( *result );
-            result->deref();
+            //io::file( *result, "Makefile" ).read();
+
                           //STRACE( "%d", a );
             // io::file( "Makefile" ).read( [ & ]( ev::Request& request )
 //                 {
@@ -257,31 +282,22 @@ int main( )
 //                      tau::stop( [](){ printf("stopped\n"); } );
 //
 //                 } ).deref();
-            
-            // io::net( {{ options::Port, 6379 }} ).write( []( ev::Request& request, const io::Event& event )
-            //     {
-            //         auto& net = reinterpret_cast< const io::Net& >( event );
-            //
-            //         STRACE( "net 0x%x", &net );
-            //         // net->read( [] ( ev::Request& request )
-            //         //     {
-            //         //         printf( "read %s \n", request.data().c() );
-            //         //     } );
-            //
-            //     }, "info\n" ).deref();
-                          
-                          int a = 100;    
-                        
-    
-            
-            
+
+            io::net( *result, {{ options::Port, 8000 }, { options::Server, true }} );
+            result->deref();
+
+                          int a = 100;
+
+
+
+
             // io::timer( [ & ] ( const ev::Request& request, const io::Event& event )
             //     {
             //                           STRACE( "%d", a );
             //          STRACE( "callback with event 0x%x", &event );
             //      }, { { options::Msec, 100 }, { options::Repeat, true } } );
         } );
-        
+
         
        
 

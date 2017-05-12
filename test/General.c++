@@ -1,71 +1,34 @@
 #include "Test.h"
 
-using namespace tau;
-#include <forward_list>
-#include <vector>
-
-
-TEST();
 
 class General: public Test
 {
 public:
     General()
-    : m_timer( false )
+        : Test( 3 )
     {
-        setInterval( Time( Time::Infinite ) );
+        start();
     }
     
 private:
-    virtual void onTimer( Event& timer )
+    virtual void run()
     {
         ENTER();
-       
-        m_timer = true;
-        timer.deref();
-        
-        //li::List< int > list;
-        //std::forward_list< int > list;
-        //std::vector< int > list;
-        li::Mass< int > list;
-        for ( auto i = 0; i < 100; i++ )
-        {
-            //list.push_front( i );
-            list.add( i );
-        }
-//        
-        start();
     }
     
-    void start()
+    virtual void check()
     {
-        ENTER();
-        
-        tau::event( this )( Time( 1 ) );
+        assert( true );
     }
     
-    virtual void run( )
-    {
-        ENTER();
-        start();
-        
-        out( "line %d", line().id() );
-    }
-    
-    virtual void si::check()
-    {
-        ENTER();
-        assert( m_timer );
-    }
-    
-    bool m_timer;   
     
 };
 
 
 int main()
 {
-    return General()();
+    auto status = ( new General() )->status();
+    return status;
 }
 
 

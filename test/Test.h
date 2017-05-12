@@ -1,71 +1,151 @@
-#ifndef TEST_H
-#define	TEST_H
+#ifndef TAU_TEST_H_
+#define	TAU_TEST_H_
 
-#include "liner.h"
+#include "tau.h"
 #include "../src/trace.h"
 
 using namespace tau;
-using namespace io;
 
 namespace tau 
 {
-    class Test;
+    typedef li::Set< Data > Strings;
     
-    class Test: public in::Female
+    class Test: public io::Result
     {
-    public:
-        Test( ui tries = 1, ui threads = 1 )
-        : m_manager( NULL ), m_tries( tries )
+        
+        struct Timer: io::Result
         {
-            handler( Event::Timeout, ( in::Female::Handler ) &Test::timerEvent );
-            handler( Line::Start, ( in::Female::Handler ) &Test::lineStart );
-            handler( Line::Stop, ( in::Female::Handler ) &Test::lineStop );
-            handler( Liner::Line, ( in::Female::Handler ) &Test::liner );
+            io::Timer* timer;
+            Test& test;
             
-            handler( Set::Data, ( Test::Handler ) &Test::read );
-            handler( Set::Wrote, ( Test::Handler ) &Test::write );
-            handler( Set::End, ( Test::Handler ) &Test::end );
-            handler( Set::Error, ( Test::Handler ) &Test::error );
-
-            s_instance = this;
-
-            m_manager = &Liner::instance( *this, threads );
-            Signals::assign( new Signals() );
-        }
+            Timer( Test& _test, const Time& time )
+                : test( _test )
+            {
+                timer = &io::timer( *this, time );    
+            } 
+            
+            virtual ~Timer()
+            {
+                
+            }
+            
+            virtual void destroy()
+            {
+                delete this;
+            } 
+            
+            void abort()
+            {
+                timer->deref();
+                deref();
+            }
+            
+            virtual void fire() = 0;
+            
+            virtual void event( ui event, ev::Request& request )
+            {
+                ENTER();
+                
+                fire();
+                
+                request.parent().deref();    
+                deref();
+                
+            }
+        };
         
-        ui start()
+        struct Run: Timer
+        {            
+            Run( Test& test, const Time& time )
+                : Timer( test, time )
+            {
+                test.run();
+            }
+            
+            virtual ~Run()
+            {
+                ENTER();        
+            }
+            
+            virtual void fire()
+            {
+                ENTER();
+                
+                test.check();
+                test.attempt();
+            }
+            
+  
+        };
+        
+        struct Timeout: Timer
         {
-            m_manager->start();
-            return 0;
-        }
+            Timeout( Test& test, const Time& time )
+                : Timer( test, time )
+            {
+                ENTER();
+            } 
+            
+            virtual ~Timeout()
+            {
+                ENTER();
+            }
+            
+            virtual void fire( )
+            {
+                ENTER();
+                
+                Test::out( "timed out" );
+
+                test.status( 1 );   
+                test.deref();
+            }
+            
+            
+            
+            virtual void destroy()
+            {
+                delete this;
+            }
+            
+            
+        };
         
-        ui operator()()
+        friend class Run;
+        friend class Timeout;
+        
+    public:
+        Test( ui tries = 1, const Time& attempt = Time( 500 )  )
+        : m_tries( tries ), m_attempt( attempt ), m_run( NULL ), m_timeout( NULL ), m_status( 0 )
         {
-            return start();    
+            os::Signals::assign( new Signals( *this ) );
+
         }
         
+        void start()
+        {
+            tau::start( [ & ] ( ) 
+                { 
+                    this->attempt();
+                    m_timeout = new Timeout( *this, Time( m_tries * m_attempt.ms() + 1000 ) );
+                } );
+        }
+                            
         virtual ~Test()
         {
             ENTER();
             
-            if ( m_manager )
-            {
-                delete m_manager;
-            }
+            cleanup();
+            tau::stop( [ & ]( ) {   } );
+
         }
-        
-        
-        static Test& get()
-        {
-            return *s_instance;
-        }
-        
+                
         static void out( const char* format, ... )
         {
             data::Data data;
             PRINT( data, format );
             data.add( "\n" );
-            out( data );
+            out::out( data );
         }
         
         ui tries() const
@@ -73,356 +153,155 @@ namespace tau
             return m_tries;
         }
         
-    protected:
-        struct State
+        ui status() const
         {
-            typedef li::List< Set* > Sets;
-            li::Map< Sets > sets;
-            Event* event;
-            ui tries;
-            li::Strings strings;
-            
-            ~State()
-            {   
-               clear();
-            }
-            
-            State()
-            : event( NULL ), tries( Test::get().tries() )
-            {
-                
-            }
-            
-            void set( const data::Data& name, Set& set )
-            {
-                sets[ name.hash() ].add( &set );
-            }
-            
-            void clear()
-            {
-                ENTER();
-                
-                sets.all( [ & ] ( ul hash, const Sets& sets ) 
-                {
-                    sets.all( [ ] ( Set* set ) { set->deref(); } );
-                } );
-                
-               sets.clear();
-               event = NULL;
-            }
-        };
-        
-        State& state()
-        {
-            if ( !s_state )
-            {
-                s_state = new State();
-            }
-            return *s_state;
+            return m_status;
         }
         
+    protected:
+        virtual void event( ui, ev::Request& )
+        {
+            ENTER();
+            
+        }
+        virtual void run()
+        {
+        }
+                
+        void add( io::Event& event )
+        {
+            ENTER();
+            m_events.append( &event );
+        }
+        
+                
         data::Data string( )
         {
-            auto string = data::Data::get();
-            state().strings[ string ] = string;
+            auto string = Data::get();
+            m_strings.set( string );
             
             return string;
         }
                         
-        virtual void onTerminate()
+        virtual void terminated()
         {
             ENTER();
             
-            if ( m_manager )
-            {
-                m_manager->stop();
-                delete m_manager;
-            }
+            deref();
         }
         
-        void setInterval( const Time& interval )
-        {
-            m_interval = interval;
-        }
         
-        Set& start( const Set::Options& options, const data::Data& name )
-        {
-            ENTER( );
-            
-            auto& set = Set::get( name );
-            set.females().add( *this );
-            
-            data::Data s;
-            options.all( [ & ] ( const data::Data& key, const data::Data& value ) 
-            {
-                s.add( data::Data()( "%s: %s\t", key.c(), value.c() ) );
-            } );
-            
-            TRACE( "options: %s", s.c() );
-            
-            try
-            {
-                set.start( options );
-                state().set( name, set );
-            }
-            catch ( const Error& e )
-            {
-                TRACE( "exception: %s", ( const char* ) e.message );
-                assert( false );
-            }
                 
-            return set;
-        }
-                
-        Net& server( Link::Type type = Link::Tcp )
-        {
-            ENTER();
-            TRACE( "creating server of type %d", type );
-            
-            Set::Options options;
-            
-            auto stype = Link::stype( type );
-            
-            
-            options[ "type" ] = stype;
-            options[ "mode" ] = "server";
-            
-            
-            if ( type == Link::Local )
-            {   
-                options[ "host" ] = data::Data()( "/tmp/%s", ( const char* ) data::Data::get() );
-            }
-            else
-            {
-                options[ "host" ] = "localhost";
-                options[ "port" ] = data::Data()( "%u", random( 10000 ) + 9000 );
-            }
-            
-            return dynamic_cast< Net& >( start( options, "net" ) );
-        }
-        
-        Net& client( Net& server )
-        {
-            ENTER( );
-           
-            Set::Options options = server.options();
-            options[ "mode" ] = "client";
-            
-            return dynamic_cast< Net& >( start( options, "net" ) );
-        }
-        
-        Bot& process( const data::Data& command )
-        {
-            return dynamic_cast< Bot& >( start(  { { "command", command } } , "process" ) );
-        }
-        
-//        File& file( const data::Data& name )
-//        {
-//            ENTER();
-//            return dynamic_cast< File& >( start(  { { "name", name } } , "file" ) );
-//        }
-        
         
         virtual void cleanup( )
         {
-            if ( s_state )
-            {
-                delete s_state;
-                s_state = NULL;
-            }
-        }
-        
-        void set( const data::Data& name, bool value = true )
-        {
-            m_checks[ name.hash() ].value = value;
-        }
-        
-        void si::check( const data::Data& name )
-        {
-            out( "checking %s", name.c() );
+            ENTER();
             
-            try
+                
+             if ( m_status )
+             {
+                 m_run->abort();
+             }
+            else
             {
-                assert( m_checks[ name.hash() ].value );
+                m_timeout->abort();
             }
-            catch ( ... )
-            {
-                assert( false );
-            }
-        }
-        
-        struct Data
-        {
-            virtual ~Data()
-            {
-            }
-        };
-        
-        void assign( const Set& set, Data& data )
-        {
-            m_data[ ( ul ) &set ] = &data;
-        }
-        
-        Data& data( const Set& set )
-        {
-            return *m_data.get( ( ul ) &set );
-        }
-        
             
+            m_events.all( []( io::Event* event ) { event->deref(); } );
+            
+        }
+        
+                    
     private:
-        class Signals: public Signals
+        
+        ui status( ui status )
         {
-        private:
-            virtual void onAbort( Signals::What what )
+            m_status = status;
+            return m_status;
+        }
+        
+        virtual void check() = 0;
+        
+        
+        void attempt()
+        {
+            ENTER();
+            
+            if ( m_tries > 0 )
             {
-                if ( what != Signals::Error )
+                
+                m_tries --;
+                TRACE( "new try, %d tries remaining", m_tries );
+                
+                m_run = new Run( *this, m_attempt );
+            }
+            else
+            {
+                TRACE( "end of tries", "" );
+                m_run = NULL;
+                deref();    
+            }
+        }
+        
+        virtual void destroy()
+        {
+            delete this;
+        }
+        
+        
+        class Signals: public os::Signals
+        {
+        public:
+            Signals( Test& test )
+                : m_test( test )
+            {
+                
+            }
+        private:
+            
+            virtual void aborted( os::Signals::What what )
+            {
+                ENTER();
+                TRACE( "signal %s", what == os::Signals::Error ? "error" : "exit" );
+                
+                if ( what != os::Signals::Error )
                 {
-                    Test::get().cleanup();
+                    m_test.deref();
                 }
              
-                if ( what != Signals::Exit )
+                if ( what != os::Signals::Exit )
                 {
                     out( "exiting with error" );
                 }
                 
-                ::exit( what == Signals::Exit ? 0 : 1 );
+                ::exit( what == os::Signals::Exit ? 0 : 1 );
             }
             
-            virtual void onTerminate()
+            virtual void terminated()
             {
-                Test::get().onTerminate();
+                m_test.terminated();
             }
+            
+        private:
+            Test& m_test;
         };
         
-        virtual void run( )
-        {
-        }
-        
-        virtual void  si::check()
-        {
-            
-        }
-        
-        virtual void onTimer( Event& timer )
-        {
-            
-        }
-        
-        void timerEvent( Grain& grain )
-        {
-            ENTER();
-            
-            auto& timer = dynamic_cast< Event& >( grain );
-
-            TRACE( "timer type %d", timer.type() );
-            
-            if ( !timer.type() )
-            {
-                onTimer( timer );
-                return;
-            }
-            
-            si::check();
-            
-            if ( !tau::line().id() )
-            {
-                m_manager->stop();
-            }
-            
-            timer.deref();
-        }
-        
-        void liner( Grain& grain )
-        {
-            Line& line = dynamic_cast< Line& >( grain );
-            line.females().add( *this );
-        }
                 
-        void lineStop( Grain& )
-        {
-            cleanup();
-        }
-        
-        void lineStart( Grain& )
-        {
-            ENTER();
-            auto& event = tau::event( this )( m_interval );
-            event.setType( 1 );
-            
-            ie::toker().setMax( 100 );
-            
-            Set::populate();
-            
-            run( );
-        }
-        
-        void read( Grain& grain )
-        {
-            onRead( grain );
-        }
-        
-        virtual void onRead( Grain& grain )
-        {
-        }
-        
-        void write( Grain& grain )
-        {
-            onWrite( grain );
-        }
-        
-        virtual void onWrite( Grain& grain )
-        {
-        }
-        
-        void end( Grain& grain )
-        {
-            onEnd( grain );
-        }
-        
-        virtual void onEnd( Grain& grain )
-        {
-        }
-        
-        void error( Grain& grain )
-        {
-            onError( grain );
-        }
-        
-        virtual void onError( Grain& grain )
-        {
-            auto& set = dynamic_cast< Set& >( grain );
-            TRACE( "%s", ( const char* ) set.error().message );
-                    
-            assert( false );
-        }
-                
-        struct Check
-        {
-            bool value;
-            Check()
-            : value( false )
-            {
-                
-            }
-            void clear()
-            {
-                
-            }
-        };
     private:
-        Liner* m_manager;
-        static Test* s_instance;
- 
-        Time m_interval;
+        
         ui m_tries;
-        static __thread State* s_state;
-        li::Map< Check > m_checks;
-        li::Map< Data* > m_data;
+        
+        li::List< io::Event* > m_events;
+        Run* m_run;
+        Time m_attempt;
+        li::Set< Data > m_strings;
+        Timeout* m_timeout;
+        ui m_status;
     };
     
-#define TEST() \
-    Test* Test::s_instance = NULL; \
-    __thread Test::State* Test::s_state = NULL;
+// #define TEST() \
+//     Test* Test::s_instance = NULL; \
+//     //__thread Test::State* Test::s_state = NULL;
     
 };
 

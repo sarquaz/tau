@@ -26,16 +26,12 @@ private:
         start();
     }
     
-    virtual void onAccept( Grain& grain )
+    virtual void accepted( ev::Request& request )
     {
         ENTER();
-        auto& net = dynamic_cast< Net& >( grain );
-        net.females().add( *this );
-
-        net.enable();
     }
     
-    virtual void onRead( Grain& grain )
+    virtual void read( ev::Request& request )
     {
         ENTER();
         auto& net = dynamic_cast< Net& >( grain );
@@ -69,6 +65,33 @@ private:
         ENTER();
     }
     
+    io::Net& server( fs::Link::Type type = fs::Link::Tcp )
+    {
+        ENTER();
+        TRACE( "creating server of type %d", type );
+        
+        Options options;
+
+        options[  options::Type ] = type;
+        options[  options::Server ] = true;
+        
+        Data host;
+        
+        if ( type == Link::Local )
+        {   
+            host = Data()( "/tmp/%s", ( const char* ) Data::get() );
+        }
+        else
+        {
+            host = localhost;
+            options[ options::Port ] = Data()( "%u", random( 10000 ) + 9000 );
+        }
+        
+        auto& server = io::net( options, host );
+        add( server );
+        return server;
+    }
+    
     virtual void onTimer( Event& timer )
     {
         ENTER();
@@ -80,12 +103,13 @@ private:
         timer.deref();
     }
     
+    
     virtual void si::check()
     {
         Test::si::check( "read" );
     }
     
-    void start( )
+    virtual void started( )
     {
         try
         {
@@ -123,11 +147,12 @@ private:
 
 int main()
 {
-    li::cycle< Link::Type >( { Link::Local, Link::Udp, Link::Tcp } )( []( Link::Type type )
-    {
-        ( TestNet( type ) ) (); 
-        
-    } );
+        li::cycle< fs::Link::Type >( { fs::Link::Local, fs::Link::Udp, fs::Link::Tcp } )( []( fs::Link::Type type )
+        {
+            TestNet test( type );
+        } );
+
+    
     
    return 0;
 }
