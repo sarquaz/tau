@@ -252,6 +252,7 @@ namespace tau
             }
             
             void bind( );
+            void shutdown();
 
         private:
             Type type( ) const

@@ -458,7 +458,7 @@ namespace tau
             
             TRACE( "wrote %u bytes", result );
 
-            return si::check( result )( "send " );
+            return si::check( result )( "send" );
         }
         
         unsigned long Link::read( Data& data, ul length, ul offset ) const
@@ -486,6 +486,11 @@ namespace tau
             }
 
             return result;
+        }
+        
+        void Link::shutdown()
+        {
+            si::check( ::shutdown( fd(), SHUT_RDWR ) )( "shutdown" );
         }
     }
 }

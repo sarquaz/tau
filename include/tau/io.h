@@ -376,7 +376,7 @@ namespace tau
                 Write
             };
             
-            Net( Result& result, const Options& options, const Data& host = Data() );
+            Net( Result& result, const Options& options, const Data& host );
             Net( Result& result, fs::Link::Accept& accept );
             
             virtual ~Net()
@@ -425,8 +425,11 @@ namespace tau
                 result().event( Error, request );    
             }            
             
+            void perform( ev::Request& );
+            
         public:            
             Net& write( const Data& what = Data() );
+            Net& close();
                         
         private:
             Data m_host; 
@@ -438,9 +441,9 @@ namespace tau
             Data m_write;
         };
         
-        inline Net& net( Result& result, const Options& options )
+        inline Net& net( Result& result, const Options& options, const Data& host = Data() )
         {
-            auto net = mem::mem().type< Net >( result, options );
+            auto net = mem::mem().type< Net >( result, options, host );
             return *net;
         }
         

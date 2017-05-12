@@ -229,7 +229,20 @@ namespace tau
             ENTER();
             TRACE( "server: %d, connected: %d event %s", m_server, m_connected, request.event().type == ev::Loop::Event::Read ? "read" : "write" );
             
+            try
+            {
+                perform( request );
+            }
+            catch ( tau::Error* e )
+            {
+                request.error( e );
+                result().event( Error, request );
+            }
             
+        }
+        
+        void Net::perform( ev::Request& request )
+        {
             if ( request.event().type == ev::Loop::Event::Read )
             {
                 auto event = Read;
@@ -262,6 +275,13 @@ namespace tau
                 if ( !m_connected )
                 {
                     m_connected = true;
+                }
+                
+                if ( request.custom() )
+                {
+                    TRACE( "closing connection", "" );
+                    m_link.shutdown();
+                    result().event( Close, request );
                 }
                 
                 TRACE( "connected %d write length %u", m_connected, m_write.length() );
@@ -302,6 +322,25 @@ namespace tau
             
             request->event().type = ev::Loop::Event::Write;
             request->event().fd = m_link.fd();
+            
+            this->request( request );
+            return *this;
+        }
+        
+        Net& Net::close( )
+        {
+            ENTER();
+            
+            if ( !m_connected || m_server )
+            {
+                return *this;
+            }
+
+            auto request = mem::mem().type< ev::Request >( *this );
+            
+            request->event().type = ev::Loop::Event::Write;
+            request->event().fd = m_link.fd();
+            request->custom( ( void* ) Close  );
             
             this->request( request );
             return *this;
