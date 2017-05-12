@@ -79,8 +79,6 @@ namespace tau
         private:
             void free()
             {
-                ENTER();
-            
                 if ( m_data != m_default )
                 {
                     mem::mem().free( m_data );    
