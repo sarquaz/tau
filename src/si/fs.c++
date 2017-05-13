@@ -129,12 +129,17 @@ namespace tau
         
         unsigned long File::write( const Data& data, ul offset ) const
         {
+            ENTER();
             if ( offset )
             {
                 seek( offset );
             }
             
-            return si::check( ::write( fd( ), data, data.length( ) ) )( "write" );
+            auto wrote = si::check( ::write( fd( ), data, data.length( ) ) )( "write" );
+            
+            TRACE( "wrote %u bytes", wrote );
+            
+            return wrote;
         }
         unsigned long File::read( Data& data, ul length, ul offset ) const
         {
@@ -153,6 +158,7 @@ namespace tau
             data.space( length );
             auto read = si::check( ::read( fd( ), data, length ) )( "read" );
             data.length( read );
+            TRACE( "read %u bytes", read );
             return read;
         }   
         
@@ -262,7 +268,7 @@ namespace tau
                 _port = s->sin6_port;
             }
             
-            host.space( 0x100 );
+            host.space( 0x200 );
             ::inet_ntop( family, target, host, host.size() );
         }
         
@@ -348,6 +354,8 @@ namespace tau
             std::memcpy( *this, source, length );
             
             length = address.length;
+            TRACE( "address host %s", address.host.c() );
+            
             host = address.host;
             family = address.family;
             
@@ -388,6 +396,9 @@ namespace tau
             ::setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, ( const char* ) &set, sizeof( set ) );
 #endif      
 
+            TRACE( "opened fd %d for type %d", fd, address.type );
+            
+            
             File::assign( fd );
         }
         
@@ -404,8 +415,20 @@ namespace tau
         Link::Accept Link::accept()
         {
             Accept accept;
+            
             accept.fd =  si::check( ::accept( fd( ), accept.address, &accept.address.length ) )( "accept" );
-            accept.address.parse( );
+            if ( !local() )
+            {
+                accept.address.parse( );    
+            }
+            else
+            {
+                accept.address = Address( m_address.type, m_address.host );
+            }
+            
+            
+            TRACE( "accepted address type %u", accept.address.type );
+            
 
             return accept;
         }
@@ -463,9 +486,14 @@ namespace tau
         
         unsigned long Link::read( Data& data, ul length, ul offset ) const
         {
+            ENTER();
+            
+            
+            TRACE( "local: %d, address type %u", local(), m_address.type );
+            
             if ( local() )
             {
-                return File::read( data, length, offset );
+               return File::read( data, length, offset );
             }
 
             long result;           
@@ -490,7 +518,7 @@ namespace tau
         
         void Link::shutdown()
         {
-            si::check( ::shutdown( fd(), SHUT_RDWR ) )( "shutdown" );
+            si::check( ::shutdown( fd(), SHUT_RDWR ) )( "shutdow" );
         }
     }
 }

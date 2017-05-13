@@ -160,24 +160,34 @@ namespace tau
         
         Net::Net( Result& result, const Options& options, const Data& host )
             : Event( result ), m_host( host.empty() ? "localhost" : host ), m_server( options.def( options::Server, false ) ), 
-            m_port( options.def( options::Port, 0 ) ), m_type( ( fs::Link::Type ) options.def( options::Type, fs::Link::Tcp ) ), m_connected( false )
+            m_port( options.def( options::Port, 0 ) ), m_type( ( fs::Link::Type ) options.def( options::Type, fs::Link::Tcp ) ), m_connected( false ), m_remote( false )
         {
             ENTER();         
-            TRACE( "host %s", m_host.c() );
+            
+            TRACE( "host %s port %d type %s server %d", m_host.c(), m_port, fs::Link::stype( m_type ).c(), m_server );
                 
-            //
-            //  lookup hostname 
-            //         
-            pool().add( *( mem::mem().type< Lookup >( *this ) ) );
+            if ( m_type != fs::Link::Local )
+            {
+                //
+                //  lookup hostname 
+                //         
+                pool().add( *( mem::mem().type< Lookup >( *this ) ) );    
+            }    
+            else
+            {
+                start();
+            }
+            
         }
         
         Net::Net( Result& result, fs::Link::Accept& accept )
-            : Event( result ),  m_server( false ), m_port( accept.address.port() ), m_host( accept.address.host ), m_type( accept.address.type ), m_connected( true )
+            : Event( result ),  m_server( false ), m_port( accept.address.port() ), m_host( accept.address.host ), m_type( accept.address.type ), m_connected( true ), m_remote( true )
         {
             ENTER();
             
             m_link.assign( accept.fd );
             m_link.address() = accept.address;
+            
             
             start();
         }
@@ -186,18 +196,18 @@ namespace tau
         {
             ENTER();
             
-            auto request = mem::mem().type< ev::Request >( *this );
-            request->event().type = ev::Loop::Event::Read;
-            request->event().fd = m_link.fd();
-            request->file() = &m_link;
-            
             try
             {
+                if ( type() == fs::Link::Local && !m_remote )
+                {
+                    m_link.open( fs::Link::Address( m_type, m_host ) );    
+                }
+                
                 if ( !m_server ) 
                 {
                     if ( !m_connected )
                     {
-                        m_link.connect();    
+                        m_link.connect();        
                     }
                 }
                 else
@@ -207,6 +217,7 @@ namespace tau
             }
             catch ( tau::Error* e )
             {
+                auto request = mem::mem().type< ev::Request >( *this );
                 request->error( e );
                 result().event( Error, *request );
                 request->deref();
@@ -216,6 +227,10 @@ namespace tau
             //
             //  check for readability
             //  
+            auto request = mem::mem().type< ev::Request >( *this );
+            request->event().type = ev::Loop::Event::Read;
+            request->event().fd = m_link.fd();
+            request->file() = &m_link;
             this->request( request );
             
             //
@@ -227,7 +242,7 @@ namespace tau
         void Net::on( ev::Request& request )
         {
             ENTER();
-            TRACE( "server: %d, connected: %d event %s", m_server, m_connected, request.event().type == ev::Loop::Event::Read ? "read" : "write" );
+            TRACE( "server: %d, remote %d connected: %d event %s", m_server, m_remote, m_connected, request.event().type == ev::Loop::Event::Read ? "read" : "write" );
             
             try
             {
@@ -258,6 +273,7 @@ namespace tau
                 else
                 {
                     auto accept = m_link.accept();
+                    TRACE( "accepted type %d", accept.address.type );
                     auto net = mem::mem().type< Net >( result(), accept );
                     request.custom( &accept.address ); 
                     result().event( Accept, request );

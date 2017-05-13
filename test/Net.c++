@@ -1,18 +1,13 @@
 #include "Test.h"
 
-using namespace tau;
-using namespace tau::io;
-
-TEST();
-
 class TestNet: public Test
 {
 public:
-    TestNet( Link::Type type )
-    : Test( 3 ), m_count( 5 ), m_type( type )
+    TestNet( fs::Link::Type type )
+    : Test( 1 ), m_count( 1 ), m_type( type )
     {
-        setInterval( Time( 1000 ) );
-        in::Female::handler( io::Net::Accept, ( Test::Handler ) &TestNet::onAccept );
+        ENTER();
+        start();
     }
     
     virtual ~TestNet()
@@ -23,48 +18,97 @@ private:
     virtual void run( )
     {
         ENTER();
-        start();
-    }
-    
-    virtual void accepted( ev::Request& request )
-    {
-        ENTER();
-    }
-    
-    virtual void read( ev::Request& request )
-    {
-        ENTER();
-        auto& net = dynamic_cast< Net& >( grain );
         
-        data::Data string = net.in();        
+        li::List< io::Net* > servers;
+        
+        for ( auto i = 0; i < m_count; i++ )
+        {
+            servers.append( &server( m_type ) );
+        }
+        
+        servers.all( [ & ] ( io::Net* net ) 
+        {
+            auto s = Test::string();
+            
+            TRACE( "adding string %s", s.c() );
+            client( *net ).write( s ); 
+        } );    
+    }
+    
+    virtual void event( ui event, ev::Request& request )
+    {
+        switch ( event )
+        {
+            case io::Net::Accept:
+                accepted( request );
+                break;
+                
+            case io::Net::Close:
+                closed( request );
+                break;
+                
+            
+            case io::Net::Read:
+                read( request );
+                break;    
+
+                
+           case io::Net::Write:
+                wrote( request );
+                break;                
+                
+            
+            case io::Net::Error:
+                out( request.error()->message.c() );
+                assert( false );
+                break;                    
+        }
+    }
+    
+    void accepted( ev::Request& request )
+    {
+        ENTER();
+    }
+    
+    void closed( ev::Request& request )
+    {
+        ENTER();
+        
+        request.parent().deref();
+    }
+    
+    void read( ev::Request& request )
+    {
+        ENTER();
+        auto& net = dynamic_cast< io::Net& >( request.parent() );
+        
+        TRACE( "read event, server %d", net.server() );
+        
+        Data string;
+        
+        string.add( request.data() );
         
         if ( net.remote() )
         {
             out("echo %s", string.c() );
-            net.out().add( string );
+            net.write( string );
             return;
         }
         
-        state().strings.remove( string );
         out( "%s", string.c() );
-        Test::set( "read" );
+        
+        strings().remove( string );
+        net.deref();
+        
     }
     
-    virtual void onWrite( Grain& grain )
+    void wrote( ev::Request& request )
     {
         ENTER();
-        auto& net = dynamic_cast< Net& >( grain );
-        if ( net.remote() )
-        {
-            net.deref();
-        }
+        //auto& net = dynamic_cast< io::Net& >( grain );
+        
     }
-    
-    virtual void onClose( Grain& grain )
-    {
-        ENTER();
-    }
-    
+        
     io::Net& server( fs::Link::Type type = fs::Link::Tcp )
     {
         ENTER();
@@ -77,79 +121,71 @@ private:
         
         Data host;
         
-        if ( type == Link::Local )
+        if ( type == fs::Link::Local )
         {   
-            host = Data()( "/tmp/%s", ( const char* ) Data::get() );
+            host = "/tmp/";
+            host.add( Data::get() );
+            host.add( ".sock" );
         }
         else
         {
-            host = localhost;
-            options[ options::Port ] = Data()( "%u", random( 10000 ) + 9000 );
+            options[ options::Port ] = r::random( 10000 ) + 9000;
         }
         
-        auto& server = io::net( options, host );
+        auto& server = io::net( *this, options, host );
         add( server );
         return server;
     }
     
-    virtual void onTimer( Event& timer )
+    io::Net& client( io::Net& server )
     {
         ENTER();
-        assert( state().strings.empty() );
+        TRACE( "creating client of type %d", server.type() );
         
-        state().clear();   
+        Options options;
 
-        start( );
-        timer.deref();
+        options[  options::Type ] = server.type();
+        
+        auto& host = server.host();
+        options[ options::Port ] = server.port();
+
+        auto& client = io::net( *this, options, host );
+        
+    //    add( client );
+        return client;
     }
+        
     
-    
-    virtual void si::check()
+    virtual void check()
     {
-        Test::si::check( "read" );
+        ENTER();
+        
+        strings().values( [ & ] ( const Data& value ) 
+            {
+                TRACE("strings: value %s", value.c() );
+            } );
+        
+        
+        assert( strings().empty() );
     }
     
     virtual void started( )
     {
-        try
-        {
-            li::List< Net* > servers;
-            for ( auto i = 0; i < m_count; i++ )
-            {
-                servers.add( &Test::server( m_type ) );
-            }
-            
-            servers.all( [ & ] ( Net* net ) 
-            {
-                auto s = string();
-                TRACE( "adding string %s", s.c() );
-                client( *net ).out().add( s ); } );
-        }
-            
-        catch( const Error& e )
-        {
-            TRACE( "exception: %s", ( const char* ) e.message );
-            assert( false );
-        }
         
-        if ( !state().event && state().tries > 1 )
-        {
-            state().event = &tau::event( this )( Time( 100 ) );
-            state().tries --;
-        }
     }
     
 private:
     ui m_count;
     ui m_tries;
-    Link::Type m_type;
+    fs::Link::Type m_type;
 };
 
 int main()
-{
-        li::cycle< fs::Link::Type >( { fs::Link::Local, fs::Link::Udp, fs::Link::Tcp } )( []( fs::Link::Type type )
+{   
+    li::cycle< fs::Link::Type >( { fs::Link::Local /*, fs::Link::Udp, fs::Link::Tcp*/ } )( []( fs::Link::Type type )
         {
-            TestNet test( type );
+            STRACE( "%d", type );
+            new TestNet( type );
         } );
 
     

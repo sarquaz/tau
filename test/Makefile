@@ -5,7 +5,7 @@ LDFLAGS = -L../bin -ltau
 SOURCES = $(wildcard *.c++)
 #EXECUTABLES = $(SOURCES:.c++)
 
-EXECUTABLES = General     
+EXECUTABLES = Net     
 
 all:  tau $(EXECUTABLES)  #run
 

@@ -117,7 +117,7 @@ namespace tau
         {
             Data data;
             
-            auto start = 33;
+            auto start = 48;
             auto range = 126 - start;
             
             ui number = 0;
@@ -141,7 +141,7 @@ namespace tau
                     number = 0;
                 }
             }
-                            
+            
             return data;
         }
         

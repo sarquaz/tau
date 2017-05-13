@@ -244,6 +244,8 @@ namespace tau
                 ENTER();
                 
                 ul hash = box::h::hash< Key >()( key );    
+                
+                TRACE( "hash %u", hash );
                 auto& data = box::map::Map< Data< Key, Value >, Size, Allocator >::operator[]( hash );
                 data.key = key;
                 return data.value;
@@ -272,7 +274,15 @@ namespace tau
             {
                 ENTER();
                 
-                return box::map::Map< Data< Key, Value >, Size, Allocator >::remove( box::h::hash< Key >()( key ) );
+                auto hash = box::h::hash< Key >()( key );
+                TRACE( "hash %u", hash );
+                
+                return box::map::Map< Data< Key, Value >, Size, Allocator >::remove( hash );
+            }
+            
+            bool empty() const
+            {
+                return this->length() == 0;
             }
             
             template < class Callback > void keys( Callback callback )

@@ -20,8 +20,6 @@ private:
     {
         assert( true );
     }
-    
-    
 };
 
 

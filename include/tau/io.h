@@ -414,6 +414,11 @@ namespace tau
                 mem::mem().detype< Net >( this );
             }
             
+            bool remote() const
+            {
+                return m_remote;
+            }
+            
         private:
             
             void start();
@@ -434,11 +439,12 @@ namespace tau
         private:
             Data m_host; 
             ui m_port;
-            bool m_server;
             fs::Link::Type m_type;
             fs::Link m_link;
-            bool m_connected;
             Data m_write;
+            bool m_connected;
+            bool m_server;
+            bool m_remote;
         };
         
         inline Net& net( Result& result, const Options& options, const Data& host = Data() )
