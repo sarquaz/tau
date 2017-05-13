@@ -272,11 +272,7 @@ namespace tau
             
             bool remove( const Key& key )
             {
-                ENTER();
-                
                 auto hash = box::h::hash< Key >()( key );
-                TRACE( "hash %u", hash );
-                
                 return box::map::Map< Data< Key, Value >, Size, Allocator >::remove( hash );
             }
             
