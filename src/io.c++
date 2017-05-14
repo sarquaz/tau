@@ -205,14 +205,24 @@ namespace tau
                 
                 if ( !m_server ) 
                 {
-                    if ( !m_connected )
+                    if ( !m_connected  )
                     {
-                        m_link.connect();        
+                        if ( m_type != fs::Link::Udp )
+                        {
+                            m_link.connect();            
+                        }
+                        else
+                        {
+                            m_connected = true;
+                        }
                     }
                 }
                 else
                 {
                     m_link.listen();
+                    auto request = mem::mem().type< ev::Request >( *this );
+                    result().event( Listen, *request );
+                    request->deref();
                 }    
             }
             catch ( tau::Error* e )
@@ -233,10 +243,13 @@ namespace tau
             request->file() = &m_link;
             this->request( request );
             
-            //
-            //  check for writeability
-            //
-            write();
+            if ( !m_server && !m_remote )
+            {
+                //
+                //  check for writeability
+                //
+                write();
+            }
         }
         
         void Net::on( ev::Request& request )
@@ -261,7 +274,7 @@ namespace tau
             if ( request.event().type == ev::Loop::Event::Read )
             {
                 auto event = Read;
-                if ( !m_server )
+                if ( !m_server || m_type == fs::Link::Udp )
                 {
                     if ( !m_link.read( request.data() ) )
                     {
@@ -272,11 +285,14 @@ namespace tau
                 }
                 else
                 {
-                    auto accept = m_link.accept();
-                    TRACE( "accepted type %d", accept.address.type );
-                    auto net = mem::mem().type< Net >( result(), accept );
-                    request.custom( &accept.address ); 
-                    result().event( Accept, request );
+                    if ( m_type != fs::Link::Udp )
+                    {
+                        auto accept = m_link.accept();
+                        TRACE( "accepted type %d", accept.address.type );
+                        auto net = mem::mem().type< Net >( result(), accept );
+                        request.custom( &accept.address ); 
+                        result().event( Accept, request );
+                    }
                 }
                 
                 
@@ -300,7 +316,7 @@ namespace tau
                     result().event( Close, request );
                 }
                 
-                TRACE( "connected %d write length %u", m_connected, m_write.length() );
+                TRACE( "request 0x%x connected %d write length %u request data length %u", &request, m_connected, m_write.length(), request.data().length() );
                 
                 if ( !m_write.empty() )
                 {
@@ -324,6 +340,7 @@ namespace tau
             
             if ( !m_connected && !what.empty() )
             {
+                TRACE( "adding to write", "" );
                 m_write.add( what );
                 return *this;
             }
@@ -334,6 +351,8 @@ namespace tau
             {
                 request->data() = what;
             }
+            
+            TRACE( "request 0x%x data length %u", &request, request->data().length() );
         
             
             request->event().type = ev::Loop::Event::Write;

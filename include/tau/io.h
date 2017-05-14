@@ -373,7 +373,8 @@ namespace tau
                 Accept,
                 Close,
                 Read,
-                Write
+                Write,
+                Listen
             };
             
             Net( Result& result, const Options& options, const Data& host );

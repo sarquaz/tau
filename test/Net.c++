@@ -18,21 +18,11 @@ private:
     virtual void run( )
     {
         ENTER();
-        
-        li::List< io::Net* > servers;
-        
+
         for ( auto i = 0; i < m_count; i++ )
         {
-            servers.append( &server( m_type ) );
-        }
-        
-        servers.all( [ & ] ( io::Net* net ) 
-        {
-            auto s = Test::string();
-            
-            TRACE( "adding string %s", s.c() );
-            client( *net ).write( s ); 
-        } );    
+            server( m_type );
+        }        
     }
     
     virtual void event( ui event, ev::Request& request )
@@ -57,6 +47,10 @@ private:
                 wrote( request );
                 break;                
                 
+          case io::Net::Listen:
+               listened( request );
+               break;                    
+        
             
             case io::Net::Error:
                 out( request.error()->message.c() );
@@ -98,7 +92,7 @@ private:
         out( "%s", string.c() );
         
         strings().remove( string );
-        net.deref();
+        //net.deref();
         
     }
     
@@ -107,6 +101,17 @@ private:
         ENTER();
         //auto& net = dynamic_cast< io::Net& >( grain );
         
+    }
+    
+    void listened( ev::Request& request )
+    {
+        ENTER();
+        auto& server = dynamic_cast< io::Net& >( request.parent() );
+        
+        auto s = Test::string();
+        
+        TRACE( "adding string %s", s.c() );
+        client( server ).write( s ); 
     }
         
     io::Net& server( fs::Link::Type type = fs::Link::Tcp )
@@ -151,7 +156,7 @@ private:
 
         auto& client = io::net( *this, options, host );
         
-    //    add( client );
+        add( client );
         return client;
     }
         
@@ -169,20 +174,15 @@ private:
         assert( strings().empty() );
     }
     
-    virtual void started( )
-    {
-        
-    }
-    
 private:
     ui m_count;
-    ui m_tries;
     fs::Link::Type m_type;
+    
 };
 
 int main()
 {   
-    li::cycle< fs::Link::Type >( { fs::Link::Local /*, fs::Link::Udp, fs::Link::Tcp*/ } )( []( fs::Link::Type type )
+    li::cycle< fs::Link::Type >( { fs::Link::Local , fs::Link::Udp , fs::Link::Tcp  } )( []( fs::Link::Type type )
         {
             STRACE( "%d", type );
             new TestNet( type );

@@ -241,11 +241,8 @@ namespace tau
             
             Value& operator[]( const Key& key )
             {
-                ENTER();
-                
                 ul hash = box::h::hash< Key >()( key );    
                 
-                TRACE( "hash %u", hash );
                 auto& data = box::map::Map< Data< Key, Value >, Size, Allocator >::operator[]( hash );
                 data.key = key;
                 return data.value;

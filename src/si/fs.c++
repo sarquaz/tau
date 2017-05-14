@@ -354,8 +354,6 @@ namespace tau
             std::memcpy( *this, source, length );
             
             length = address.length;
-            TRACE( "address host %s", address.host.c() );
-            
             host = address.host;
             family = address.family;
             
@@ -506,12 +504,17 @@ namespace tau
                 Address peer;
                 result = ::recvfrom( fd(), data, length, 0, peer, &peer.length );
                 peer.parse( );
+                TRACE( "read %d bytes", result );
                 ( const_cast< Link* >( this ) )->address() = peer;
             }
             else
             {
                 result = ::recv( fd(), data, length, 0 );
             }
+            
+            data.length( result );
+            
+            return si::check( result )( "receive" );
 
             return result;
         }
