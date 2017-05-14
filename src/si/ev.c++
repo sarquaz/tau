@@ -176,6 +176,12 @@ namespace tau
             ENTER();
             m_event.deref();
             m_parent.remove( *this );
+            
+            if ( m_error )
+            {
+                m_error->deref();
+            }
+            
             thread().deref();
         }
 

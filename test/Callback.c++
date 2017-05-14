@@ -133,7 +133,7 @@ template< class Callback > void test( Callback callback )
 
 int main()
 {
-    Thread thread;
+    0Thread thread;
     thread.assign( [](){ STRACE( "callback", "" ); } );
     thread.start();
     thread.join();

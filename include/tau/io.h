@@ -51,6 +51,11 @@ namespace tau
         class Event: public ev::Request::Parent
         {
             public:
+                enum
+                {
+                    Error = __LINE__
+                };
+                
                 Event( Result& result )
                     : m_result( result )
                 {
@@ -82,10 +87,20 @@ namespace tau
                 }
                 
                 virtual void callback( ev::Request& request );
-
-                virtual void on( ev::Request&  )
+                
+                virtual void on( ev::Request& request )
                 {
-                    
+                    try
+                    {
+                        perform( request );
+                    }
+                    catch ( tau::Error* e )
+                    {
+                        request.error( e );
+                        result().event( Error, request );
+                        request.deref();
+                    }
+                        
                 }
                 
                 virtual void after(  )
@@ -96,6 +111,12 @@ namespace tau
                 Result& result( ) 
                 {
                     return m_result;
+                }
+                
+            private:
+                virtual void perform( ev::Request& request ) 
+                {
+                    
                 }
                 
             private:
@@ -211,7 +232,7 @@ namespace tau
             
             Process& write( const Data& data )
             {
-                event( m_process.stream( out::In ), &data );
+                event( m_process.stream( sys::In ), &data );
                 return *this;
             }
                         
@@ -220,7 +241,7 @@ namespace tau
                 mem::mem().detype< Process >( this );            
             }
             
-            virtual void on( ev::Request& request );
+            virtual void perform( ev::Request& );
                 
             
         private:
@@ -423,19 +444,16 @@ namespace tau
         private:
             
             void start();
-            virtual void on( ev::Request& );
             
-            void error( ev::Request& request )
-            {
-                ENTER();
-                result().event( Error, request );    
-            }            
+            virtual void perform( ev::Request& );
             
-            void perform( ev::Request& );
+            ev::Request& event( ui what, tau::Error* error = NULL );
+            
             
         public:            
             Net& write( const Data& what = Data() );
-            Net& close();
+            
+            
                         
         private:
             Data m_host; 

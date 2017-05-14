@@ -129,7 +129,6 @@ namespace tau
         
         unsigned long File::write( const Data& data, ul offset ) const
         {
-            ENTER();
             if ( offset )
             {
                 seek( offset );
@@ -137,14 +136,10 @@ namespace tau
             
             auto wrote = si::check( ::write( fd( ), data, data.length( ) ) )( "write" );
             
-            TRACE( "wrote %u bytes", wrote );
-            
             return wrote;
         }
         unsigned long File::read( Data& data, ul length, ul offset ) const
         {
-            ENTER( );
-            
             if ( offset )
             {
                 seek( offset );
@@ -158,7 +153,7 @@ namespace tau
             data.space( length );
             auto read = si::check( ::read( fd( ), data, length ) )( "read" );
             data.length( read );
-            TRACE( "read %u bytes", read );
+            
             return read;
         }   
         
@@ -485,7 +480,6 @@ namespace tau
         unsigned long Link::read( Data& data, ul length, ul offset ) const
         {
             ENTER();
-            
             
             TRACE( "local: %d, address type %u", local(), m_address.type );
             

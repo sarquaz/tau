@@ -1,16 +1,16 @@
 #include "Test.h"
 
-class TestNet: public Test
+class Net: public Test
 {
 public:
-    TestNet( fs::Link::Type type )
-    : Test( 1 ), m_count( 1 ), m_type( type )
+    Net( fs::Link::Type type )
+    : Test( 2 ), m_count( 2 ), m_type( type )
     {
         ENTER();
         start();
     }
     
-    virtual ~TestNet()
+    virtual ~Net()
     {
     }
     
@@ -185,7 +185,7 @@ int main()
     li::cycle< fs::Link::Type >( { fs::Link::Local , fs::Link::Udp , fs::Link::Tcp  } )( []( fs::Link::Type type )
         {
             STRACE( "%d", type );
-            new TestNet( type );
+            new Net( type );
         } );
 
     

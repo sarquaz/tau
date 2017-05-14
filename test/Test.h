@@ -7,6 +7,7 @@
 using namespace tau;
 
 typedef li::Set< Data > Strings;
+typedef li::Map< Data, bool > Checks;
 
 class Test: public io::Result
 {
@@ -103,10 +104,10 @@ public:
             
     static void out( const char* format, ... )
     {
-        data::Data data;
-        PRINT( data, format );
+        Data data;
+        _DATA_PRINT( data, format );
         data.add( "\n" );
-        out::out( data );
+        sys::out( data );
     }
     
     ui tries() const
@@ -129,7 +130,7 @@ protected:
         m_events.append( &event );
     }
     
-    data::Data string( )
+    Data string( )
     {
         Data d;
         d.add( Data::get() );
@@ -142,6 +143,11 @@ protected:
     {
         return m_strings;
     }
+    
+    Checks& checks()
+    {
+        return m_checks;        
+    }    
                     
     virtual void terminated()
     {
@@ -242,13 +248,10 @@ private:
     li::List< io::Event* > m_events;
     Run* m_run;
     Time m_attempt;
-    li::Set< Data > m_strings;
-};
+    Strings m_strings;
+    Checks m_checks;
     
-// #define TEST() \
-//     Test* Test::s_instance = NULL; \
-//     //__thread Test::State* Test::s_state = NULL;
-    
+};        
     
 
 #endif	

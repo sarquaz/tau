@@ -21,14 +21,14 @@ namespace tau
             m_process.start( m_command );            
             m_process.streams([ & ] ( os::Process::Stream& s )
                 {
-                    if ( s.type() != out::In )
+                    if ( s.type() != sys::In )
                     {
                         event( s );
                     }
                 } );
         }
                         
-        void Process::on( ev::Request& request )
+        void Process::perform( ev::Request& request )
         {
             ENTER();
             
@@ -37,35 +37,21 @@ namespace tau
             
             if ( request.event().type == ev::Loop::Event::Read )
             {
-                try
-                {
-                    stream.read( request.data() );
-                }
-                catch ( tau::Error* e )
-                {
-                    request.error( e );
-                }
+                stream.read( request.data() );
                 
-                if ( stream.type() == out::Err )
+                if ( stream.type() == sys::Err )
                 {
                     event = Error;
                 }
             }
             else
             {
-                try
-                {
-                    stream.write( request.data() );    
-                }
-                catch ( tau::Error* e )
-                {
-                    request.error( e );
-                }
-                
+                stream.write( request.data() );    
                 event = Write;
             }
             
             result().event( event, request );
+            
             if ( event == Write )
             {
                 request.deref();
@@ -75,7 +61,7 @@ namespace tau
         void Process::event( os::Process::Stream& stream, const Data* data )
         {
             auto request = mem::mem().type< ev::Request >( *this );
-            request->event().type = ( stream.type() != out::In ) ? ev::Loop::Event::Read : ev::Loop::Event::Write;
+            request->event().type = ( stream.type() != sys::In ) ? ev::Loop::Event::Read : ev::Loop::Event::Write;
             request->event().fd = stream.fd();
             request->file() = &stream;
             
@@ -111,7 +97,7 @@ namespace tau
                 }
                 
             }
-            catch ( Error* e )
+            catch ( tau::Error* e )
             {
                 request().error( e );
             }
@@ -154,7 +140,7 @@ namespace tau
             }
             else
             {
-                m_net.error( request );
+                m_net.result().event( Error, request );    
             }
         }
         
@@ -220,28 +206,24 @@ namespace tau
                 else
                 {
                     m_link.listen();
-                    auto request = mem::mem().type< ev::Request >( *this );
-                    result().event( Listen, *request );
-                    request->deref();
+                    auto& request = event( Listen );
+                    result().event( Listen, request );
+                    request.deref();
                 }    
             }
             catch ( tau::Error* e )
             {
-                auto request = mem::mem().type< ev::Request >( *this );
-                request->error( e );
-                result().event( Error, *request );
-                request->deref();
+                auto& request = event( Error, e );
+                result().event( Error, request );
+                request.deref();
                 return;
             }
                         
             //
             //  check for readability
             //  
-            auto request = mem::mem().type< ev::Request >( *this );
-            request->event().type = ev::Loop::Event::Read;
-            request->event().fd = m_link.fd();
-            request->file() = &m_link;
-            this->request( request );
+            
+            request( &event( Read ) );
             
             if ( !m_server && !m_remote )
             {
@@ -252,25 +234,30 @@ namespace tau
             }
         }
         
-        void Net::on( ev::Request& request )
+        ev::Request& Net::event( ui what, tau::Error* error )
+        {
+            auto request = mem::mem().type< ev::Request >( *this );
+            
+            if ( what == Read || what == Write )
+            {
+                request->event().type = what == Read ? ev::Loop::Event::Read : ev::Loop::Event::Write;
+                request->event().fd = m_link.fd();
+                request->file() = &m_link;
+            }
+            
+            if ( error )
+            {
+                request->error( error );
+            }
+             
+            return *request;    
+        }
+                
+        void Net::perform( ev::Request& request )
         {
             ENTER();
             TRACE( "server: %d, remote %d connected: %d event %s", m_server, m_remote, m_connected, request.event().type == ev::Loop::Event::Read ? "read" : "write" );
             
-            try
-            {
-                perform( request );
-            }
-            catch ( tau::Error* e )
-            {
-                request.error( e );
-                result().event( Error, request );
-            }
-            
-        }
-        
-        void Net::perform( ev::Request& request )
-        {
             if ( request.event().type == ev::Loop::Event::Read )
             {
                 auto event = Read;
@@ -295,7 +282,6 @@ namespace tau
                     }
                 }
                 
-                
                 if ( event == Close )
                 {
                     request.deref();
@@ -307,13 +293,6 @@ namespace tau
                 if ( !m_connected )
                 {
                     m_connected = true;
-                }
-                
-                if ( request.custom() )
-                {
-                    TRACE( "closing connection", "" );
-                    m_link.shutdown();
-                    result().event( Close, request );
                 }
                 
                 TRACE( "request 0x%x connected %d write length %u request data length %u", &request, m_connected, m_write.length(), request.data().length() );
@@ -345,39 +324,14 @@ namespace tau
                 return *this;
             }
 
-            auto request = mem::mem().type< ev::Request >( *this );
+            auto& request = event( Write );
             
             if ( !what.empty() )
             {
-                request->data() = what;
-            }
-            
-            TRACE( "request 0x%x data length %u", &request, request->data().length() );
-        
-            
-            request->event().type = ev::Loop::Event::Write;
-            request->event().fd = m_link.fd();
-            
-            this->request( request );
-            return *this;
-        }
-        
-        Net& Net::close( )
-        {
-            ENTER();
-            
-            if ( !m_connected || m_server )
-            {
-                return *this;
+                request.data() = what;
             }
 
-            auto request = mem::mem().type< ev::Request >( *this );
-            
-            request->event().type = ev::Loop::Event::Write;
-            request->event().fd = m_link.fd();
-            request->custom( ( void* ) Close  );
-            
-            this->request( request );
+            this->request( &request );
             return *this;
         }
     }

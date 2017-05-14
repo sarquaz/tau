@@ -135,7 +135,7 @@ namespace tau
         
         ul Thread::id( )
         {
-            return out::id();
+            return sys::id();
         }
 
         Process::Process( )
@@ -240,17 +240,17 @@ namespace tau
             auto fd = 0;
             switch ( m_type )
             {
-                case out::In:
+                case sys::In:
                     fd = writeFd( child );
                     break;
 
-                case out::Out:
-                case out::Err:
+                case sys::Out:
+                case sys::Err:
                     fd = readFd( child );
                     break;
             }
 
-            if ( m_type == out::In )
+            if ( m_type == sys::In )
             {
                 ::close( readFd( child ) );
             }
@@ -258,7 +258,7 @@ namespace tau
             {
                 ::dup2( fd, m_type );
                 
-                if ( m_type == out::In )
+                if ( m_type == sys::In )
                 {
                     ::close( fd );
                 }
@@ -351,7 +351,7 @@ namespace tau
                 case SIGSEGV:
                 case SIGABRT:
                 
-                    out::backtrace( 15 );
+                    sys::backtrace( 15 );
                     break;
                     
                  

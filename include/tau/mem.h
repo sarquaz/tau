@@ -1,8 +1,14 @@
 #ifndef _TAU_MEM_H_
 #define _TAU_MEM_H_
 
+#include "box.h"
+
+
 namespace tau
 {
+    //
+    //  memory management routines
+    //
     namespace mem
     {
         struct Allocator

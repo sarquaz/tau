@@ -1,22 +1,25 @@
 #include "Test.h"
 
-using namespace tau;
-using namespace tau::io;
-
-TEST();
-
-class TestProcess: public Test
+class Process: public Test
 {
 public:
-    TestProcess()
-    : m_test( data::Data::get( 10 ) )
+    Process()
+    : m_test( Data::get( 10 ) )
     {
-        setInterval( Time( 500 ) );
+        
     }
     
-    virtual ~TestProcess()
+    virtual ~Process()
     {
             
+    }
+    
+    virtual void event( ui event, ev::Request& request )
+    {
+        switch ( event )
+        {
+            case io::Proces::Read
+        }
     }
     
     virtual void onWrite( Grain& grain )
@@ -137,10 +140,10 @@ public:
     };
     
 private:
-    data::Data m_test;
+    Data m_test;
 };
 
 int main()
 {
-    TestProcess()();
+    new Process();
 }

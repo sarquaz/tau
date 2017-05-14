@@ -3,9 +3,9 @@
 
 namespace tau
 {
-    void Trace::handler( log::Level level, data::Data& data )
+    void Trace::handler( log::Level level, Data& data )
     {
-        data( "%s [%u] %u", TAU_NAME, out::id( ), time().ms() );
+        data( "%s [%u] %u", TAU_NAME, sys::id( ), time().ms() );
     }
             
     namespace log
@@ -30,7 +30,7 @@ namespace tau
             }
         }
         
-        void Trace::handle( Level level, data::Data& data )
+        void Trace::handle( Level level, Data& data )
         {
             if ( m_handler )
             {
@@ -53,14 +53,14 @@ namespace tau
         
         void Trace::operator()( Level level, const char *format, ... )
         {
-            data::Data data;
-            auto file = out::Stream::Out;
+            Data data;
+            auto file = sys::Stream::Out;
             
             handle( level, data );
             
             if ( level == Error )
             {
-                file = out::Stream::Err;
+                file = sys::Stream::Err;
             }
             else if ( level == Info )
             {
@@ -82,11 +82,10 @@ namespace tau
                 data.add( ": " );
             }
                         
-            PRINT( data, format );
+            _DATA_PRINT( data, format );
             data.add( "\n" );
             
-            out::out( data, file );
-            data.clear();
+            sys::out( data, file );
         }
     }
 }

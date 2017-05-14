@@ -27,7 +27,7 @@ typedef unsigned long ul;
 typedef unsigned char uchar;
 
 
-#include "sys.h"
+#include "unix.h"
 
 #ifdef __MACH__
     #pragma clang diagnostic ignored "-Wdeprecated-declarations"

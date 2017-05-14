@@ -1,8 +1,6 @@
 #ifndef _TAU_SI_H
 #define _TAU_SI_H
 
-#include "types.h"
-
 namespace tau
 {        
     namespace si
@@ -23,9 +21,6 @@ namespace tau
 
             ul operator()( const char* format, ... )
             {
-                TRACE( "ret %d errno %d", result, errno );
-                
-
                 if ( errno == skip || result != -1 )
                 {
                     return result;
@@ -34,17 +29,15 @@ namespace tau
                 
 
                 auto error = mem::mem().type< Error >();
-                EPRINT( error->message, format );
+                _DATA_EPRINT( error->message, format );
                 error->message( ", errno %d", errno );
-                TRACE( "%s", error->message.c() );
+                sys::out( error->message.c() );
                 
                 
                 throw error;
             }
         };
     }
-         
-
 }
 
 #include "si/fs.h"

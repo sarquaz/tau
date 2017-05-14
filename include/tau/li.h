@@ -1,7 +1,6 @@
 #ifndef _TAU_LI_H_
 #define _TAU_LI_H_
 
-#include "../../src/trace.h"
 #include "mem.h"
 
 namespace tau
