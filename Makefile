@@ -49,8 +49,9 @@ $(TARGET): $(OBJECTS)
 ifeq ($(BUILD),shared)
 		mkdir -p bin && $(CXX) -shared  -fPIC -o bin/$@ $(OBJECTS)    $(PLATFORM_LDFLAGS) 
 else
-		$(AR) libtau.a $(OBJECTS)
-		mkdir -p bin && $(RANLIB) bin/$@
+		mkdir -p bin
+		$(AR) bin/libtau.a $(OBJECTS)
+		$(RANLIB) bin/$@
 endif
 
 test: #rebuild
