@@ -6,7 +6,7 @@ tau is working under OS X, linux support, extensive testing and documentation is
 
 Building
 
-`make` builds the library (edit `config.mk`) to select between static and shared builds
+`make` builds the library (edit `config.mk` to select between static and shared builds)
 		
 `make test` runs test cases		
 
