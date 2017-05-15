@@ -238,7 +238,7 @@ namespace tau
                 return *this;
             }
             
-            Process& read();
+            
                         
             virtual void destroy()
             {
@@ -249,6 +249,7 @@ namespace tau
                 
             
         private:
+            Process& read();
             void event( os::Process::Stream* stream = NULL, const Data* data = NULL );            
 
         private:
