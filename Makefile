@@ -24,7 +24,7 @@ AR = ar rcu
 RANLIB= ranlib
 
 CPPDEPS = -MT$@ -MF`echo $@ | sed -e 's,\.o$$,.d,'` -MD -MP
-TAU_CXXFLAGS =  -fPIC -DPIC -std=c++0x    -Iinclude/tau $(PLATFORM_CPPFLAGS) $(CFLAGS) $(CPPFLAGS) 
+TAU_CXXFLAGS =  -fPIC -DPIC -std=c++11    -Iinclude/tau $(PLATFORM_CPPFLAGS) $(CFLAGS) $(CPPFLAGS) 
 	
 SOURCES = $(wildcard src/*.c++ wildcard src/si/*.c++)
 #SOURCES =  src/types.c++ src/si.++ src/log.c++ src/si

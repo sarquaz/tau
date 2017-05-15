@@ -1,6 +1,8 @@
 #ifndef _TAU_SI_FS_H_
 #define _TAU_SI_FS_H_
 
+#include "../../src/trace.h"
+
 namespace tau
 {
     namespace fs
@@ -98,8 +100,8 @@ namespace tau
             
             unsigned int available( ) const;
             
-            virtual unsigned long write( const Data& data, ul offset = 0 ) const;            
-            virtual unsigned long read( Data& data, ul length = 0, ul offset = 0 ) const;
+            virtual unsigned long write( const Data& data, long offset = -1 ) const;            
+            virtual unsigned long read( Data& data, ul length = 0, long offset = -1 ) const;
             
             File( const File& file )
             {
@@ -123,7 +125,7 @@ namespace tau
             
                         
         private:            
-            void seek( ul offset ) const;
+            virtual void seek( long ) const;
             
         private:
             Handle m_fd;
@@ -253,6 +255,10 @@ namespace tau
             
             void bind( );
             void shutdown();
+            virtual void seek( long ) const
+            {
+                
+            }
 
         private:
             Type type( ) const

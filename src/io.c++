@@ -108,6 +108,8 @@ namespace tau
                         auto info = fs::info( file.path() );
                         m_length = info.size();    
                     }
+                    
+                    TRACE( "need to read %u bytes at offset %u", m_length, m_offset );
                 
                     file.read( request().data(), m_length, m_offset );    
                 }

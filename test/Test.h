@@ -153,6 +153,7 @@ protected:
     {
         ENTER();
         
+        cleanup();
         deref();
     }
     
@@ -173,7 +174,19 @@ protected:
                 
 private:
     
-    virtual void check() = 0;
+    virtual void check( )
+    {
+        ENTER();
+    
+        checks().entries( [ & ] ( const Data& data, bool value ) 
+            {
+                if ( !value )
+                {
+                    out( "check %s failed", data.c() );
+                    assert( false );
+                }
+            } );
+    }
     
     
     void attempt()
@@ -233,7 +246,7 @@ private:
         
         virtual void terminated()
         {
-            m_test.terminated();
+            ::exit( 1 );
         }
         
     private:

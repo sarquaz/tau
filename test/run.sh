@@ -1,11 +1,11 @@
 #!/bin/bash
 
 shopt -s nullglob
-for f in test/*
+for f in test/bin/*
 do
     if [[ -x "$f" ]]
     then
-        if [ "$f" != "test/run.sh" ]
+        if [ "$f" != "test/bin/libtau.so" ]
         then
             if [[ -f "$f" ]]
             then

@@ -3,11 +3,11 @@ CPPFLAGS =  -I../include/tau  -g -DLOG -std=c++11
 LDFLAGS = -L../bin -ltau 
 
 SOURCES = $(wildcard *.c++)
-#EXECUTABLES = $(SOURCES:.c++)
+EXECUTABLES = $(SOURCES:.c++=)
 
-EXECUTABLES = Process        
+#EXECUTABLES = Net        
 
-all:  tau $(EXECUTABLES)  #run
+all:  tau $(EXECUTABLES)  run
 
 clean:
 	rm -rf *.o
@@ -22,9 +22,7 @@ tau:
          	
 run:
 
-	cp ../bin/libtau.so bin
-#
-#              # && cd .. && test/run.sh
+	cp ../bin/libtau.so bin && cd .. && test/run.sh
 
 		
 .PHONY: all clean 

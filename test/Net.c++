@@ -53,6 +53,7 @@ private:
         
             
             case io::Net::Error:
+            case io::Event::Error:            
                 out( request.error()->message.c() );
                 assert( false );
                 break;                    
@@ -182,7 +183,7 @@ private:
 
 int main()
 {   
-    li::cycle< fs::Link::Type >( { fs::Link::Local , fs::Link::Udp , fs::Link::Tcp  } )( []( fs::Link::Type type )
+    li::cycle< fs::Link::Type >( { fs::Link::Local, fs::Link::Udp , fs::Link::Tcp   } )( []( fs::Link::Type type )
         {
             STRACE( "%d", type );
             new Net( type );

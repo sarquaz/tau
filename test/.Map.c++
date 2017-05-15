@@ -229,7 +229,7 @@ int main( )
                 
                 if ( event == io::Net::Read )
                 {
-                        printf( "%s", request.data().c() );
+                    printf( "%s", request.data().c() );
                 }
                 
                 if ( event == io::Net::Accept )

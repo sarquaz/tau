@@ -25,8 +25,8 @@ private:
 
 int main()
 {
-    auto status = ( new General() )->status();
-    return status;
+    new General();
+    return 0;
 }
 
 

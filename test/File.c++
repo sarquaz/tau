@@ -1,112 +1,99 @@
 #include "Test.h"
 
-TEST();
-
-class TestFile: public Test
+class File: public Test
 {
 public:
-    TestFile()    
-    : m_name( data::Data::get() )
+    File()    
+    : m_name( Data::get() )
     {
-        setInterval( Time( 10 ) );
-        Test::handler( File::Read, ( Test::Handler ) &TestFile::onRead );
+        start();    
     }
     
-    virtual ~TestFile()
+    virtual ~File()
     {
             
+    }
+    
+    virtual void event( ui event, ev::Request& request )
+    {
+        switch ( event )
+        {
+            case io::File::Read:
+                read( request );
+                break;
+
+            case io::File::Write:
+                wrote( request );
+                break;
+                
+            case io::Event::Error:            
+                out( request.error()->message.c() );
+                assert( false );
+                break;                    
+        }
     }
     
 private:
-    
-    
-    virtual void onRead( Grain& grain )
+    virtual void read( ev::Request& request )
     {
         ENTER();
         
-        auto& file = dynamic_cast< File& >( grain );
+        auto& read = request.data();
         
-        auto& read = file.in().data();
-        auto& data = dynamic_cast< Data& >( Test::data( file ) );
+        checks()[ "read" ] = m_write == read;
         
-        assert( read.find( data.first.data() ) > -1 );
-        assert( read.find( data.second.data(), data.first.data().length() ) > -1 );
-        
-        Test::set( "read" );
-        
+        read.add( '\0' );
         out( read );
-        out( "\n" );        
+        out( "\n" );
+        
+        //
+        //  close file
+        //  
+        auto file = dynamic_cast< io::File* >( request.parent().parent() );
+        file->deref();        
     }
     
-    virtual void onWrite( Grain& grain )
+    virtual void wrote( ev::Request& request )
     {
         ENTER();
-        auto& file = dynamic_cast< File& >( grain );
-
-//        auto& nfile = Test::file( file.name() );
-//        Test::assign( nfile, Test::data( file ) );
-//        nfile.read();
+        auto file = dynamic_cast< io::File* >( request.parent().parent() );
+        file->read();
         
-        Test::set( "write" );
+        checks()[ "write" ] = true;
     }
         
-    struct Data: Test::Data
-    {
-        Till& first;
-        Till& second;
-        
-        Data()
-        : first( Till::get() ), second( Till::get() )
-        {
-            
-        }
-        
-        ~Data()
-        {
-            first.deref();
-            second.deref();
-        }
-        
-    };
-    
     virtual void run()
     {
         ENTER();
 
-        auto& file = Test::file( m_name );
-
-        auto& data = *new Data( );
-
-        data.first.add( data::Data::get( 100 ) );
-        file.out( ).add( data.first );
-        
-        data.second.add( data::Data::get( 100 ) );
-        file.out( ).add( data.second );
-
-        Test::assign( file, data );
-        
-            
-    }
-    
-    
-    virtual void si::check( )
-    {
-        ENTER();
-        Test::si::check( "write" );
+        m_name.add( ".test" );
+        //
+        //  open file
+        //
+        auto& file = io::file( *this, m_name );
+        //
+        //  get test  string
+        //
+        m_write = Data::get( 100 );
+        //
+        //  write to file
+        //
+        file.write( m_write );
     }
     
     virtual void cleanup()
     {
         ENTER();
-        File::remove( m_name );
+        fs::File::remove( m_name );
         Test::cleanup();
     }
     
 private:
-    data::Data m_name;
+    Data m_name;
+    Data m_write;
 };
 
 int main()
 {
-    TestFile()();
+    new File();
 }

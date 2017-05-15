@@ -102,6 +102,7 @@ namespace tau
             {
                 flags |= O_CREAT;
                 mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+                STRACE( "will create new file", "" );
             }
             else
             {
@@ -127,24 +128,18 @@ namespace tau
             return available;
         }
         
-        unsigned long File::write( const Data& data, ul offset ) const
+        unsigned long File::write( const Data& data, long offset ) const
         {
-            if ( offset )
-            {
-                seek( offset );
-            }
-            
+            seek( offset );
             auto wrote = si::check( ::write( fd( ), data, data.length( ) ) )( "write" );
             TRACE( "wrote %d bytes", wrote );
             
             return wrote;
         }
-        unsigned long File::read( Data& data, ul length, ul offset ) const
+        unsigned long File::read( Data& data, ul length, long offset ) const
         {
-            if ( offset )
-            {
-                seek( offset );
-            }
+            seek( offset );
+            
             
             if ( !length ) 
             {
@@ -185,9 +180,14 @@ namespace tau
             }
         }
         
-        void File::seek( ul offset ) const
+        void File::seek( long offset ) const
         {
-            si::check( ::lseek( fd( ), offset, SEEK_SET ) )( "seek" );
+            ENTER()
+            if ( offset != -1 )
+            {
+                si::check( ::lseek( fd( ), offset, SEEK_SET ) )( "seek" );    
+            }    
+            
         }
         
         Link::Type Link::type( const Data& key )

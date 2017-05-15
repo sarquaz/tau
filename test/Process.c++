@@ -105,23 +105,7 @@ public:
         
         io::process( *this, "swdfgsg" );
     }
-    
-    
-    virtual void check( )
-    {
-        ENTER();
-    
-        checks().entries( [ & ] ( const Data& data, bool value ) 
-            {
-                if ( !value )
-                {
-                    out( "check %s failed", data.c() );
-                    assert( false );
-                }
-            } );
-    }
-
-    
+        
 private:
     Data m_test;
 };
