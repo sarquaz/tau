@@ -205,17 +205,15 @@ namespace tau
             }
         }
         
-        int Process::code()
+        long Process::code()
         {
             int code = 0;
             int result = ::waitpid( pid( ), &code, WNOHANG );
             
             if ( result != m_pid )
             {
-                throw Error();
+                throw mem::mem().type< Error >();
             }
-            
-            TRACE( "%d", result );
             
             return code;
         }
@@ -227,6 +225,8 @@ namespace tau
 
         void Process::Stream::close( )
         {
+            ENTER();
+            
             if ( fd() )
             {
                 ::close( readFd( ) );

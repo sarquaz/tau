@@ -215,6 +215,7 @@ namespace tau
             {
                 Read = __LINE__,
                 Write,
+                Exit,
                 Error
             };
                         
@@ -222,7 +223,8 @@ namespace tau
             
             virtual ~Process()
             {
-                    ENTER();
+                ENTER();
+                ev::Request::Parent::clear();
             }
             
             const os::Process& process() const
@@ -232,9 +234,11 @@ namespace tau
             
             Process& write( const Data& data )
             {
-                event( m_process.stream( sys::In ), &data );
+                event( &m_process.stream( sys::In ), &data );
                 return *this;
             }
+            
+            Process& read();
                         
             virtual void destroy()
             {
@@ -245,7 +249,7 @@ namespace tau
                 
             
         private:
-            void event( os::Process::Stream& stream, const Data* data = NULL );            
+            void event( os::Process::Stream* stream = NULL, const Data* data = NULL );            
 
         private:
             os::Process m_process;
@@ -453,8 +457,6 @@ namespace tau
         public:            
             Net& write( const Data& what = Data() );
             
-            
-                        
         private:
             Data m_host; 
             ui m_port;

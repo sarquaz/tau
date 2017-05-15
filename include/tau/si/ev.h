@@ -24,7 +24,8 @@ namespace tau
                     Read,
                     Write,
                     Once,
-                    Stop
+                    Stop,
+                    Process
                 };
                 
                 Handle fd;
@@ -224,13 +225,7 @@ namespace tau
             public:
                 virtual ~Parent()
                 {
-                    m_list.all( [ & ]( Request* request ) 
-                        {
-                            if ( m_set.remove( request ) )
-                            {
-                                request->deref();
-                            }
-                        } );
+                    clear();
                 }
                 
                 virtual void before( Request& request )
@@ -253,6 +248,19 @@ namespace tau
                     : m_parent( parent )
                 {
                     
+                }
+                
+                void clear()
+                {
+                    m_list.all( [ & ]( Request* request ) 
+                        {
+                            if ( m_set.remove( request ) )
+                            {
+                                request->deref();
+                            }
+                        } );
+                        
+                    m_list.clear();    
                 }
                 
             private:

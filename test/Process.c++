@@ -4,9 +4,8 @@ class Process: public Test
 {
 public:
     Process()
-    : m_test( Data::get( 10 ) )
     {
-        
+        start();
     }
     
     virtual ~Process()
@@ -18,126 +17,110 @@ public:
     {
         switch ( event )
         {
-            case io::Proces::Read
-        }
-    }
-    
-    virtual void onWrite( Grain& grain )
-    {
-        ENTER();
-    }
-    
-    virtual void onRead( Grain& grain )
-    {
-        ENTER();
-        
-        auto& process = dynamic_cast< Bot& >( grain );
-        auto& text = process.in().data();
-        
-        out( "%s", ( const char* ) text );
-        
-        try
-        {
-            auto& data = dynamic_cast< Data& >( Test::data( process ) );
-            assert( data.in.data() == process.in().data() );
-            assert( process.in().data().find( data.out.data() )  > -1 );
-            return;
-        }
-        catch ( ... )
-        {
+            case io::Process::Read:
+                read( request );
+                break;
+                
+            case io::Process::Write:
+                wrote( request );
+                break;
+                
+            case io::Process::Exit:
+                exited( request );
+                break;    
+                
+            case io::Event::Error:
+                out( request.error()->message );
+                assert( false );    
             
         }
-        
-       Test::set( "data" );
-       
-        if ( text.length( ) )
-        {
-            Test::set( "string", text.find( m_test ) > -1 );
-        }
-        
-        Test::process( "swdfgsg" );
     }
     
-    virtual void onError( Grain& grain )
-    {
-        auto& process = dynamic_cast< Bot& >( grain );
-        TRACE( "error: %s", ( const char *) process.error().message );
-        Test::set( "error" );
-    }
-   
-    void onEnd( Grain& grain )
+    virtual void wrote( ev::Request& request )
     {
         ENTER();
-
-        auto& process = dynamic_cast< Bot& >( grain );
-        try
+        
+        checks()[ "write" ] = true;
+        auto file = request.file();
+        
+        request.deref();
+        file->close();
+    }
+    
+    virtual void read( ev::Request& request )
+    {
+        ENTER();
+        
+        auto& process = dynamic_cast< io::Event& >( request.parent() );
+        auto& text = request.data();
+        
+        
+        text.length( text.length() - 1 );
+        printf( text.c() );
+        
+        auto type = ( long ) request.custom();
+        
+        if ( type == sys::Out )
         {
-            Test::data( process );
+            strings().remove( text );
+            checks()[ "read" ] = strings().empty();    
         }
-        catch ( ... )
+        
+        if ( type == sys::Err)
         {
-            if ( !process.status() )
-            {
-                Test::set( "exit" );
-                event( this )();
-            }
+            checks()[ "error" ] = true;    
         }
-    }   
+            
+        
+        
+        request.deref();
+        
+    }
+    
+    virtual void exited( ev::Request& request )
+    {
+        ENTER();
+        
+        auto& process = dynamic_cast< io::Event& >( request.parent() );
+        
+        checks()[ "exit" ] = true;
+        
+        request.parent().deref();
+        request.deref();
+    }
     
     virtual void run()
     {
         ENTER();
         
-        auto& process = Test::process( "test=`cat`; echo $test" );
-        process.out().add( m_test );
+        checks()[ "write" ] = false;
+        checks()[ "read" ] = false;
+        checks()[ "error" ] = false;
+        checks()[ "exit" ] = false;
+        
+        
+        auto& process = io::process( *this, "test=`cat`; echo $test" );
+        process.write( Test::string() );
+        
+        
+        io::process( *this, "swdfgsg" );
     }
     
-    void map()
-    {
-       ENTER();
-        auto& data = *new Data();
-        data.out.add( data::Data::get() );
-        
-        auto& process = Test::process( "test=`cat`; echo $test" );
-        
-        process.out().add( data.out );
-        data.in.add( process.in() );
-        
-        Test::assign( process, data );
-    }
     
-    virtual void onTimer( Event& timer )
+    virtual void check( )
     {
         ENTER();
-        map();
-        timer.deref();
-    }
     
-    virtual void si::check( )
-    {
-        ENTER();
-        Test::si::check( "data" );
-        Test::si::check( "string" );
-        Test::si::check( "error" );
-        Test::si::check( "exit" );
+        checks().entries( [ & ] ( const Data& data, bool value ) 
+            {
+                if ( !value )
+                {
+                    out( "check %s failed", data.c() );
+                    assert( false );
+                }
+            } );
     }
 
-    struct Data: Test::Data
-    {
-        ev::Till& in;
-        ev::Till& out;
-
-        Data( )
-        : in( Till::get() ), out( Till::get() ) 
-        {
-        }
-
-        ~Data( )
-        {
-            in.deref( );
-            out.deref( );
-        }
-    };
     
 private:
     Data m_test;

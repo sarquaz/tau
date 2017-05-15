@@ -33,6 +33,7 @@ typedef unsigned char uchar;
     #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     #pragma clang diagnostic ignored "-Wformat"
     #pragma clang diagnostic ignored "-Wswitch"
+    #pragma clang diagnostic ignored "-Wint-to-void-pointer-cast"   
 #endif
 
 #define MAX( a, b ) ( a > b ) ? ( a ) : ( b )

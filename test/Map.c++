@@ -219,7 +219,7 @@ int main( )
         
         struct Result: io::Result
         {
-            virtual void operator()( ui event, ev::Request& request )
+            virtual void event( ui event, ev::Request& request )
             {
                 ENTER();
                 
@@ -245,6 +245,17 @@ int main( )
                     
                 }
                 
+                if ( event == io::Process::Read )
+                {
+                    printf( "%s", request.data().c() );
+                }
+                
+                if ( event == io::Process::Exit )
+                {
+                    auto code = ( long ) request.custom();
+                    TRACE( "process exited with code %d", code );
+                }
+                
                // 
                 
                     
@@ -263,13 +274,13 @@ int main( )
             }
         };
     
-    
-
+        void* test = NULL;
+        ul a = ( ul ) test;
        
         tau::start( [ & ] ( )
         {
             auto result = mem::mem().type< Result >();
-            //io::process( *result, "echo 'test'" );
+            io::process( *result, "echo 'test'" );
             //io::timer( *result );
             //io::file( *result, "Makefile" ).read();
 
@@ -283,7 +294,7 @@ int main( )
 //
 //                 } ).deref();
 
-            io::net( *result, {{ options::Port, 8000 }, { options::Server, true }} );
+//            io::net( *result, {{ options::Port, 8000 }, { options::Server, true }} );
             result->deref();
 
                           int a = 100;

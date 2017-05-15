@@ -292,6 +292,14 @@ namespace tau
                         callback( data.value );
                     });
             }
+            
+            template < class Callback > void entries( Callback callback )
+            {
+                this->all( [ & ] ( ul hash, Data< Key, Value >& data ) 
+                    {
+                        callback( data.key, data.value );
+                    });
+            }
         };
 
         template< class Value > class Set : public Map< Value, Value >

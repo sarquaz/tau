@@ -84,7 +84,7 @@ namespace tau
             }
             
             static File open( const Data& );
-            void close( );
+            virtual void close( );
             
             operator Handle() const
             {

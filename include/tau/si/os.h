@@ -111,6 +111,8 @@ namespace tau
                     return m_type;
                 }
                 
+                virtual void close( );
+                
             private:
                 Handle writeFd( bool child = false )
                 {
@@ -124,7 +126,7 @@ namespace tau
 
                 void init( bool child );
                 void open( );
-                void close( );
+                
 
                 Stream( ui type = 0 )
                 : m_type( type )
@@ -142,7 +144,7 @@ namespace tau
                 return m_pid;
             }
 
-            int code( );
+            long code( );
             void signal( int signal ) const;
 
             void kill( ) const

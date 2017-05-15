@@ -35,6 +35,13 @@ namespace tau
 #else
                     return EPOLLIN;
 #endif
+                case Process:
+#ifdef __MACH__
+                    return EVFILT_PROC;
+#else
+                    return EPOLLIN;
+#endif                                        
+                    
                     
                 default:
                     return EVFILT_TIMER;
@@ -105,6 +112,10 @@ namespace tau
                     TRACE( "oneshot event", "" );
                     act |= EV_ONESHOT;
                 }
+                else if ( event.type == Event::Process )
+                {
+                    flags = NOTE_EXIT;
+                }
                 
                 TRACE( "setting time value %d", time );
             }
@@ -112,11 +123,13 @@ namespace tau
             EV_SET( &handle, event.fd, event.filter( ), act, flags, time, &event );
             try
             {
-                si::check( ::kevent( m_handle, &handle, 1, NULL, 0, NULL ) )( "kevent" );    
+                si::check( ::kevent( m_handle, &handle, 1, NULL, 0, NULL ), ENOENT )( "kevent" );    
             }
-            catch ( const Error& error )
+            catch ( Error* error )
             {
-                TRACE( "error %s", error.message.c() );
+                TRACE( "error %s", error->message.c() );
+                error->deref();
+                assert( false );
             }
             
         

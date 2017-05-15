@@ -19,13 +19,12 @@ namespace tau
             ENTER();
             
             m_process.start( m_command );            
-            m_process.streams([ & ] ( os::Process::Stream& s )
-                {
-                    if ( s.type() != sys::In )
-                    {
-                        event( s );
-                    }
-                } );
+            read();
+  
+            //
+            //  wait for process exit
+            //    
+            event();
         }
                         
         void Process::perform( ev::Request& request )
@@ -38,35 +37,56 @@ namespace tau
             if ( request.event().type == ev::Loop::Event::Read )
             {
                 stream.read( request.data() );
-                
-                if ( stream.type() == sys::Err )
-                {
-                    event = Error;
-                }
+                request.custom( ( void* ) stream.type() );
             }
-            else
+            
+            if ( request.event().type == ev::Loop::Event::Write )
             {
                 stream.write( request.data() );    
                 event = Write;
             }
             
-            result().event( event, request );
-            
-            if ( event == Write )
+            if ( request.event().type == ev::Loop::Event::Process )
             {
-                request.deref();
+                request.custom( ( void* ) m_process.code() );
+                event = Exit;
             }
+            
+            result().event( event, request );
         }
         
-        void Process::event( os::Process::Stream& stream, const Data* data )
+        Process& Process::read()
+        {
+            m_process.streams([ & ] ( os::Process::Stream& s )
+                {
+                    if ( s.type() != sys::In )
+                    {
+                        event( &s );
+                    }
+                } );
+                
+            return *this;
+        }
+        
+        void Process::event( os::Process::Stream* stream, const Data* data )
         {
             auto request = mem::mem().type< ev::Request >( *this );
-            request->event().type = ( stream.type() != sys::In ) ? ev::Loop::Event::Read : ev::Loop::Event::Write;
-            request->event().fd = stream.fd();
-            request->file() = &stream;
+            
+            if ( stream )
+            {
+                request->event().type = ( stream->type() != sys::In ) ? ev::Loop::Event::Read : ev::Loop::Event::Write;            
+                request->event().fd = stream->fd();    
+                request->file() = stream;
+            } 
+            else
+            {
+                request->event().type = ev::Loop::Event::Process;
+                request->event().fd = m_process.pid();
+            }
             
             if ( data )
             {   
+                TRACE( "need to write %s", data->c() );
                 request->data() = *data;
             }
             

@@ -4,7 +4,7 @@ class Net: public Test
 {
 public:
     Net( fs::Link::Type type )
-    : Test( 2 ), m_count( 2 ), m_type( type )
+    : Test( 2, Time( 1000 ) ), m_count( 2 ), m_type( type )
     {
         ENTER();
         start();

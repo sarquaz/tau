@@ -135,6 +135,7 @@ namespace tau
             }
             
             auto wrote = si::check( ::write( fd( ), data, data.length( ) ) )( "write" );
+            TRACE( "wrote %d bytes", wrote );
             
             return wrote;
         }
@@ -153,6 +154,8 @@ namespace tau
             data.space( length );
             auto read = si::check( ::read( fd( ), data, length ) )( "read" );
             data.length( read );
+            
+            TRACE( "read %d bytes", read );
             
             return read;
         }   
