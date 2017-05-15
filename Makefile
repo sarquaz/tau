@@ -53,7 +53,7 @@ else
 		mkdir -p bin && $(RANLIB) bin/$@
 endif
 
-test: rebuild
+test: #rebuild
 	cd test && $(MAKE); 
 	
 %.o: %.c++
