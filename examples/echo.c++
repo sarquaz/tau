@@ -28,6 +28,7 @@ int main( )
                         
                     case io::Net::Close:
                         printf( "connection closed \n");
+                        net.deref();
                         break;    
                         
                     case io::Net::Error:
