@@ -408,6 +408,7 @@ namespace tau
             virtual ~Net()
             {
                 ENTER();
+                ev::Request::Parent::clear();
             }    
             
             fs::Link& link()
