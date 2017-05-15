@@ -1,6 +1,6 @@
 CXX = g++
 
-CPPFLAGS ?= -g -DLOG
+CPPFLAGS ?= 
 
 UNAME := $(shell uname)
 
