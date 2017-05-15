@@ -42,6 +42,7 @@ consider following code that creates TCP echo server on port 10000 (compile with
                         
 		                    case io::Net::Close:
 		                        printf( "connection closed \n");
+					  net.deref();	 
 		                        break;    
                         
 		                    case io::Net::Error:
