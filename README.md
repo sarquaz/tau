@@ -5,11 +5,13 @@ tau is not using any external libraries, is multithreaded, has functions for asy
 tau is working under OS X, linux support, extensive testing and documentation is planned. 
 
 #Building
+
 `make` builds the library (edit `config.mk`) to select between static and shared builds
 		
 `make test` runs test cases		
 
 #Usage
+
 consider following code that creates TCP echo server on port 10000 (compile with `-I../include/tau  -std=c++11` or `cd examples && make`):
 
 		#include "tau.h"
