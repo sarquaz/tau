@@ -183,6 +183,8 @@ namespace tau
         void File::seek( long offset ) const
         {
             ENTER()
+            TRACE( "offset %u", offset );
+                    
             if ( offset != -1 )
             {
                 si::check( ::lseek( fd( ), offset, SEEK_SET ) )( "seek" );    
@@ -461,7 +463,7 @@ namespace tau
 
             if ( local() )
             {
-                return File::write( data, offset );
+                return File::write( data );
             }
 
             long result;
@@ -488,7 +490,7 @@ namespace tau
             
             if ( local() )
             {
-               return File::read( data, length, offset );
+               return File::read( data );
             }
 
             long result;           

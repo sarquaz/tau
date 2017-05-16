@@ -125,7 +125,7 @@ namespace tau
             
                         
         private:            
-            virtual void seek( long ) const;
+            void seek( long ) const;
             
         private:
             Handle m_fd;
@@ -255,10 +255,7 @@ namespace tau
             
             void bind( );
             void shutdown();
-            virtual void seek( long ) const
-            {
-                
-            }
+      
 
         private:
             Type type( ) const
