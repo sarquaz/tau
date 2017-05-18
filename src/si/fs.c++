@@ -520,7 +520,7 @@ namespace tau
         
         void Link::shutdown()
         {
-            si::check( ::shutdown( fd(), SHUT_RDWR ) )( "shutdow" );
+            si::check( ::shutdown( fd(), SHUT_RDWR ) )( "shutdown" );
         }
     }
 }

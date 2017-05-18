@@ -44,7 +44,11 @@ namespace tau
                     
                     
                 default:
+#ifdef __MACH__        
                     return EVFILT_TIMER;
+#else                    
+                    return EPOLLIN;
+#endif                    
             }
         }
     
@@ -88,7 +92,6 @@ namespace tau
             {
                 m_setup( event );    
             }
-            
         
 #ifdef __MACH__
             auto flags = 0;
@@ -131,6 +134,15 @@ namespace tau
                 error->deref();
                 assert( false );
             }
+    
+            if ( action == Add )
+            {
+                m_check.set( &event );
+            }
+            else
+            {
+                m_check.remove( &event );
+            }
             
         
 #else
@@ -152,6 +164,7 @@ namespace tau
         void Loop::remove( Request& request ) 
         {
             act( Remove, request.event() );
+
         }
         
         void Loop::Setup::operator()( Event& event )
@@ -159,7 +172,7 @@ namespace tau
             ENTER();
 #ifdef __MACH__
             auto fd = r::random( INT_MAX );
-            if ( !m_fds.exists( fd ) )
+            if ( !m_fds.contains( fd ) )
             {
                 m_fds.set( fd );
                 event.fd = fd;

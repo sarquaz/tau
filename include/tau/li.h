@@ -78,9 +78,10 @@ namespace tau
         private:
             void free()
             {
-                if ( m_data != m_default )
+                if ( m_data != m_default && m_data )
                 {
                     mem::mem().free( m_data );    
+                    m_data = NULL;
                 }
             }
             
@@ -99,6 +100,7 @@ namespace tau
                     //  allocate space
                     //
                     auto data = mem::mem().get( size * sizeof( Data ) );
+                    
                     //
                     //  copy data
                     //
@@ -260,7 +262,7 @@ namespace tau
                 throw Error( "value not found" );    
             }
              
-            bool exists( const Key& key ) const
+            bool contains( const Key& key ) const
             {
                 auto hash = box::h::hash< Key >()( key );
                 return ( const_cast< Map* >( this ) )->find( hash ) ? true : false;    

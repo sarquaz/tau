@@ -120,7 +120,6 @@ namespace tau
             //
             auto& list = m_map [ hash ];
             
-            
             if ( list.length() )
             {
                 auto node = list.tail();

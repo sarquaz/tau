@@ -67,9 +67,7 @@ namespace tau
                            {
                                mem::mem().detype< Error >( e );
                            }
-                           
                        }
-                   
                    }
                 }
         
@@ -138,6 +136,12 @@ namespace tau
                         TRACE( "event ident %d", e.ident );
                         
                         auto event = static_cast< Event* > ( e.udata );
+                        
+                        if ( !m_check.contains( event ) )
+                        {
+                            continue;
+                        }
+                            
         
                         TRACE( "event 0x%x type %d", event, event->type );
                         
@@ -168,7 +172,7 @@ namespace tau
             
             void add( Request& ); 
             void remove( Request& );
-
+            
         private:
             enum Action
             {
@@ -178,7 +182,50 @@ namespace tau
             
             class Setup
             {
+#ifdef __linux__
+                class Event: public Reel
+                {
+                public:
+                    virtual ~Event()
+                    {
+                        
+                    }
+                    
+                    Loop::Event*& event()
+                    {
+                        return m_event;
+                    }
+                    
+                    
+                    virtual void operator()();
+                    virtual void assign( Loop::Event* );
+                    
+                protected:
+                    Event()
+                        : m_event( NULL )
+                    {
+                        
+                    }
+                    
+                private:
+                    fs::File m_file;
+                    Loop::Event* m_event;
+                };
+                
+                class Timer: public Event
+                {
+                };
+                
+                class Signal: public Event
+                {
+                };
+                
+                
+#endif
+                
             public:
+                
+                
                 Setup()
                 {
                     
@@ -193,6 +240,8 @@ namespace tau
             private:
 #ifdef __MACH__
         li::Set< Handle > m_fds;        
+#else
+
 #endif
             };
 
@@ -211,6 +260,9 @@ namespace tau
             Hevent m_events[ 128 ];
             Setup m_setup;
             bool m_stop;
+#ifdef __MACH__
+            li::Set< Event* > m_check;
+#endif
         };
         
         
