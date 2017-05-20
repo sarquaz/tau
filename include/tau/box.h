@@ -1,6 +1,9 @@
 #ifndef _TAU_BOX_H_
 #define _TAU_BOX_H_
 
+
+
+
 namespace tau
 {
     namespace box
@@ -149,7 +152,7 @@ namespace tau
                 ul operator()( What* what ) const
                 {
                     ul value = ( ul ) what;
-                    return box::Hash( ( uchar* ) &value, sizeof( ul ) )();
+                    return box::Hash( ( uchar* ) &value )();
                 }
             };
         }
@@ -497,7 +500,7 @@ namespace tau
                 
             public:
                 _Node( ul hash )
-                    : m_map( NULL ), m_hash( hash ), m_sizeable( NULL )
+                    : m_map( NULL ), m_hash( hash ), m_sizeable( NULL ), m_parent( false )
                 {
                 }
                 
@@ -541,11 +544,23 @@ namespace tau
                     return m_sizeable;
                 }
                 
+                bool parent() const
+                {
+                    return m_parent;
+                }
+                
+                bool parent( bool parent ) 
+                {
+                    m_parent = parent;
+                    return m_parent;
+                }
+                
             private:
                 ul m_hash;
                 Data m_data;
                 Map< Data, Size,  Allocator >*  m_map;
                 Sizeable* m_sizeable;
+                bool m_parent;
             };
             
             template < class Data, ui Size = box::Size, class Allocator = box::Allocator > class Map: Sizeable
@@ -600,6 +615,7 @@ namespace tau
                 
                 Data& operator []( ul hash ) 
                 {
+                    auto h = hash;
                     auto& node = find( hash );
                     
                     if ( node )
@@ -644,9 +660,12 @@ namespace tau
                     if ( node )
                     {
                         node->sizeable()->dec();
-                        box::detype< Node, Allocator >( node );
-                        node = NULL;
-                        
+                        if ( !node->parent() )
+                        {
+                            box::detype< Node, Allocator >( node );
+                            node = NULL;
+                        }
+                            
                         return true;
                     }
                     
@@ -658,7 +677,7 @@ namespace tau
                 {
                     auto rem = hash % Size;
                     auto& node = m_nodes[ rem ];
-                                        
+
                     if ( node )
                     {
                        if ( node->hash() == hash )
@@ -666,6 +685,7 @@ namespace tau
                            return node;
                        }  
                        
+                       node->parent( true );
                        hash = ( hash  - rem ) / Size;
                        return ( *node )[ hash ];  
                    }

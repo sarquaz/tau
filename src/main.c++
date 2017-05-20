@@ -57,7 +57,7 @@ namespace tau
     {
         ul Hash::operator()() const
         {
-            ul hash = 100253314709;
+            ul hash = 100253314709U;
             ul last = 179426173;
             ul store = hash ^ m_size;
             auto pos = 0;

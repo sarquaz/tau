@@ -242,11 +242,14 @@ namespace tau
             
             Value& operator[]( const Key& key )
             {
-                ul hash = box::h::hash< Key >()( key );    
+                auto hash = box::h::hash< Key >()( key );    
+                auto h = hash;
                 
-                auto& data = box::map::Map< Data< Key, Value >, Size, Allocator >::operator[]( hash );
-                data.key = key;
-                return data.value;
+                
+                auto& node = box::map::Map< Data< Key, Value >, Size, Allocator >::operator[]( hash );
+                
+                node.key = key;
+                return node.value;
             }
             
             const Value& get( const Key& key ) const
@@ -265,7 +268,8 @@ namespace tau
             bool contains( const Key& key ) const
             {
                 auto hash = box::h::hash< Key >()( key );
-                return ( const_cast< Map* >( this ) )->find( hash ) ? true : false;    
+                auto node = ( const_cast< Map* >( this ) )->find( hash );
+                return  node ? true : false;    
             }    
             
             bool remove( const Key& key )

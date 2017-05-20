@@ -33,7 +33,7 @@ namespace tau
 #ifdef __MACH__
                     return EVFILT_TIMER;
 #else
-                    return EPOLLIN;
+                    return EPOLLIN | EPOLLONESHOT;
 #endif
                 case Process:
 #ifdef __MACH__
@@ -77,56 +77,83 @@ namespace tau
         {
             ENTER();
             auto act = 0;
+            auto filter = event.filter( );
 
 #ifdef __MACH__
             act = action == Add ? EV_ADD : EV_DELETE;
 #else
             act = action == Add ? EPOLL_CTL_ADD : EPOLL_CTL_DEL;
+            
+            if ( event.state == Event::Active && event.type == Event::Default )
+            {
+                TRACE( "modyfiying existing event", "" );
+                act = EPOLL_CTL_MOD;
+            }
+            
 #endif
+            event.state = action == Add ? Event::Active : Event::Inactive;
+            
         
-            TRACE( "%s event 0x%x with fd %d filter %d", action == Add ? "adding" : "removing", &event, event.fd, event.filter() );
+             if ( event.type < 4 )
+             {
+                 m_setup( event );
+             }
+                        
+            TRACE( "%s event 0x%x with fd %d filter %d, act %d state %u", action == Add ? "adding" : "removing", &event, event.fd, filter, act, event.state );
         
             Hevent handle;
             
-            if ( !event.fd )
-            {
-                m_setup( event );    
-            }
-        
+            
 #ifdef __MACH__
             auto flags = 0;
             long time = 0;
+            
+            
+            if ( event.type == Event::Default && action == Remove )
+            {
+                return;
+            }
+
             if ( action == Add )
             {
                 TRACE( "time value: %u sec %u usec %u", event.time.value, event.time.s(), event.time.us() );
                     
                 if ( event.type == Event::Default || event.type == Event::Timer )
                 {
-                    flags = NOTE_USECONDS;
+                    flags = NOTE_USECONDS | NOTE_CRITICAL;
                     time = event.time.us();
                 } 
-                else if ( event.time.infinite() )
+                
+                if ( event.time.infinite() )
                 {
                     flags = NOTE_SECONDS;
                     time = INT_MAX;
                 }
-                else if ( event.type == Event::Once )
+                
+                if ( event.type == Event::Default )
                 {
-                    TRACE( "oneshot event", "" );
                     act |= EV_ONESHOT;
                 }
                 else if ( event.type == Event::Process )
                 {
                     flags = NOTE_EXIT;
                 }
-                
-                TRACE( "setting time value %d", time );
             }
             
-            EV_SET( &handle, event.fd, event.filter( ), act, flags, time, &event );
+            EV_SET( &handle, event.fd, filter, act, flags, time, &event );
+            
+#else
+            handle.events = filter;
+            handle.data.ptr = &event;
+#endif
+            
             try
             {
-                si::check( ::kevent( m_handle, &handle, 1, NULL, 0, NULL ), ENOENT )( "kevent" );    
+#ifdef __MACH__
+                si::check( ::kevent( m_handle, &handle, 1, NULL, 0, NULL ) )( "kevent" );    
+#else
+                si::check( ::epoll_ctl( m_handle, act, event.fd, &handle ) )( "epoll_ctl" );
+#endif
             }
             catch ( Error* error )
             {
@@ -134,25 +161,6 @@ namespace tau
                 error->deref();
                 assert( false );
             }
-    
-            if ( action == Add )
-            {
-                m_check.set( &event );
-            }
-            else
-            {
-                m_check.remove( &event );
-            }
-            
-        
-#else
-            Eevent set;
-            set.events = event.filter( );
-            set.data.ptr = event.data;
-        
-        
-            si::check( ::epoll_ctl( m_queue, act, event.fd, &set ) )( "epoll_ctl" );
-#endif
         }
         
         void Loop::add( Request& request ) 
@@ -167,25 +175,113 @@ namespace tau
 
         }
         
-        void Loop::Setup::operator()( Event& event )
+        void Loop::Setup::operator()( Loop::Event& event )
         {
             ENTER();
+            TRACE( "need to setup event type %u", event.type );
+            
+            
+            
 #ifdef __MACH__
-            auto fd = r::random( INT_MAX );
-            if ( !m_fds.contains( fd ) )
+            if ( event.fd )
             {
-                m_fds.set( fd );
-                event.fd = fd;
-                TRACE( "assigning fd %d", fd );
+                return;
+            }
+            
+            
+            auto fd = 0;
+            
+            for ( ;; )
+            {
+                fd = r::random( INT_MAX );
+                if ( !m_fds.contains( fd ) )
+                {
+                    m_fds.set( fd );
+                    event.fd = fd;
+                    TRACE( "assigning fd %d", fd );
+                    break;
+                }
+            }
+#else
+            Event* processor = NULL;
+            auto& list = m_map[ event.type ];
+            
+            if ( !list.empty() )
+            {
+                processor = list.pop();
             }
             else
             {
-                ( *this )( event );
+                switch ( event.type )
+                {
+                    case Loop::Event::Default:
+                        processor = mem::mem().type< Event >();
+                        break;
+                        
+                    case Loop::Event::Timer:
+                        processor = mem::mem().type< Timer >();
+                        break;
+                        
+                    default:
+                        break;
+                }
             }
-#else
             
+            
+            if ( !processor )
+            {
+                TRACE( "no processor", "" );
+                assert( false );
+            }
+            
+            event.custom = processor;
+            processor->pre( event );
 #endif
+            
         }
+        
+#ifdef __linux__
+        void Loop::Setup::process( Loop::Event& event )
+        {
+            ENTER();
+            TRACE( "event type %d", event.type );
+            
+            if ( !event.custom )
+            {
+                return;
+            }
+            
+            auto processor = static_cast< Event* >( event.custom );
+            processor->post( event );
+            m_map[ event.type ].append( processor );
+        }
+        
+        void Loop::Setup::Event::pre( Loop::Event& event )
+        {
+            ENTER();
+            
+            if ( !m_file.fd() )
+            {
+                auto fd = ::eventfd( 1, 0 );
+                m_file.assign( fd );
+                event.fd = fd;
+            }
+            else
+            {
+                long long value = 1;
+                m_file.writeraw( ( char* ) &value, sizeof( value ) );
+            }
+        }
+        
+        void Loop::Setup::Event::post( Loop::Event& event )
+        {
+            ENTER();
+            long long value = 0;
+            m_file.readraw( ( char* ) &value, sizeof( value ) );
+            TRACE( "read %u", value );
+        }
+        
+#endif
         
         Request::Request( Request::Parent& parent )
             : m_error( NULL ), m_parent( parent ), m_event( *( Loop::Event::get() ) ), m_custom( NULL ), m_file( NULL )

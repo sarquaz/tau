@@ -71,6 +71,11 @@ namespace tau
         class File
         { 
         public:            
+            File( Handle fd = 0 )
+            : m_fd( fd )
+            {
+            }
+            
             static void remove( const Data& name )
             {
                 ::unlink( name );
@@ -100,6 +105,8 @@ namespace tau
             
             unsigned int available( ) const;
             
+            unsigned long writeraw( const char* data, ul size ) const;    
+            unsigned long readraw( char* data, ul size ) const;        
             virtual unsigned long write( const Data& data, long offset = -1 ) const;            
             virtual unsigned long read( Data& data, ul length = 0, long offset = -1 ) const;
             
@@ -117,10 +124,7 @@ namespace tau
             void nb() const;
             
         protected:
-            File( Handle fd = 0 )
-            : m_fd( fd )
-            {
-            }
+            
             
             
                         

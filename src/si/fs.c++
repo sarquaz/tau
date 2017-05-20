@@ -128,6 +128,16 @@ namespace tau
             return available;
         }
         
+        unsigned long File::writeraw( const char* data, ul size ) const
+        {
+            return si::check( ::write( fd( ), data, size ) )( "write" );
+        }
+        
+        unsigned long File::readraw( char* data, ul size ) const
+        {
+            return si::check( ::read( fd( ), data, size ) )( "read" );    
+        }        
+        
         unsigned long File::write( const Data& data, long offset ) const
         {
             seek( offset );
@@ -139,7 +149,6 @@ namespace tau
         unsigned long File::read( Data& data, ul length, long offset ) const
         {
             seek( offset );
-            
             
             if ( !length ) 
             {

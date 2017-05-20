@@ -56,11 +56,6 @@ namespace tau
                         return *m_loop;
                     }
                     
-                    virtual void before( ev::Request& request )
-                    {
-                        request.event().type = ev::Loop::Event::Once;
-                    }
-                    
                 protected:
                     Task( ev::Request::Parent* parent = NULL )
                         : ev::Request::Parent( parent ), m_request( NULL ), m_loop( NULL )
