@@ -1,9 +1,6 @@
 #ifndef _TAU_BOX_H_
 #define _TAU_BOX_H_
 
-
-
-
 namespace tau
 {
     namespace box
@@ -500,7 +497,7 @@ namespace tau
                 
             public:
                 _Node( ul hash )
-                    : m_map( NULL ), m_hash( hash ), m_sizeable( NULL ), m_parent( false )
+                    : m_map( NULL ), m_hash( hash ), m_sizeable( NULL ), m_deleted( false )
                 {
                 }
                 
@@ -546,21 +543,26 @@ namespace tau
                 
                 bool parent() const
                 {
-                    return m_parent;
+                    return m_map != NULL;
                 }
                 
-                bool parent( bool parent ) 
+                bool deleted() const
                 {
-                    m_parent = parent;
-                    return m_parent;
+                    return m_deleted;
                 }
                 
+                bool deleted( bool deleted )
+                {
+                    m_deleted = deleted;
+                    return m_deleted;
+                }
+                                
             private:
                 ul m_hash;
                 Data m_data;
                 Map< Data, Size,  Allocator >*  m_map;
                 Sizeable* m_sizeable;
-                bool m_parent;
+                bool m_deleted;
             };
             
             template < class Data, ui Size = box::Size, class Allocator = box::Allocator > class Map: Sizeable
@@ -618,13 +620,20 @@ namespace tau
                     auto h = hash;
                     auto& node = find( hash );
                     
-                    if ( node )
+                    if ( node && !node->deleted() )
                     {
                         return node->data();
                     } 
                     else
                     {
-                        node = box::type< Node, Allocator >( hash );
+                        if ( !node )
+                        {
+                            node = box::type< Node, Allocator >( hash );    
+                        }
+                        else
+                        {
+                            node->deleted( false );
+                        }
                         
                         auto& sizeable = node->sizeable();
                         
@@ -644,20 +653,24 @@ namespace tau
                         {
                             continue;
                         }
-                        
+
                         if ( node->map() )
                         {
                             node->map()->nodes( nodes );
                         }
                         
-                        nodes( node );
+                        if ( !node->deleted() )
+                        {
+                            nodes( node );    
+                        }
+                        
                     }    
                 }
                 
                 bool remove( ul hash )
                 {
                     auto& node = find( hash );
-                    if ( node )
+                    if ( node && !node->deleted() )
                     {
                         node->sizeable()->dec();
                         if ( !node->parent() )
@@ -665,13 +678,17 @@ namespace tau
                             box::detype< Node, Allocator >( node );
                             node = NULL;
                         }
-                            
+                        else
+                        {
+                            node->deleted( true );
+                        }
+                                
                         return true;
                     }
                     
                     return false;
                 }
-                
+                                
             protected:
                 Node*& find( ul& hash )
                 {
@@ -683,9 +700,8 @@ namespace tau
                        if ( node->hash() == hash )
                        {
                            return node;
-                       }  
+                       } 
                        
-                       node->parent( true );
                        hash = ( hash  - rem ) / Size;
                        return ( *node )[ hash ];  
                    }
