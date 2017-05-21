@@ -150,7 +150,7 @@ namespace tau
             try
             {
 #ifdef __MACH__
-                si::check( ::kevent( m_handle, &handle, 1, NULL, 0, NULL ) )( "kevent" );    
+                si::check( ::kevent( m_handle, &handle, 1, NULL, 0, NULL ), ENOENT )( "kevent" );    
 #else
                 si::check( ::epoll_ctl( m_handle, act, event.fd, &handle ) )( "epoll_ctl" );
 #endif

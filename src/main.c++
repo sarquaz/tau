@@ -27,6 +27,8 @@ namespace tau
     {
         if ( !m_ref )
         {
+            TRACE( "%u", m_ref );
+            
             assert( false );
             return;
         }
@@ -38,6 +40,8 @@ namespace tau
 
     void Reel::deref( )
     {
+        TRACE( "%u", m_ref );
+        
         if ( !m_ref )
         {
             assert( false );
@@ -45,7 +49,7 @@ namespace tau
         }
 
         m_ref--;
-        TRACE( "%d", m_ref );
+        
 
         if ( !m_ref )
         {

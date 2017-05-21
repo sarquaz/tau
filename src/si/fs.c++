@@ -190,10 +190,7 @@ namespace tau
         }
         
         void File::seek( long offset ) const
-        {
-            ENTER()
-            TRACE( "offset %u", offset );
-                    
+        {                    
             if ( offset != -1 )
             {
                 si::check( ::lseek( fd( ), offset, SEEK_SET ) )( "seek" );    
