@@ -69,7 +69,7 @@ namespace tau
             void join( ) const;
             void start( );
         
-            ul id( );
+            static ul id( );
             
             bool started() const
             {

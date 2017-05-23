@@ -19,16 +19,18 @@ namespace tau
             {
                 enum State
                 {
-                    Inactive,
-                    Active    
+                    Initial,
+                    Added,
+                    Disabled,
+                    Deleted    
                 };
                 
                 enum Type
                 {
                     Default = 0,
                     Timer,
-                    Stop,
                     Process,
+                    Stop,
                     Read,
                     Write
                 };
@@ -42,13 +44,13 @@ namespace tau
                 State state;
         
                 Event( Type _type, Handle _fd = 0 )
-                    : time( Time::Infinite ), fd( _fd ), type( _type ), loop( NULL ), request( NULL ), custom( NULL ), state( Inactive )
+                    : time( Time::Infinite ), fd( _fd ), type( _type ), loop( NULL ), request( NULL ), custom( NULL ), state( Initial )
                 {
                 
                 }
             
                 Event( const Time& _time = Time(), Type _type = Default )
-                    : fd( 0 ), type( _type ), time( _time ), loop( NULL ), request( NULL ), custom( NULL ), state( Inactive )
+                    : fd( 0 ), type( _type ), time( _time ), loop( NULL ), request( NULL ), custom( NULL ), state( Initial )
                 {
                     ENTER();
                 }
@@ -67,13 +69,9 @@ namespace tau
                        assert( request );
                        try
                        {
-
                            {
-
                                loop->remove( *request );       
-                               
                            }
-                                      
                        }
                        catch ( Error* e )
                        {
@@ -157,14 +155,23 @@ namespace tau
                         auto event = static_cast< Event* > ( e.udata );
                         
                         TRACE( "event 0x%x event ident %d", event, e.ident );
+                        
+                        assert( event );
                                                     
                         
     #else
                         auto event = static_cast< Event* > ( e.data.ptr );                        
+                        assert( event );
                         
-                        m_setup.process( *event );
+                        if ( event->type == Event::Default )
+                        {
+                            event->state = Event::Disabled;
+                        }
+                        
+                        
+                        
     #endif
-                        TRACE( "event 0x%x type %d", event, event->type );
+                        TRACE( "event 0x%x type %d state %d", event, event->type, event->state );
                         
                         if ( event->type == Event::Stop )
                         {
@@ -173,7 +180,15 @@ namespace tau
                             return;
                         }
                         
+#ifdef __linux__
+                        m_setup.process( *event );
+#endif                        
+                        
                         callback( *event );
+                        
+#ifdef __linux__
+                        m_setup.complete( *event );
+#endif
                     }
                 }
             }
@@ -198,7 +213,10 @@ namespace tau
             
             class Setup
             {
+                
 #ifdef __linux__
+                
+                
                 class Event: public Reel
                 {
                 public:
@@ -217,10 +235,14 @@ namespace tau
                     virtual void post( Loop::Event& );
                     virtual void pre( Loop::Event& );
                     
+                    
+                    
                     virtual void destroy()
                     {
                         mem::mem().detype< Event >( this );
                     }
+                    
+                    static Event* processor( Loop::Event& );
                     
                 protected:
 
@@ -256,9 +278,12 @@ namespace tau
                 
 #ifdef __linux__
                 void process( Loop::Event& );
+                void complete( Loop::Event& );
 #endif
                 
             private:
+                
+                
 #ifdef __MACH__
         li::Set< Handle > m_fds;        
 #else
@@ -282,9 +307,6 @@ namespace tau
             Hevent m_events[ 128 ];
             Setup m_setup;
             bool m_stop;
-#ifdef __MACH__
-            li::Set< Event* > m_check;
-#endif
         };
         
         

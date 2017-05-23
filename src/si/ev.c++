@@ -84,30 +84,29 @@ namespace tau
 #else
             act = action == Add ? EPOLL_CTL_ADD : EPOLL_CTL_DEL;
             
-            if ( event.state == Event::Active && event.type == Event::Default )
+            if ( event.state == Event::Disabled  )
             {
                 TRACE( "modyfiying existing event", "" );
                 act = EPOLL_CTL_MOD;
             }
             
 #endif
-            event.state = action == Add ? Event::Active : Event::Inactive;
+            event.state = action == Add ? Event::Added : Event::Deleted;
             
         
-             if ( event.type < 4 )
+             if ( event.type < 3 && action == Add )
              {
                  m_setup( event );
              }
                         
-            TRACE( "%s event 0x%x with fd %d filter %d, act %d state %u", action == Add ? "adding" : "removing", &event, event.fd, filter, act, event.state );
+            TRACE( "%s event 0x%x with fd %d filter %d, act %d state %u type %d", action == Add ? "adding" : "removing", &event, event.fd, filter, act, event.state, event.type );
         
             Hevent handle;
             
             
 #ifdef __MACH__
-            auto flags = 0;
+            int flags = 0;
             long time = 0;
-            
             
             if ( event.type == Event::Default && action == Remove )
             {
@@ -206,6 +205,8 @@ namespace tau
             Event* processor = NULL;
             auto& list = m_map[ event.type ];
             
+            TRACE( "list length: %u", list.length() );
+            
             if ( !list.empty() )
             {
                 processor = list.pop();
@@ -233,6 +234,10 @@ namespace tau
                 TRACE( "no processor", "" );
                 assert( false );
             }
+            else
+            {
+                TRACE( "using processor 0x%x", processor );
+            }
             
             event.custom = processor;
             processor->pre( event );
@@ -241,24 +246,50 @@ namespace tau
         }
         
 #ifdef __linux__
+        
+        Loop::Setup::Event* Loop::Setup::Event::processor( Loop::Event& event )
+        {
+            SENTER();
+            
+            if ( !event.custom )
+            {
+                return NULL;
+            }
+            
+            auto processor = static_cast< Event* >( event.custom );
+            
+            STRACE( "0x%x", processor );
+            return processor;
+        }
+        
         void Loop::Setup::process( Loop::Event& event )
+        {
+            auto processor = Event::processor( event );
+            if ( processor )
+            {
+                processor->post( event );    
+            }
+            
+        }
+        
+        
+        void Loop::Setup::complete( Loop::Event& event )
         {
             ENTER();
             TRACE( "event type %d", event.type );
             
-            if ( !event.custom )
+            auto processor = Event::processor( event );
+            if ( processor )
             {
-                return;
+                m_map[ event.type ].append( processor );    
             }
-            
-            auto processor = static_cast< Event* >( event.custom );
-            processor->post( event );
-            m_map[ event.type ].append( processor );
         }
         
         void Loop::Setup::Event::pre( Loop::Event& event )
         {
             ENTER();
+            
+            TRACE( "file fd %d", m_file.fd() );
             
             if ( !m_file.fd() )
             {
@@ -268,6 +299,7 @@ namespace tau
             }
             else
             {
+                event.fd = m_file.fd();
                 long long value = 1;
                 m_file.writeraw( ( char* ) &value, sizeof( value ) );
             }

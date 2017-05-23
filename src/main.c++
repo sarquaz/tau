@@ -61,7 +61,7 @@ namespace tau
     {
         ul Hash::operator()() const
         {
-            ul hash = 100253314709U;
+            unsigned long long hash = 100253314709U;
             ul last = 179426173;
             ul store = hash ^ m_size;
             auto pos = 0;
@@ -114,7 +114,7 @@ namespace tau
            __thread Random* t_random = NULL;
         
            Random::Random( )
-           : m_random( time().ms() /* + Thread::id( )*/ )
+           : m_random( time().ms() + os::Thread::id( ) )
            {
            }
         
