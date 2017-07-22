@@ -113,8 +113,14 @@ namespace tau
         {
             struct timeval time;
             time.tv_sec = value / 1000000;
-            time.tv_usec = value - time.tv_sec  * 1000000 ;
+            time.tv_usec = value - time.tv_sec  * 1000000;
             return time;
+        }
+        
+        void totimespec ( struct timespec* time ) const
+        {
+            time->tv_sec = value / 1000000;
+            time->tv_nsec = ( value - time->tv_sec  * 1000000 ) * 1000;
         }
         
         ul s() const

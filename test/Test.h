@@ -82,14 +82,14 @@ public:
     Test( ui tries = 1, const Time& attempt = Time( 500 )  )
     : m_tries( tries ), m_attempt( attempt ), m_run( NULL )
     {
-        os::Signals::assign( new Signals( *this ) );
+//        os::Signals::assign( new Signals( *this ) );
     }
     
     void start()
     {
         tau::start( [ & ] ( ) 
             { 
-                this->attempt();
+                attempt();
             } );
     }
                         
@@ -200,7 +200,8 @@ private:
             m_tries --;
             TRACE( "new try, %d tries remaining", m_tries );
             
-            m_run = new Run( *this, m_attempt );
+             m_run = new Run( *this, m_attempt );
+            //m_run->deref();
         }
         else
         {
@@ -230,12 +231,7 @@ private:
         {
             ENTER();
             TRACE( "signal %s", what == os::Signals::Error ? "error" : "exit" );
-            
-            if ( what != os::Signals::Error )
-            {
-                m_test.deref();
-            }
-         
+                     
             if ( what != os::Signals::Exit )
             {
                 out( "exiting with error" );

@@ -41,7 +41,7 @@ namespace tau
                 m_pool.stop();
             }
             
-            ev::Loop& loop() 
+            newev::Loop& loop() 
             {
                 return m_loop;
             }
@@ -70,29 +70,15 @@ namespace tau
                 delete this;
             }
             
-            virtual void run()
-            {
-                ENTER();
-                
-                Main::instance().started( this );
-               
-                m_start( ); 
-                
-                m_loop.run( [ & ] ( ev::Loop::Event& event ) 
-                    {
-                        assert( event.request );
-                        event.request->callback();
-                     } );
-                
-                m_stop( );
-            }
+            virtual void run();
+            
     
         private:
             void* m_data;
             std::function< void() > m_start; 
             std::function< void() > m_stop; 
             
-            ev::Loop m_loop;
+            newev::Loop m_loop;
             th::Pool m_pool;
             
         };
@@ -186,15 +172,15 @@ namespace tau
         return Main::thread();
     }
     
-    inline ev::Loop& loop()
+    inline newev::Loop& loop()
     {
-        auto& thread = reinterpret_cast< Main::Thread& >( tau::thread() );
+        auto& thread = dynamic_cast< Main::Thread& >( tau::thread() );
         return thread.loop();
     }
     
     inline th::Pool& pool()
     {
-        auto& thread = reinterpret_cast< Main::Thread& >( tau::thread() );
+        auto& thread = dynamic_cast< Main::Thread& >( tau::thread() );
         return thread.pool();
     }
     

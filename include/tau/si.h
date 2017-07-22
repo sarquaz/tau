@@ -43,6 +43,7 @@ namespace tau
 #include "si/fs.h"
 #include "si/os.h"
 #include "si/ev.h"
+#include "si/newev.h"
 #include "si/th.h"
 
 

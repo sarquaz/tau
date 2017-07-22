@@ -23,6 +23,18 @@ namespace tau
         t_thread = thread;
     }
     
+    void Main::Thread::run()
+    {
+        ENTER();
+        ref();
+        Main::instance().started( this );
+
+        m_start(); 
+        m_loop.run();
+        m_stop();
+        deref();
+    }
+    
     void Reel::ref( )
     {
         if ( !m_ref )

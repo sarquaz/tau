@@ -60,25 +60,8 @@ namespace tau
                     operator = ( event );
                 }
             
-                ~Event()
-                {
-                   ENTER();
+                ~Event();
                
-                   if ( loop )
-                   {
-                       assert( request );
-                       try
-                       {
-                           {
-                               loop->remove( *request );       
-                           }
-                       }
-                       catch ( Error* e )
-                       {
-                           mem::mem().detype< Error >( e );
-                       }
-                   }
-                }
         
                 void operator = ( const Event& event )
                 {
@@ -131,14 +114,17 @@ namespace tau
     #ifdef __MACH__
                         changes = si::check( ::kevent( m_handle, NULL, 0, m_events, lengthof( m_events ), NULL ) )( "kevent" );
     #else
-                        changes = si::check( ::epoll_wait( m_handle, m_events, lengthof( m_events ), -1 ) )( "epoll");
+                        changes = si::check( ::epoll_wait( m_handle, m_events, lengthof( m_events ), -1 ), EINTR )( "epoll");
     #endif
                     }
-                    catch ( const Error& error )
+                    catch ( Error* error )
                     {
-                        TRACE( "error %s", error.message.c() );
+                        TRACE( "error %s", error->message.c() );
+                        assert( false );
                         return;
                     }
+                    
+                    
                     
                     for ( auto i = 0; i < changes; i++ )
                     {
@@ -186,9 +172,6 @@ namespace tau
                         
                         callback( *event );
                         
-#ifdef __linux__
-                        m_setup.complete( *event );
-#endif
                     }
                 }
             }
@@ -215,12 +198,13 @@ namespace tau
             {
                 
 #ifdef __linux__
-                
+            public:
                 
                 class Event: public Reel
                 {
                 public:
-                    Event()
+                    Event( ui type = Loop::Event::Default )
+                        : m_type( type )
                     {
                         
                     }
@@ -231,10 +215,12 @@ namespace tau
                     }
                     
                     
-                    
                     virtual void post( Loop::Event& );
                     virtual void pre( Loop::Event& );
-                    
+                    virtual void close()
+                    {
+                        
+                    }
                     
                     
                     virtual void destroy()
@@ -244,15 +230,44 @@ namespace tau
                     
                     static Event* processor( Loop::Event& );
                     
+                    ui type() const
+                    {
+                        return m_type;
+                    }
+                    
                 protected:
 
                     
                 protected:
                     fs::File m_file;
+                    
+                private:
+                    ui m_type;
                 };
                 
                 class Timer: public Event
                 {
+                public:
+                    Timer()
+                        : Event( Loop::Event::Timer )
+                    {
+                        
+                    }
+                    virtual ~Timer()
+                    {
+                        
+                    }
+                    
+                    virtual void post( Loop::Event& );
+                    virtual void pre( Loop::Event& );
+                    
+                    virtual void close();   
+                     
+                    
+                    virtual void destroy()
+                    {
+                        mem::mem().detype< Timer >( this );
+                    }
                 };
                 
                 class Signal: public Event
@@ -279,6 +294,8 @@ namespace tau
 #ifdef __linux__
                 void process( Loop::Event& );
                 void complete( Loop::Event& );
+                
+                void close( Event& );
 #endif
                 
             private:
@@ -300,8 +317,11 @@ namespace tau
 
             void act( Action action, Event& event );
             
+            Setup& setup()
+            {
+                return m_setup;
+            }
             
-
         private:
             Handle m_handle;
             Hevent m_events[ 128 ];
@@ -457,7 +477,10 @@ namespace tau
         };
         
     }
+    
 
-}
+    //extern ev::Loop& loop();
+
+} 
 
 #endif

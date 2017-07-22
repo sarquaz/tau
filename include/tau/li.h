@@ -2,6 +2,7 @@
 #define _TAU_LI_H_
 
 #include "mem.h"
+#include "../../src/trace.h"
 
 namespace tau
 {
@@ -146,6 +147,8 @@ namespace tau
         template < class Value > class List: public box::list::List< Value, Allocator >
         {
         public:
+            typedef typename box::list::List< Value, Allocator >::Node Node;
+            
             enum Direction
             {
                 Head = box::list::Head,
@@ -174,10 +177,33 @@ namespace tau
             virtual ~List( )
             {
             }
+            
+            Value& last()
+            {
+                auto node = this->tail( );
+                if ( node )
+                {
+                    return node->data();
+                }
+                
+                throw Error();
+            }
+            
+            Value& first()
+            {
+                auto node = this->head( );
+                if ( node )
+                {
+                    return node->data();
+                }
+                
+                throw Error();
+            }
 
             Value pop( Direction direction = Tail)
             {
                 auto node = direction == Tail ? this->tail( ) : this->head();
+                
                 if ( node )
                 {
                     auto data = node->data();
@@ -234,6 +260,16 @@ namespace tau
                 : box::map::Map< Data< Key, Value >, Size, Allocator > ()
             {
             }
+            
+            Map( const std::initializer_list< std::pair< const Key&, Value& > >& list )
+                : box::map::Map< Data< Key, Value >, Size, Allocator > ()
+            {
+                for ( auto i = list.begin(); i != list.end(); i++ )
+                {
+                    ( *this )[ i->first ] = i->second;
+                }
+            }
+            
             virtual ~Map()
             {
                 
@@ -252,10 +288,10 @@ namespace tau
                 return node.value;
             }
             
-            const Value& get( const Key& key ) const
+            Value& get( const Key& key ) 
             {
                 ul hash = box::h::hash< Key >()( key );    
-                auto node = ( const_cast< Map* >( this ) )->find( hash );
+                auto node = this->find( hash );
                 
                 if ( node )
                 {
@@ -263,6 +299,11 @@ namespace tau
                 }
                  
                 throw Error( "value not found" );    
+            }
+            
+            const Value& get( const Key& key ) const
+            {
+                return ( const_cast< Map* >( this ) )->get( key );
             }
              
             bool contains( const Key& key ) const
@@ -307,28 +348,55 @@ namespace tau
                     });
             }
         };
+        
+        
+        template < class Value > struct Entry
+        {
+            Value value;
+            typename List< Entry < Value >* >::Node* node;
+            
+            Entry( const Entry& entry )
+                : value( entry.value ), node( entry.node )
+            {
+                 
+            }
+            
+            Entry()
+            {
+                
+            }
+        };
+        
 
-        template< class Value > class Set : public Map< Value, Value >
+        template< class Value > class Set : public Map< Value, Entry< Value > >
         {
         public:
             Set()
-                : Map< Value, Value >()
+                : Map< Value, Entry< Value > >()
             {
                 
             }
             Set( const Set& set )
-                : Map< Value, Value >()
+                : Map< Value, Entry< Value > >()
             {
                 operator =( set );
             }
             
-            Set( const std::initializer_list< std::pair< const Value, Value > >& list )
-                : Map< Value, Value >()
+            Value& operator[]( const Value& key )
             {
-                for ( auto i = list.begin(); i != list.end(); i++ )
+                
+                auto length = this->length();
+                auto& entry = Map< Value, Entry< Value > >::operator[]( key );
+                
+                auto& value = entry.value;
+                
+                if ( this->length() != length )
                 {
-                    ( *this )[ i->first ] = i->second;
+                    entry.node = m_list.append( &entry );
                 }
+                
+
+                return value;
             }
             
             
@@ -342,21 +410,83 @@ namespace tau
                 ( *this )[ value ] = value;
             }       
             
-            Value def( const Value& key, const Value& value ) const
+            Value def( const Value& key, const Value& def ) const
             {
-                Value ret;
+                Entry< Value > entry;
+                Value value;
         
                 try
                 {
-                    ret = this->get( key );
+                    entry = this->get( key );
+                    value = entry.value;
                 }
                 catch ( ... )
                 {
-                    ret = value;
+                    value = def;
                 }
         
-                return ret;
+                return value;
             }
+            
+            void clear()
+            {
+                box::map::Sizeable::dec( m_list.length() );
+                values( [ & ] ( Value& value ) 
+                {
+                    remove( value ); 
+                } );
+                
+                m_list.clear();
+                
+                
+            }
+            
+            Value& first()
+            {
+                if ( m_list.length() )
+                {
+                    return m_list.first()->value;
+                }
+                
+                throw Error();
+            }
+            
+            Value& last()
+            {
+                if ( m_list.length() )
+                {
+                    return m_list.last()->value;
+                }
+                
+                throw Error();
+            }
+            
+            bool remove( const Value& key )
+            {
+                auto length = this->length();
+                try
+                {
+                    auto& entry = this->get( key );    
+                    entry.node->remove();
+                    Map< Value, Entry< Value > >::remove( key );
+                    return true;
+                }
+                catch ( const Error& )
+                {
+                    return false;
+                }                
+            }
+            
+            template < class Callback > void values( Callback callback )
+            {
+                m_list.all( [ & ]( Entry< Value >* entry ) 
+                    {
+                        callback( entry->value );
+                    });
+            }
+            
+        private:
+            List< Entry< Value >* > m_list;
             
         };
         

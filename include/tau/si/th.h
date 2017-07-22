@@ -9,70 +9,41 @@ namespace tau
         {
             public:
                 
-                class Task: public ev::Request::Parent
+                class Task: public newev::Event::Parent
                 {
                     friend class Pool;
                         
                 public:
                     virtual ~Task()
                     {
-                        ENTER();
-                        
-                        if ( m_request )
-                        {
-                            m_request->deref();
-                        }
+                        ENTER();                        
                     }
                     
                     virtual void operator()() = 0;
-                    virtual void complete( ev::Request& ) = 0;
-                                        
-                    virtual void callback( ev::Request& request )
+                    virtual void complete( newev::Event& )
                     {
                         ENTER();
-                        complete( request );
-                        deref();
                     }
                                         
-                    ev::Request& request()
-                    {
-                        if ( !m_request )
-                        {
-                            m_request = mem::mem().type< ev::Request >( *this );
-                        }
-                        
-                        return *m_request;
-                    }
-                    
-                    ev::Request& request( ev::Request* request )
-                    {
-                        m_request = request;
-                        return *m_request;
-                    }
-                                        
-                    ev::Loop& loop( ) const
-                    {
-                        assert( m_loop );
-                        return *m_loop;
-                    }
+                    virtual void event( ui, newev::Event& );                                        
                     
                 protected:
-                    Task( ev::Request::Parent* parent = NULL )
-                        : ev::Request::Parent( parent ), m_request( NULL ), m_loop( NULL )
+                    Task(  )
+                        : m_loop( &tau::loop() )
                     {
                         ENTER();
                     }
                     
-                private:
-                    ev::Loop& loop( ev::Loop& loop )
-                    {
-                        m_loop = &loop;
-                        return loop;
-                    }        
                     
                 private:
-                    ev::Request* m_request;
-                    ev::Loop* m_loop;
+                    void dispatch( newev::Loop& );
+                    newev::Loop* loop() const
+                    {
+                        return m_loop;
+                    }
+                    
+                private:
+                    newev::Loop* m_loop;
                     
                 };
                 
@@ -98,10 +69,13 @@ namespace tau
                         m_loop.stop();
                     }
                     
-                    void dispatch( Task& );
+                    newev::Loop& loop()
+                    {
+                        return m_loop;
+                    }
                     
                 private:
-                    ev::Loop m_loop;
+                    newev::Loop m_loop;
                 };
                 
             public:
@@ -115,39 +89,16 @@ namespace tau
                     m_threads.all( [] ( Thread* thread ) { mem::mem().detype< Thread >( thread ); } );
                 }
                                 
-                void add( Task& task )
-                {
-                    ENTER();
-                    
-                    //
-                    //  dispatch to thread
-                    //
-                    Thread* thread;
-                    
-                    TRACE( "have %d threads count %d", m_threads.length(), m_count );
-                    
-                    if ( m_threads.length() <= m_count )
-                    {
-                        thread = mem::mem().type< Thread >( );
-                        thread->start();
-                    }
-                    else
-                    {
-                        thread = m_threads.pop();
-                    }
-                    
-                    m_threads.prepend( thread );
-                    
-                    thread->dispatch( task );
-                }
-                
+                void add( Task& task );
                 void stop();
 
             private:
                 li::List< Thread* > m_threads;
                 ui m_count;
         };
-    }
+    };
+    
+    extern th::Pool& pool();
 }
 
 #endif

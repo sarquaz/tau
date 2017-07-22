@@ -1,13 +1,13 @@
 CXX = g++
-CPPFLAGS =  -I../include/tau  -g -DLOG -std=c++11
+CPPFLAGS =  -I../include/tau  -std=c++11 -g -DLOG
 LDFLAGS = -L../bin -ltau 
 
 SOURCES = $(wildcard *.c++)
 EXECUTABLES = $(SOURCES:.c++=)
 
-#EXECUTABLES = Net        
+EXECUTABLES = Mem
 
-all:  tau $(EXECUTABLES)  run
+all:  tau $(EXECUTABLES) #run
 
 clean:
 	rm -rf *.o

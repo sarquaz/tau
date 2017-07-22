@@ -4,6 +4,34 @@ namespace tau
 {
     namespace ev 
     {   
+        Loop::Event::~Event()
+        {
+           ENTER();
+       
+           if ( loop )
+           {
+               assert( request );
+               
+#ifdef __linux__
+               if ( custom )
+               {
+                   loop->setup().close( *static_cast< Loop::Setup::Event* >( custom ) );                       
+               }
+#endif
+               
+               try
+               {
+                   {
+                       loop->remove( *request );       
+                   }
+               }
+               catch ( Error* e )
+               {
+                   mem::mem().detype< Error >( e );
+               }
+           }
+        }
+        
         void Loop::Event::callback()
         {
             assert( request );
@@ -83,11 +111,31 @@ namespace tau
             act = action == Add ? EV_ADD : EV_DELETE;
 #else
             act = action == Add ? EPOLL_CTL_ADD : EPOLL_CTL_DEL;
+             
             
-            if ( event.state == Event::Disabled  )
+            if ( event.state == Event::Disabled && event.type == Event::Default )
             {
                 TRACE( "modyfiying existing event", "" );
-                act = EPOLL_CTL_MOD;
+//                  act = EPOLL_CTL_MOD;
+                filter = EPOLLONESHOT | EPOLLIN;
+            }
+            
+            if ( event.type == Event::Write )
+            {
+                if ( action == Add )
+                {
+                    filter = EPOLLIN | EPOLLOUT;
+                }
+                else
+                {
+                    filter = EPOLLIN;
+                }
+                
+                //if ( action == Remove )
+                {
+                    act = EPOLL_CTL_MOD;
+                }
+                
             }
             
 #endif
@@ -117,7 +165,7 @@ namespace tau
             {
                 TRACE( "time value: %u sec %u usec %u", event.time.value, event.time.s(), event.time.us() );
                     
-                if ( event.type == Event::Default || event.type == Event::Timer )
+                if ( event.type == Event::Timer )
                 {
                     flags = NOTE_USECONDS | NOTE_CRITICAL;
                     time = event.time.us();
@@ -138,6 +186,8 @@ namespace tau
                     flags = NOTE_EXIT;
                 }
             }
+            
+            Handle id = 0; 
             
             EV_SET( &handle, event.fd, filter, act, flags, time, &event );
             
@@ -202,32 +252,34 @@ namespace tau
                 }
             }
 #else
-            Event* processor = NULL;
-            auto& list = m_map[ event.type ];
-            
-            TRACE( "list length: %u", list.length() );
-            
-            if ( !list.empty() )
+            Event* processor = Event::processor( event );
+            if ( !processor )
             {
-                processor = list.pop();
-            }
-            else
-            {
-                switch ( event.type )
+                auto& list = m_map[ event.type ];
+            
+                TRACE( "list length: %u", list.length() );
+            
+                if ( !list.empty() )
                 {
-                    case Loop::Event::Default:
-                        processor = mem::mem().type< Event >();
-                        break;
-                        
-                    case Loop::Event::Timer:
-                        processor = mem::mem().type< Timer >();
-                        break;
-                        
-                    default:
-                        break;
+                    processor = list.pop();
                 }
+                else
+                {
+                    switch ( event.type )
+                    {
+                        case Loop::Event::Default:
+                            processor = mem::mem().type< Event >();
+                            break;
+                        
+                        case Loop::Event::Timer:
+                            processor = mem::mem().type< Timer >();
+                            break;
+                        
+                        default:
+                            break;
+                    }
+                }        
             }
-            
             
             if ( !processor )
             {
@@ -246,6 +298,28 @@ namespace tau
         }
         
 #ifdef __linux__
+        
+        void Loop::Setup::close( Event& event )
+        {
+            ENTER();
+            
+            if ( event.type() != Loop::Event::Default )
+            {
+                event.close();
+            }
+            
+            auto& list = m_map[ event.type() ];
+            TRACE( "list length: %d", list.length() );
+            
+            if ( list.length() < 100 )
+            {
+                list.append( &event );    
+            }
+            else
+            {
+                event.deref();
+            }
+        }
         
         Loop::Setup::Event* Loop::Setup::Event::processor( Loop::Event& event )
         {
@@ -270,19 +344,6 @@ namespace tau
                 processor->post( event );    
             }
             
-        }
-        
-        
-        void Loop::Setup::complete( Loop::Event& event )
-        {
-            ENTER();
-            TRACE( "event type %d", event.type );
-            
-            auto processor = Event::processor( event );
-            if ( processor )
-            {
-                m_map[ event.type ].append( processor );    
-            }
         }
         
         void Loop::Setup::Event::pre( Loop::Event& event )
@@ -311,6 +372,53 @@ namespace tau
             long long value = 0;
             m_file.readraw( ( char* ) &value, sizeof( value ) );
             TRACE( "read %u", value );
+        }
+        
+        void Loop::Setup::Timer::close( )
+        {
+            ENTER();
+            struct itimerspec timeout;
+            std::memset( &timeout, 0, sizeof( timeout ) );
+            ::timerfd_settime( m_file.fd(), 0, &timeout, NULL );
+        }
+        
+        void Loop::Setup::Timer::post( Loop::Event& event )
+        {
+            ENTER();
+            
+            long long value = 0;
+            m_file.readraw( ( char* ) &value, sizeof( value ) );
+            TRACE( "read %u", value );
+        }
+        
+        
+        void Loop::Setup::Timer::pre( Loop::Event& event )
+        {
+            ENTER();
+            
+            TRACE( "file fd %d", m_file.fd() );
+            
+            if ( !m_file.fd() )
+            {
+                auto fd = ::timerfd_create( CLOCK_REALTIME, 0 );
+                m_file.assign( fd );
+                event.fd = fd;
+            }   
+            else
+            {
+                event.fd = m_file.fd();
+            }
+            
+            struct itimerspec timeout;
+            //std::memset( &timeout, 0, sizeof( timeout ) );
+
+            event.time.totimespec( &timeout.it_interval );
+            event.time.totimespec( &timeout.it_value );
+            
+            
+            TRACE( "need to set time: %u %d %d", event.time.value, timeout.it_interval.tv_sec, timeout.it_value.tv_sec );
+            auto ret = ::timerfd_settime( event.fd, 0, &timeout, NULL );
+            TRACE( "%d %u", ret, errno );
         }
         
 #endif

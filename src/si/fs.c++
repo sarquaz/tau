@@ -123,7 +123,9 @@ namespace tau
         unsigned int File::available( ) const
         {
             unsigned int available = 0;
-            ::ioctl( fd( ), FIONREAD, &available );
+            auto ret = ::ioctl( fd( ), FIONREAD, &available );
+            
+            TRACE( "ret %d", ret );
 
             return available;
         }
@@ -154,6 +156,8 @@ namespace tau
             {
                 length = available();
             }
+            
+            TRACE( "have %u bytes available", length );
 
             data.space( length );
             auto read = si::check( ::read( fd( ), data, length ) )( "read" );
@@ -509,13 +513,15 @@ namespace tau
                 Address peer;
                 result = ::recvfrom( fd(), data, length, 0, peer, &peer.length );
                 peer.parse( );
-                TRACE( "read %d bytes", result );
+                
                 ( const_cast< Link* >( this ) )->address() = peer;
             }
             else
             {
                 result = ::recv( fd(), data, length, 0 );
             }
+            
+            TRACE( "received %d bytes", result );
             
             data.length( result );
             

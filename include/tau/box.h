@@ -347,15 +347,13 @@ namespace tau
                     }
                 }
             
-                template < class First > Node* first( First first, Direction direction = Head )
+                template < class Callback > Node* find( Callback callback, Direction direction = Head )
                 {
-                    Node* matched;
-                
                     try
                     {
                         nodes( [ & ]( Node* node )
                             {
-                                 if ( first( node->data() ) ) 
+                                 if ( callback( node->data() ) ) 
                                  {
                                      throw node;
                                  }
@@ -565,7 +563,7 @@ namespace tau
                 bool m_deleted;
             };
             
-            template < class Data, ui Size = box::Size, class Allocator = box::Allocator > class Map: Sizeable
+            template < class Data, ui Size = box::Size, class Allocator = box::Allocator > class Map: protected Sizeable
             {
                 template < class _Data, ui _Size, class _Allocator  > friend class _Node;
                 

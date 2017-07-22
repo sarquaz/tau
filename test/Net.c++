@@ -4,7 +4,7 @@ class Net: public Test
 {
 public:
     Net( fs::Link::Type type )
-    : Test( 2, Time( 1000 ) ), m_count( 2 ), m_type( type )
+    : Test( 1, Time( 1000 ) ), m_count( 1 ), m_type( type )
     {
         ENTER();
         start();
@@ -183,7 +183,7 @@ private:
 
 int main()
 {   
-    li::cycle< fs::Link::Type >( { fs::Link::Local, fs::Link::Udp , fs::Link::Tcp   } )( []( fs::Link::Type type )
+    li::cycle< fs::Link::Type >( {/* fs::Link::Local /* , fs::Link::Udp , */ fs::Link::Tcp } )( []( fs::Link::Type type )
         {
             STRACE( "%d", type );
             new Net( type );

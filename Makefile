@@ -1,6 +1,6 @@
 CXX = g++
 
-CPPFLAGS ?= 
+CPPFLAGS ?= -g -DLOG
 
 UNAME := $(shell uname)
 
@@ -54,7 +54,7 @@ else
 		$(RANLIB) bin/$@
 endif
 
-test: #rebuild
+test: rebuild
 	cd test && $(MAKE); 
 	
 %.o: %.c++
