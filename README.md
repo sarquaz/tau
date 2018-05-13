@@ -79,5 +79,5 @@ consider following code that creates TCP echo server on port 10000 (compile with
 		}
 
 	
-for more information look through test cases in `test` or contact me
+
 
