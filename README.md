@@ -1,8 +1,8 @@
-tau is a C++ asynchronous IO library designed to be fast, minimal and to allow producing beautiful C++ code that does complex things without complexity of  low-level system calls.
+`tau` is a C++ asynchronous IO library designed to be fast, minimal and to allow producing beautiful C++ code that does complex things without complexity of  low-level system calls.
 
-tau is not using any external libraries, is multithreaded, has functions for asynchronous file, network and process IO. to be as efficient as possible it has memory management with reference counting and minimalistic replacements for std::string, std::list and std::map
+it is not using any external libraries, is multithreaded, has functions for asynchronous file, network and process IO. to be as efficient as possible it has memory management with reference counting and minimalistic replacements for std::string, std::list and std::map
 
-tau is working under OS X, linux support, extensive testing and documentation is needed. 
+working under OS X, linux support, extensive testing and documentation is needed. 
 
 # Building
 
