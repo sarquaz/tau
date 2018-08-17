@@ -10,7 +10,7 @@ tau is working under OS X, linux support, extensive testing and documentation is
 		
 `make test` runs test cases		
 
-#Usage
+# Usage
 
 Consider the following code that creates TCP echo server on port 10000 (compile with `-I../include/tau  -std=c++11` or `cd examples && make`):
 
